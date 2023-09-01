@@ -1,0 +1,42 @@
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <title>xkcd.com</title>
+  <link href="https://xkcd.com/" rel="alternate"/>
+  <id>https://xkcd.com/</id>
+  <updated>2023-08-07T00:00:00Z</updated>
+  <entry>
+    <title>Solar Panel Placement</title>
+    <link href="https://xkcd.com/2812/" rel="alternate"/>
+    <updated>2023-08-07T00:00:00Z</updated>
+    <id>https://xkcd.com/2812/</id>
+    <summary type="html">
+      <img src="https://imgs.xkcd.com/comics/solar_panel_placement.png" title="Getting the utility people to run transmission lines to Earth is expensive, but it will pay for itself in no time." alt="Getting the utility people to run transmission lines to Earth is expensive, but it will pay for itself in no time." />
+    </summary>
+  </entry>
+  <entry>
+    <title>Free Fallin'</title>
+    <link href="https://xkcd.com/2811/" rel="alternate"/>
+    <updated>2023-08-04T00:00:00Z</updated>
+    <id>https://xkcd.com/2811/</id>
+    <summary type="html">
+      <img src="https://imgs.xkcd.com/comics/free_fallin.png" title="Their crash investigation team had some particularly harsh words for Dave Matthews." alt="Their crash investigation team had some particularly harsh words for Dave Matthews." />
+    </summary>
+  </entry>
+  <entry>
+    <title>How to Coil a Cable</title>
+    <link href="https://xkcd.com/2810/" rel="alternate"/>
+    <updated>2023-08-02T00:00:00Z</updated>
+    <id>https://xkcd.com/2810/</id>
+    <summary type="html">
+      <img src="https://imgs.xkcd.com/comics/how_to_coil_a_cable.png" title="The ideal mix for maximum competitive cable-coiling energy is one A/V tech, one rock climber, one sailor, and one topologist." alt="The ideal mix for maximum competitive cable-coiling energy is one A/V tech, one rock climber, one sailor, and one topologist." />
+    </summary>
+  </entry>
+  <entry>
+    <title>Moon</title>
+    <link href="https://xkcd.com/2809/" rel="alternate"/>
+    <updated>2023-07-31T00:00:00Z</updated>
+    <id>https://xkcd.com/2809/</id>
+    <summary type="html">
+      <img src="https://imgs.xkcd.com/comics/moon.png" title="I mean, it's pretty, but it doesn't really affect us beyond that. Except that half the nights aren't really dark, and once or twice a day it makes the oceans flood the coasts." alt="I mean, it's pretty, but it doesn't really affect us beyond that. Except that half the nights aren't really dark, and once or twice a day it makes the oceans flood the coasts." />
+    </summary>
+  </entry>
+</feed>

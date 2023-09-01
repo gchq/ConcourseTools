@@ -1,0 +1,76 @@
+S3 Presigned URL
+================
+
+.. caution::
+    This example is for reference only. It is not extensively tested, and it not intended to be a fully-fledged Concourse resource for production pipelines. Copy and paste at your own risk.
+
+This example will showcase the :class:`~concoursetools.additional.InOnlyConcourseResource`, and how to build a resource to fetch arbitrary data from an external resource **that is not stored externally**. In this particular example we will consider a resource to generate a new `presigned URL <https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html>`_ for an object in an S3 bucket.
+
+Traditionally, when Concourse users which to "run an external function" from a pipeline, they create an :class:`~concoursetools.additional.OutOnlyConcourseResource` to do it. Classic examples include setting a build status (as shown in the :ref:`Bitbucket Build Status` example), or to `send a message on Slack <https://github.com/arbourd/concourse-slack-alert-resource>`_. Usually, the new version will only contain a small amount of placeholder information, such as the new build status. However, a :concourse:`put-step` is designed to "fetch" the information for further use in the pipeline, and this is only really possible when the new version represents a "state" which is stored with the external service. For example, the `Git resource <https://github.com/concourse/git-resource>`_ will push a new commit, and then emit the version corresponding to that commit so that - when the resource runs its implicit :concourse:`get-step` - the information is not overwritten.
+
+However, in the case of presigned URLs, AWS does **not** store these anywhere such that they are accessible from the server. When they are created, the user does not get given a UUID which allows them to "look up" the URL at a later date. Therefore, even if the :concourse:`put-step` of the resource created the URL and downloaded it to its resource directory, the :concourse:`get-step` would overwrite it with an empty folder. The two main solutions to this are:
+
+1. Pass the URL in the newly created version.
+2. Have the :concourse:`put-step` write the URL to a *different* resource directory.
+
+Option 2 requires another resource to be already available, as it isn't possible to request additional output directories like a :concourse:`task-step`. This is do-able but fragile, and requires care to make sure that no important files in the other resource are overwritten.  Option 1 seems cleaner, but the URL might be sensitive, and storing it as plaintext within the version is definitely not ideal. We could consider encrypting it and having the user pass some sort of key, but this is complicating matters greatly. There is a better way.
+
+The :class:`~concoursetools.additional.InOnlyConcourseResource` is designed to run these "functions" in the :concourse:`get-step`, and to be *triggered* by a :concourse:`put-step`, like so:
+
+.. code:: yaml
+
+    - put: s3-presigned-url
+      get_params:
+        file_path: my-file
+
+URL Version
+-----------
+
+Because the version itself isn't important, the :class:`~concoursetools.additional.InOnlyConcourseResource` actually uses a prebuilt version containing nothing but a timestamp of creation time:
+
+.. literalinclude:: ../../../concoursetools/additional.py
+    :pyobject: DatetimeVersion
+
+URL Resource
+------------
+
+We start by inheriting from :class:`~concoursetools.additional.InOnlyConcourseResource`. Again, we don't need to pass a version:
+
+.. literalinclude:: ../../../examples/s3.py
+    :pyobject: S3SignedURLConcourseResource.__init__
+    :dedent:
+
+All of the resource functionality comes from overloading the :meth:`~concoursetools.additional.InOnlyConcourseResource.download_data` method:
+
+.. literalinclude:: ../../../examples/s3.py
+    :pyobject: S3SignedURLConcourseResource.download_data
+    :dedent:
+
+This method takes a required ``file_path`` argument to indicate the object for which the URL should be generated. The ``expires_in`` parameter takes a mapping of arguments for :class:`datetime.timedelta` to allow users to specify expiration time more explicitly. Finally, passing a ``file_name`` instructs the URL to name the downloaded file something specific, rather than the original name from within S3.  The URL itself is generated using the `generate_presigned_url <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/generate_presigned_url.html>`_ function. Finally, we don't return a version, so we only need to concern ourselves with the :ref:`Step Metadata`.
+
+This resource can then be invoked like so:
+
+
+.. code:: yaml
+
+    - put: s3-presigned-url
+      get_params:
+        file_path: folder/file.txt
+        file_name: file.txt
+        expires_in:
+          hours: 24
+
+Once the implicit :concourse:`get-step` is completed, the URL can then be :concourse:`loaded easily <load-var-step>` and used in prior steps:
+
+.. code:: yaml
+
+    - load_var: s3-url
+      file: s3-presigned-url/url
+
+URL Conclusion
+--------------
+
+The final resource only requires **49 lines of code**, and looks like this:
+
+.. literalinclude:: ../../../examples/s3.py
+    :linenos:

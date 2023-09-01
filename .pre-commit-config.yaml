@@ -1,0 +1,55 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--enforce-all, --maxkb=100]
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
+    hooks:
+      - id: isort
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: require-ascii
+      - id: script-must-have-extension
+      - id: forbid-binary
+        exclude: docs/source/_static/.*.png
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.4.2
+    hooks:
+      - id: forbid-crlf
+      - id: forbid-tabs
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v6.22.0
+    hooks:
+      - id: cspell
+        exclude: \.gitignore|.*\.properties
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=150]
+        exclude: docs/source/conf.py
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        additional_dependencies: ["tomli"]
+        exclude: examples|tests|conf.py
+  - repo: https://github.com/regebro/pyroma
+    rev: "4.1"
+    hooks:
+    - id: pyroma
+  - repo: https://github.com/johannsdg/pre-commit-license-headers
+    rev: v0.1.0
+    hooks:
+      - id: check-license-headers
+        types: [python]
+        args:
+          - --template
+          - (C) Crown Copyright [OWNER]
+          - --owner=GCHQ

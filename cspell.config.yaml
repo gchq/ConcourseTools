@@ -1,0 +1,65 @@
+version: "0.2"
+language: en-GB
+useGitignore: true,
+ignorePaths:
+  - tests
+  - requirements*.txt
+  - .pre-commit-config.yaml
+dictionaries:
+  - python
+words:
+  - autoclass
+  - autodata
+  - autofunction
+  - automethod
+  - automodule
+  - autosectionlabel
+  - AWSCURRENT
+  - boto
+  - botocore
+  - bysource
+  - classmethod
+  - Colors
+  - concoursetools
+  - dataclass
+  - dataclasses
+  - datetime
+  - dateutil
+  - dockertools
+  - docstrings
+  - elif
+  - furo
+  - GCHQ
+  - genindex
+  - INPROGRESS
+  - intersphinx
+  - kwargs
+  - linenos
+  - linkcheck
+  - Liskov
+  - literalinclude
+  - maxdepth
+  - maxsplit
+  - modindex
+  - mypy
+  - outdir
+  - pathlib
+  - pyobject
+  - Quickstart
+  - refuri
+  - rstrip
+  - rwxr
+  - seealso
+  - stringifying
+  - termcolor
+  - toctree
+  - typehints
+  - undoc
+  - unitless
+  - urllib
+  - vars
+  - viewcode
+  - WORKDIR
+  - xkcd
+ignoreWords:
+  - cbef

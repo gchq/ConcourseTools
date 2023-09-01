@@ -1,0 +1,10 @@
+__pycache__
+*.egg-info
+.venv
+.vscode
+docs/build
+.DS_Store
+.mypy_cache
+.coverage
+coverage.xml
+.scannerwork
