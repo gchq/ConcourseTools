@@ -1,6 +1,6 @@
-![logo](docs/source/_static/logo.png)
+![logo](https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png)
 
-![version](https://img.shields.io/badge/version-0.7.0-informational)
+![version](https://img.shields.io/badge/version-0.7.1-informational)
 ![pre-release](https://img.shields.io/badge/pre--release-beta-red)
 ![python](https://img.shields.io/badge/python-%3E%3D3.8-informational)
 ![coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
@@ -16,7 +16,7 @@ A Python package for easily implementing Concourse [resource types](https://conc
 
 ## Installation
 
-Install from this repository, or from [PyPI](https://pypi.org/project/concoursetools/):
+Install from [GitHub](https://github.com/gchq/ConcourseTools/), or from [PyPI](https://pypi.org/project/concoursetools/):
 
 ```shell
 $ pip install concoursetools
@@ -35,4 +35,4 @@ For more information, see the [documentation](https://concoursetools.readthedocs
 
 ## Bugs and Contributions
 
-Concourse Tools is in beta, and still under somewhat-active development.  Contributions, fixes, suggestions and bug reports are all welcome: Please familiarise yourself with our [contribution guidelines](CONTRIBUTING.md).
+Concourse Tools is in beta, and still under somewhat-active development.  Contributions, fixes, suggestions and bug reports are all welcome: Please familiarise yourself with our [contribution guidelines](https://github.com/gchq/ConcourseTools/blob/main/CONTRIBUTING.md).
