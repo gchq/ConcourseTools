@@ -96,10 +96,13 @@ html_theme_options = {
     "light_logo": "logo.png",
     "dark_logo": "logo-dark.png",
     "sidebar_hide_name": True,
+    "source_repository": "https://github.com/gchq/ConcourseTools/",
+    "source_branch": "main",
+    "source_directory": "docs/source/",
     "footer_icons": [
         {
             "name": "GitHub",
-            "url": "https://github.com/gchq/ConcourseTools",
+            "url": "https://github.com/gchq/ConcourseTools/",
             "class": "fa-brands fa-github fa-2x",
         },
         {

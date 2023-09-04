@@ -30,7 +30,7 @@ Creating a Concourse resource type with Concourse Tools couldn't be simpler:
 2. Create a Dockerfile containing your requirements and calling your resource.
 3. Upload the Docker image to a registry, and use it in your pipelines!
 
-For more information, see the [documentation](https://gchq.github.io/ConcourseTools/).
+For more information, see the [documentation](https://concoursetools.readthedocs.io/en/stable/).
 
 
 ## Bugs and Contributions
