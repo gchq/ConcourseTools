@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/source/_static/logo-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="./docs/source/_static/logo.png">
-  <img alt="ConcourseTools logo" src="./docs/source/_static/logo.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png">
+  <img alt="ConcourseTools logo" src="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png">
 </picture>
 
 ![version](https://img.shields.io/badge/version-0.7.1-informational)
