@@ -1,6 +1,6 @@
 __pycache__
 *.egg-info
-.venv
+.venv*/
 .vscode
 docs/build
 .DS_Store
@@ -8,3 +8,4 @@ docs/build
 .coverage
 coverage.xml
 .scannerwork
+dist/
