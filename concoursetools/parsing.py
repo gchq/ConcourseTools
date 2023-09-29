@@ -4,7 +4,7 @@ Concourse Tools contains a number of simple functions for mapping
 between Python and the Concourse resource type paradigm.
 """
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig
 
@@ -31,26 +31,13 @@ def parse_check_payload(raw_json: str) -> Tuple[ResourceConfig, Optional[Version
     .. note::
         If the version has not been passed, then :obj:`None` will be returned, and **not** an empty :class:`dict`.
     """
-    payload: Dict[str, Dict[str, Any]] = json.loads(raw_json)
+    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    source_config = _extract_source_config_from_payload(payload)
 
     try:
-        unsafe_source_config = payload["source"]
-    except KeyError as error:
-        raise RuntimeError("Could not extract source from payload") from error
-    else:
-        try:
-            source_config = {str(key): value for key, value in unsafe_source_config.items()}
-        except AttributeError:
-            if unsafe_source_config is not None:
-                raise
-            source_config = {}
-
-    try:
-        unsafe_version_config = payload["version"]
+        version_config = _extract_version_config_from_payload(payload)
     except KeyError:
         version_config = None
-    else:
-        version_config = {str(key): str(value) for key, value in unsafe_version_config.items()}
 
     return source_config, version_config
 
@@ -75,29 +62,14 @@ def parse_in_payload(raw_json: str) -> Tuple[ResourceConfig, VersionConfig, Para
 
     :returns: The source and version configuration, and parameters passed to the get step.
     """
-    payload: Dict[str, Dict[str, Any]] = json.loads(raw_json)
+    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    source_config = _extract_source_config_from_payload(payload)
+    params_config = _extract_param_config_from_payload(payload)
 
     try:
-        unsafe_source_config = payload["source"]
-    except KeyError as error:
-        raise RuntimeError("Could not extract source from payload") from error
-    else:
-        try:
-            source_config = {str(key): value for key, value in unsafe_source_config.items()}
-        except AttributeError:
-            if unsafe_source_config is not None:
-                raise
-            source_config = {}
-
-    try:
-        unsafe_version_config = payload["version"]
+        version_config = _extract_version_config_from_payload(payload)
     except KeyError as error:
         raise RuntimeError("Could not extract version from payload") from error
-    else:
-        version_config = {str(key): str(value) for key, value in unsafe_version_config.items()}
-
-    unsafe_params_config = payload.get("params", {})
-    params_config = {str(key): value for key, value in unsafe_params_config.items()}
 
     return source_config, version_config, params_config
 
@@ -123,24 +95,11 @@ def parse_out_payload(raw_json: str) -> Tuple[ResourceConfig, Params]:
 
     :returns: The source configuration, and parameters passed to the put step.
     """
-    payload: Dict[str, Dict[str, Any]] = json.loads(raw_json)
+    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    source_config = _extract_source_config_from_payload(payload)
+    params_config = _extract_param_config_from_payload(payload)
 
-    try:
-        unsafe_source_config = payload["source"]
-    except KeyError as error:
-        raise RuntimeError("Could not extract source from payload") from error
-    else:
-        try:
-            source_config = {str(key): value for key, value in unsafe_source_config.items()}
-        except AttributeError:
-            if unsafe_source_config is not None:
-                raise
-            source_config = {}
-
-    unsafe_params = payload.get("params", {})
-    params = {str(key): value for key, value in unsafe_params.items()}
-
-    return source_config, params
+    return source_config, params_config
 
 
 def parse_metadata(metadata_pairs: List[MetadataPair]) -> Metadata:
@@ -295,3 +254,33 @@ def format_out_input(resource_config: ResourceConfig, params: Optional[Params] =
     if params is not None:
         payload["params"] = params
     return json.dumps(payload, **json_kwargs)
+
+
+def _extract_source_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+    try:
+        unsafe_source_config = payload["source"]
+    except KeyError as error:
+        raise RuntimeError("Could not extract source from payload") from error
+    else:
+        try:
+            unsafe_source_config = cast(Dict[str, Any], unsafe_source_config)
+            source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        except AttributeError:
+            if unsafe_source_config is not None:
+                raise
+            source_config = {}
+    return source_config
+
+
+def _extract_version_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+    unsafe_version_config = payload["version"]
+    unsafe_version_config = cast(Dict[str, Any], unsafe_version_config)
+    version_config = {str(key): str(value) for key, value in unsafe_version_config.items()}
+    return version_config
+
+
+def _extract_param_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+    unsafe_params_config = payload.get("params", {})
+    unsafe_params_config = cast(Dict[str, Any], unsafe_params_config)
+    params_config = {str(key): value for key, value in unsafe_params_config.items()}
+    return params_config
