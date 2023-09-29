@@ -41,9 +41,10 @@ repos:
         additional_dependencies: ["tomli"]
         exclude: examples|tests|conf.py
   - repo: https://github.com/regebro/pyroma
-    rev: "4.1"
+    rev: f4ef6995f6c054586fe6d5d33d180abe71ebabd0
     hooks:
     - id: pyroma
+      args: ["-d", "--min=10", ".", "--skip-tests", "ValidREST"]
   - repo: https://github.com/johannsdg/pre-commit-license-headers
     rev: v0.1.0
     hooks:
