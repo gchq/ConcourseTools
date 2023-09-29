@@ -66,6 +66,18 @@ class CheckParsingTests(TestCase):
         with self.assertRaises(RuntimeError):
             parse_check_payload(config)
 
+    def test_check_step_null_source(self) -> None:
+        config = textwrap.dedent("""
+        {
+            "source": null,
+            "version": { "ref": "61cbef" }
+        }
+        """).strip()
+        resource, version = parse_check_payload(config)
+        self.assertDictEqual(resource, {})
+        version = cast(VersionConfig, version)
+        self.assertDictEqual(version, {"ref": "61cbef"})
+
     def test_check_step_broken_version(self) -> None:
         config = textwrap.dedent("""
         {
@@ -157,6 +169,18 @@ class InParsingTests(TestCase):
         with self.assertRaises(RuntimeError):
             parse_in_payload(config)
 
+    def test_in_step_null_source(self) -> None:
+        config = textwrap.dedent("""
+        {
+            "source": null,
+            "version": { "ref": "61cbef" }
+        }
+        """).strip()
+        resource, version, params = parse_in_payload(config)
+        self.assertDictEqual(resource, {})
+        self.assertDictEqual(params, {})
+        self.assertDictEqual(version, {"ref": "61cbef"})
+
     def test_in_step_missing_version(self) -> None:
         config = textwrap.dedent("""
         {
@@ -235,6 +259,16 @@ class OutParsingTests(TestCase):
         """).strip()
         with self.assertRaises(RuntimeError):
             parse_out_payload(config)
+
+    def test_out_step_null_source(self) -> None:
+        config = textwrap.dedent("""
+        {
+            "source": null
+        }
+        """).strip()
+        resource, params = parse_out_payload(config)
+        self.assertDictEqual(resource, {})
+        self.assertDictEqual(params, {})
 
 
 class FormatTests(TestCase):

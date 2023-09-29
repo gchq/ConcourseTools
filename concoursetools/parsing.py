@@ -38,7 +38,12 @@ def parse_check_payload(raw_json: str) -> Tuple[ResourceConfig, Optional[Version
     except KeyError as error:
         raise RuntimeError("Could not extract source from payload") from error
     else:
-        source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        try:
+            source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        except AttributeError:
+            if unsafe_source_config is not None:
+                raise
+            source_config = {}
 
     try:
         unsafe_version_config = payload["version"]
@@ -77,7 +82,12 @@ def parse_in_payload(raw_json: str) -> Tuple[ResourceConfig, VersionConfig, Para
     except KeyError as error:
         raise RuntimeError("Could not extract source from payload") from error
     else:
-        source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        try:
+            source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        except AttributeError:
+            if unsafe_source_config is not None:
+                raise
+            source_config = {}
 
     try:
         unsafe_version_config = payload["version"]
@@ -120,7 +130,12 @@ def parse_out_payload(raw_json: str) -> Tuple[ResourceConfig, Params]:
     except KeyError as error:
         raise RuntimeError("Could not extract source from payload") from error
     else:
-        source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        try:
+            source_config = {str(key): value for key, value in unsafe_source_config.items()}
+        except AttributeError:
+            if unsafe_source_config is not None:
+                raise
+            source_config = {}
 
     unsafe_params = payload.get("params", {})
     params = {str(key): value for key, value in unsafe_params.items()}
