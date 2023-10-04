@@ -50,6 +50,7 @@ words:
   - rstrip
   - rwxr
   - seealso
+  - srcset
   - stringifying
   - termcolor
   - toctree

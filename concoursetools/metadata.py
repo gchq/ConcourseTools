@@ -160,6 +160,47 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         return f"{self.ATC_EXTERNAL_URL}/{quote(build_path)}{query_string}"
 
+    def format_string(self, string: str) -> str:
+        """
+        Format a string with metadata using standard bash ``$`` notation.
+
+        Only a handful of "safe" values will be interpolated, not arbitrary attributes on the instance.
+        These are the :concourse:`original environment variables <implementing-resource-types.resource-metadata>`,
+        including :attr:`BUILD_CREATED_BY` if it exists. Any missing environment variable (such as in the case of a
+        one-off build) will be empty. A ``$BUILD_URL`` variable is also added for ease.
+
+        .. note::
+            The interpolation is done by iterating over all possible variables and calling :meth:`str.replace`.
+            This is actually the `fastest method <https://stackoverflow.com/q/3411006>`_ for small strings.
+
+        :param string: The string to be interpolated.
+        :returns: The interpolated string.
+
+        :Example:
+            >>> from concoursetools.mocking import TestBuildMetadata
+            >>> metadata = TestBuildMetadata()
+            >>> metadata.format_string("The build id is $BUILD_ID.")
+            'The build id is 12345678.'
+        """
+        possible_vars = {
+            "$BUILD_ID": self.BUILD_ID,
+            "$BUILD_TEAM_NAME": self.BUILD_TEAM_NAME,
+            "$BUILD_NAME": self.BUILD_NAME,
+            "$BUILD_JOB_NAME": self.BUILD_JOB_NAME,
+            "$BUILD_PIPELINE_NAME": self.BUILD_PIPELINE_NAME,
+            "$BUILD_PIPELINE_INSTANCE_VARS": self.BUILD_PIPELINE_INSTANCE_VARS,
+            "$ATC_EXTERNAL_URL": self.ATC_EXTERNAL_URL,
+            "$BUILD_URL": self.build_url(),
+        }
+        try:
+            possible_vars["$BUILD_CREATED_BY"] = self.BUILD_CREATED_BY
+        except PermissionError:
+            pass
+
+        for variable, value in possible_vars.items():
+            string = string.replace(variable, value or "")
+        return string
+
     @classmethod
     def from_env(cls) -> "BuildMetadata":
         """Return an instance populated from the environment."""
@@ -187,7 +228,7 @@ def _flatten_dict(d: Dict[str, Any]) -> Dict[str, Any]:
         ...     }
         ... }
         >>> _flatten_dict(d)
-        {"key_1": "value_1", "key_2.1": "value_2_1", "key_2.2", "value_2_2"}
+        {'key_1': 'value_1', 'key_2.1': 'value_2_1', 'key_2.2': 'value_2_2'}
     """
     flattened_dict: Dict[str, Any] = {}
     for key, value in d.items():
