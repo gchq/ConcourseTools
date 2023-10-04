@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from concoursetools import BuildMetadata
 from concoursetools.metadata import _flatten_dict
+from concoursetools.mocking import TestBuildMetadata
 from concoursetools.testing import create_env_vars, mock_environ
 
 
@@ -150,3 +151,30 @@ class MetadataTests(TestCase):
             "version.parents.to": "2.0.0",
         }
         self.assertDictEqual(_flatten_dict(nested_dict), flattened_dict)
+
+
+class MetadataFormattingTests(TestCase):
+    """
+    Tests for the BuildMetadata.format_string method.
+    """
+    def setUp(self) -> None:
+        """Code to run before each test."""
+        self.metadata = TestBuildMetadata()
+
+    def test_no_interpolation(self) -> None:
+        new_string = self.metadata.format_string("This is a normal string.")
+        self.assertEqual(new_string, "This is a normal string.")
+
+    def test_simple_interpolation(self) -> None:
+        new_string = self.metadata.format_string("The build id is $BUILD_ID and the job name is $BUILD_JOB_NAME.")
+        self.assertEqual(new_string, "The build id is 12345678 and the job name is my-job.")
+
+    def test_interpolation_with_one_off(self) -> None:
+        metadata = TestBuildMetadata(one_off_build=True)
+        new_string = metadata.format_string("The build id is $BUILD_ID and the job name is $BUILD_JOB_NAME.")
+        self.assertEqual(new_string, "The build id is 12345678 and the job name is .")
+
+    def test_interpolation_incorrect_value(self) -> None:
+        metadata = TestBuildMetadata(one_off_build=True)
+        new_string = metadata.format_string("The build id is $OTHER.")
+        self.assertEqual(new_string, "The build id is $OTHER.")
