@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import importlib
 import inspect
 import pathlib
+import sys
 import textwrap
 from types import MethodType
 from typing import Any, Callable, Dict, Optional, Type, cast
@@ -14,6 +15,7 @@ from concoursetools import ConcourseResource
 from concoursetools.typing import VersionProtocol
 
 DEFAULT_EXECUTABLE = "/usr/bin/env python3"
+DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None:
@@ -38,7 +40,7 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
 
     if args.include_rsa:
         contents = textwrap.dedent(f"""
-        FROM python:3.8-alpine as builder
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as builder
 
         ARG ssh_known_hosts
         ARG ssh_private_key
@@ -57,7 +59,7 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
             pip install -r requirements.txt --no-deps
 
 
-        FROM python:3.8-alpine as runner
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as runner
         COPY --from=builder /opt/venv /opt/venv
         # Activate venv
         ENV PATH="/opt/venv/bin:$PATH"
@@ -70,7 +72,7 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
         """).lstrip()
     else:
         contents = textwrap.dedent(f"""
-        FROM python:3.8-alpine
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine
 
         COPY requirements.txt requirements.txt
 
