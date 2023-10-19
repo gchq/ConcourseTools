@@ -15,3 +15,9 @@ Test Wrappers
 
 .. autoclass:: concoursetools.testing.FileConversionTestResourceWrapper
     :members:
+
+.. autoclass:: concoursetools.testing.DockerTestResourceWrapper
+    :members:
+
+.. autoclass:: concoursetools.testing.DockerConversionTestResourceWrapper
+    :members:

@@ -1,11 +1,16 @@
 # (C) Crown Copyright GCHQ
 import pathlib
+import random
+import shutil
+import string
+import subprocess
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from unittest import SkipTest, TestCase
 
-from concoursetools.dockertools import create_asset_scripts
-from concoursetools.testing import (ConversionTestResourceWrapper, FileConversionTestResourceWrapper, FileTestResourceWrapper,
-                                    JSONTestResourceWrapper, SimpleTestResourceWrapper)
+import concoursetools
+from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile
+from concoursetools.testing import (ConversionTestResourceWrapper, DockerConversionTestResourceWrapper, DockerTestResourceWrapper,
+                                    FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper)
 from tests.resource import TestResource, TestVersion
 
 
@@ -480,3 +485,249 @@ class FileConversionWrapperTests(TestCase):
     def test_out_step_missing_params(self) -> None:
         with self.assertRaises(RuntimeError):
             self.wrapper.publish_new_version()
+
+
+class DockerWrapperTests(TestCase):
+    image = ""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        try:
+            cls.image = _build_test_resource_docker_image()
+        except FileNotFoundError as error:
+            if shutil.which("docker") is None:
+                raise SkipTest("Docker could not be found on the path.") from error
+            raise
+
+    def setUp(self) -> None:
+        """Code to run before each test."""
+        config = {
+            "uri": "git://some-uri",
+            "branch": "develop",
+            "private_key": "...",
+        }
+        self.wrapper = DockerTestResourceWrapper(config, self.image)
+
+    def test_check_step_with_version_no_debugging(self) -> None:
+        version_config = {"ref": "61cbef"}
+        new_version_configs = self.wrapper.fetch_new_versions(version_config)
+        self.assertListEqual(new_version_configs, [{"ref": "7154fe"}])
+
+    def test_check_step_with_version(self) -> None:
+        version_config = {"ref": "61cbef"}
+        with self.wrapper.capture_debugging() as debugging:
+            new_version_configs = self.wrapper.fetch_new_versions(version_config)
+        self.assertListEqual(new_version_configs, [{"ref": "7154fe"}])
+        self.assertEqual(debugging, "Previous version found.\n")
+
+    def test_check_step_with_version_twice(self) -> None:
+        version_config = {"ref": "61cbef"}
+        with self.wrapper.capture_debugging() as debugging:
+            self.wrapper.fetch_new_versions(version_config)
+        with self.wrapper.capture_debugging() as debugging:
+            self.wrapper.fetch_new_versions(version_config)
+        self.assertEqual(debugging, "Previous version found.\n")
+
+    def test_check_step_with_directory_state_capture(self) -> None:
+        with self.assertRaises(RuntimeError):
+            with self.wrapper.capture_directory_state():
+                self.wrapper.fetch_new_versions()
+
+    def test_check_step_without_version(self) -> None:
+        with self.wrapper.capture_debugging() as debugging:
+            new_version_configs = self.wrapper.fetch_new_versions()
+        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertEqual(debugging, "")
+
+    def test_in_step_no_directory_state(self) -> None:
+        version_config = {"ref": "61cbef"}
+
+        with self.wrapper.capture_debugging() as debugging:
+            _, metadata_pairs = self.wrapper.download_version(version_config)
+        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_no_params(self) -> None:
+        version_config = {"ref": "61cbef"}
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state() as directory_state:
+                _, metadata_pairs = self.wrapper.download_version(version_config)
+        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_with_params(self) -> None:
+        version_config = {"ref": "61cbef"}
+        params = {"file_name": "README.md"}
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state() as directory_state:
+                _, metadata_pairs = self.wrapper.download_version(version_config, params=params)
+        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_with_incorrect_params(self) -> None:
+        version_config = {"ref": "61cbef"}
+        params = {"missing": ""}
+        with self.assertRaises(RuntimeError):
+            self.wrapper.download_version(version_config, params=params)
+
+    def test_out_step_with_params(self) -> None:
+        params = {"repo": "repo"}
+
+        directory = {
+            "repo": {
+                "ref.txt": "61cbef",
+            }
+        }
+
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state(directory):
+                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+
+        self.assertDictEqual(version_config, {"ref": "61cbef"})
+        self.assertListEqual(metadata_pairs, [])
+        self.assertEqual(debugging, "Uploading.\n")
+
+    def test_out_step_missing_params(self) -> None:
+        with self.assertRaises(RuntimeError):
+            self.wrapper.publish_new_version()
+
+    def test_missing_image(self) -> None:
+        random_sha256_hash = "".join(random.choices(string.hexdigits, k=64)).lower()
+        self.wrapper.image = f"sha256:{random_sha256_hash}"
+        with self.assertRaises(RuntimeError):
+            self.wrapper.fetch_new_versions()
+
+
+class DockerConversionWrapperTests(TestCase):
+    image = ""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        try:
+            cls.image = _build_test_resource_docker_image()
+        except FileNotFoundError as error:
+            if shutil.which("docker") is None:
+                raise SkipTest("Docker could not be found on the path.") from error
+            raise
+
+    def setUp(self) -> None:
+        """Code to run before each test."""
+        config = {
+            "uri": "git://some-uri",
+            "branch": "develop",
+            "private_key": "...",
+        }
+        self.wrapper = DockerConversionTestResourceWrapper(TestResource, config, self.image)
+
+    def test_check_step_with_version_no_debugging(self) -> None:
+        version = TestVersion("61cbef")
+        new_versions = self.wrapper.fetch_new_versions(version)
+        self.assertListEqual(new_versions, [TestVersion("7154fe")])
+
+    def test_check_step_with_version(self) -> None:
+        version = TestVersion("61cbef")
+        with self.wrapper.capture_debugging() as debugging:
+            new_versions = self.wrapper.fetch_new_versions(version)
+        self.assertListEqual(new_versions, [TestVersion("7154fe")])
+        self.assertEqual(debugging, "Previous version found.\n")
+
+    def test_check_step_with_version_twice(self) -> None:
+        version = TestVersion("61cbef")
+        with self.wrapper.capture_debugging() as debugging:
+            self.wrapper.fetch_new_versions(version)
+        with self.wrapper.capture_debugging() as debugging:
+            self.wrapper.fetch_new_versions(version)
+        self.assertEqual(debugging, "Previous version found.\n")
+
+    def test_check_step_with_directory_state_capture(self) -> None:
+        with self.assertRaises(RuntimeError):
+            with self.wrapper.capture_directory_state():
+                self.wrapper.fetch_new_versions()
+
+    def test_check_step_without_version(self) -> None:
+        with self.wrapper.capture_debugging() as debugging:
+            new_versions = self.wrapper.fetch_new_versions()
+        self.assertListEqual(new_versions, [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")])
+        self.assertEqual(debugging, "")
+
+    def test_in_step_no_directory_state(self) -> None:
+        version = TestVersion("61cbef")
+        with self.wrapper.capture_debugging() as debugging:
+            _, metadata = self.wrapper.download_version(version)
+        self.assertDictEqual(metadata, {"team_name": "my-team"})
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_no_params(self) -> None:
+        version = TestVersion("61cbef")
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state() as directory_state:
+                _, metadata = self.wrapper.download_version(version)
+        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(metadata, {"team_name": "my-team"})
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_with_params(self) -> None:
+        version = TestVersion("61cbef")
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state() as directory_state:
+                _, metadata = self.wrapper.download_version(version, file_name="README.md")
+        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(metadata, {"team_name": "my-team"})
+        self.assertEqual(debugging, "Downloading.\n")
+
+    def test_in_step_with_incorrect_params(self) -> None:
+        version = TestVersion("61cbef")
+        with self.assertRaises(RuntimeError):
+            self.wrapper.download_version(version, missing="")
+
+    def test_out_step_with_params(self) -> None:
+        directory = {
+            "repo": {
+                "ref.txt": "61cbef",
+            }
+        }
+
+        with self.wrapper.capture_debugging() as debugging:
+            with self.wrapper.capture_directory_state(directory):
+                version, metadata = self.wrapper.publish_new_version(repo="repo")
+
+        self.assertEqual(version, TestVersion("61cbef"))
+        self.assertDictEqual(metadata, {})
+        self.assertEqual(debugging, "Uploading.\n")
+
+    def test_out_step_missing_params(self) -> None:
+        with self.assertRaises(RuntimeError):
+            self.wrapper.publish_new_version()
+
+
+def _build_test_resource_docker_image() -> str:
+    with TemporaryDirectory() as temp_dir_name:
+        temp_dir = pathlib.Path(temp_dir_name)
+        path_to_this_file = pathlib.Path(__file__)
+        path_to_test_resource_module = path_to_this_file.parent / "resource.py"
+
+        temporary_resource_file = temp_dir / "concourse.py"
+        shutil.copyfile(path_to_test_resource_module, temporary_resource_file)
+
+        temporary_requirements_file = temp_dir / "requirements.txt"
+        temporary_requirements_file.write_text(f"concoursetools=={concoursetools.__version__}")
+
+        args = Namespace(str(temp_dir), resource_file="concourse.py")
+        create_dockerfile(args)
+
+        try:
+            process = subprocess.run(
+                ["docker", "build", ".", "-q"],
+                cwd=str(temp_dir),
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(error.stderr.decode()) from error
+
+        stdout = process.stdout.decode()
+        sha1_hash = stdout.strip()
+        return sha1_hash
