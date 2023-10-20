@@ -16,7 +16,7 @@ import pathlib
 import secrets
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, Generator, Generic, List, Optional, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generator, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
 from concoursetools.dockertools import create_script_file
@@ -427,7 +427,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Fetch new versions of the resource.
 
-        Calls the external check script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external check script using :func:`run_script` with the correct environment.
 
         .. caution::
             No environment variables are available to the check script.
@@ -439,8 +439,11 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         if self.check_script is None:
             raise NotImplementedError("Check script not passed.")
 
+        env = {}
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
-        stdout, stderr = self.capture_output_from_script(self.check_script, stdin, additional_argv=[], env={})
+        stdout, stderr = run_script(self.check_script, additional_args=[], env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -454,7 +457,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Download a version and place its files within the resource directory in your pipeline.
 
-        Calls the external in script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external in script using :func:`run_script` with the correct environment.
 
         :param version_config: The JSON configuration of the version.
         :param params: A mapping of additional keyword parameters passed to the inner resource.
@@ -463,11 +466,13 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         if self.in_script is None:
             raise NotImplementedError("In script not passed.")
 
+        env = self.mocked_environ.copy()
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_in_input(self.inner_resource_config, version_config, params)
         with self._directory_state:
-            stdout, stderr = self.capture_output_from_script(self.in_script, stdin,
-                                                             additional_argv=[str(self._directory_state.path)],
-                                                             env=self.mocked_environ.copy())
+            stdout, stderr = run_script(self.in_script, additional_args=[str(self._directory_state.path)],
+                                        env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -483,7 +488,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Update a resource by publishing a new version.
 
-        Calls the external out script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external out script using :func:`run_script` with the correct environment.
 
         :param params: A mapping of additional keyword parameters passed to the inner resource.
         :returns: The new version configuration, and a list of metadata pairs.
@@ -491,11 +496,13 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         if self.out_script is None:
             raise NotImplementedError("Out script not passed.")
 
+        env = self.mocked_environ.copy()
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_out_input(self.inner_resource_config, params)
         with self._directory_state:
-            stdout, stderr = self.capture_output_from_script(self.out_script, stdin,
-                                                             additional_argv=[str(self._directory_state.path)],
-                                                             env=self.mocked_environ.copy())
+            stdout, stderr = run_script(self.out_script, additional_args=[str(self._directory_state.path)],
+                                        env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -527,46 +534,6 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         return cls(inner_resource_config, check_script=assets_dir / "check", in_script=assets_dir / "in",
                    out_script=assets_dir / "out", directory_dict=directory_dict, one_off_build=one_off_build,
                    instance_vars=instance_vars, **env_vars)
-
-    def capture_output_from_script(self, script_path: pathlib.Path, stdin: str, additional_argv: List[str],
-                                   env: Dict[str, str], cwd: PathLike = pathlib.Path(".")) -> Tuple[str, str]:
-        """
-        Run an external script and capture the output.
-
-        The script is run using :func:`subprocess.run`.
-
-        :param script_path: The location of the script to run.
-        :param stdin: A string to be passed on :obj:`~sys.stdin`.
-        :param additional_argv: Additional strings to pass as :obj:`sys.argv`.
-                                The first argument is always the script path.
-        :param env: Environment variables to be made available to the script. ``PYTHONPATH`` is added by the method.
-        :param cwd: The working directory of the script. Defaults to current working directory.
-        :returns: The stdout and stderr of the script.
-        :raises FileNotFoundError: If the script path can not be resolved.
-        :raises RuntimeError: If the external script exits with a non-zero exit code.
-        """
-        if not script_path.is_file():
-            raise FileNotFoundError(f"No script found at {script_path}")
-
-        env["PYTHONPATH"] = f"{cwd}:$PYTHONPATH"
-
-        argv = [str(script_path)] + additional_argv
-
-        try:
-            process = subprocess.run(
-                argv,
-                env=env,
-                cwd=str(cwd),
-                check=True,
-                input=stdin.encode(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(cast(bytes, error.stderr).decode()) from error
-
-        stdout, stderr = process.stdout.decode(), process.stderr.decode()
-        return stdout, stderr
 
 
 class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[VersionT]):
@@ -719,7 +686,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Fetch new versions of the resource.
 
-        Calls the ``/opt/resource/check`` script within the Docker container.
+        Calls the ``/opt/resource/check`` script within the Docker container using :func:`run_docker_container`.
 
         .. caution::
             No environment variables are available to the check script.
@@ -730,8 +697,8 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         """
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
         with self._directory_state:
-            stdout, stderr = self.run_docker_image("/opt/resource/check", stdin=stdin, environ=self.mocked_environ.copy(),
-                                                   working_dir="/")
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/check", additional_args=[], env={},
+                                                  cwd=pathlib.Path("/"), stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -745,7 +712,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Download a version and place its files within the resource directory in your pipeline.
 
-        Calls the ``/opt/resource/in`` script within the Docker container.
+        Calls the ``/opt/resource/in`` script within the Docker container using :func:`run_docker_container`.
 
         :param version_config: The JSON configuration of the version.
         :param params: A mapping of additional keyword parameters passed to the inner resource.
@@ -754,9 +721,9 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         stdin = format_in_input(self.inner_resource_config, version_config, params)
         inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
         with self._directory_state:
-            stdout, stderr = self.run_docker_image("/opt/resource/in", stdin=stdin, environ=self.mocked_environ.copy(),
-                                                   dir_mapping={self._directory_state.path: inner_temp_dir}, working_dir="/",
-                                                   args=[inner_temp_dir])
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/in", additional_args=[inner_temp_dir],
+                                                  env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir})
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -772,7 +739,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Update a resource by publishing a new version.
 
-        Calls the ``/opt/resource/out`` script within the Docker container.
+        Calls the ``/opt/resource/out`` script within the Docker container using :func:`run_docker_container`.
 
         :param params: A mapping of additional keyword parameters passed to the inner resource.
         :returns: The new version configuration, and a list of metadata pairs.
@@ -780,9 +747,9 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         stdin = format_out_input(self.inner_resource_config, params)
         inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
         with self._directory_state:
-            stdout, stderr = self.run_docker_image("/opt/resource/out", stdin=stdin, environ=self.mocked_environ.copy(),
-                                                   dir_mapping={self._directory_state.path: inner_temp_dir}, working_dir="/",
-                                                   args=[inner_temp_dir])
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/out", additional_args=[inner_temp_dir],
+                                                  env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir})
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -793,75 +760,6 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         new_version_config: VersionConfig = output["version"]
         metadata_pairs: List[MetadataPair] = output["metadata"]
         return new_version_config, metadata_pairs
-
-    def run_docker_image(self, command: str, stdin: Optional[str] = None, environ: Optional[Dict[str, str]] = None,
-                         rm: bool = True, interactive: bool = True, dir_mapping: Optional[Dict[pathlib.Path, PathLike]] = None,
-                         working_dir: Optional[PathLike] = None, args: Optional[List[str]] = None, local_only: bool = True) -> Tuple[str, str]:
-        """
-        Run a command within the Docker container.
-
-        The command is run using :func:`subprocess.run`.
-
-        .. caution::
-            Mounted directory paths are not checked for actually being directories.
-
-        .. danger::
-            Directories are **not** mounted in "read-only" mode.
-
-        :param command: The command to be passed to ``docker run``. Can also be a path to a script within the container.
-        :param stdin: A string to be passed on :obj:`~sys.stdin`.
-        :param environ: Environment variables to be made available to the script.
-        :param rm: Set to :obj:`True` to automatically remove the container when it exits.
-                   Equivalent to passing ``--rm``.
-        :param interactive: Set to :obj:`True` to keep ``stdin`` open even if not attached.
-                            Equivalent to passing ``-i`` or ``--interactive``.
-        :param dir_mapping: A mapping of directories to paths to mount within the container. Values can be paths or strings.
-        :param working_dir: Pass a path within the container to set the working directory, or else use the image default.
-        :param args: Additional arguments to pass to the command.
-        :param local_only: When set to :obj:`True` (default), only locally cached images can be used.
-        :returns: The stdout and stderr of the script.
-        :raises RuntimeError: If the container exits with a non-zero exit code.
-        """
-        docker_args: List[str] = ["docker", "run"]
-
-        if rm:
-            docker_args.append("--rm")
-
-        if interactive:
-            docker_args.append("--interactive")
-
-        if dir_mapping:
-            for outer, inner in dir_mapping.items():
-                docker_args.extend(["--volume", f"{outer.absolute()!s}:{inner!s}"])
-
-        if working_dir:
-            docker_args.extend(["--workdir", str(working_dir)])
-
-        if local_only is True:
-            docker_args.extend(["--pull", "never"])
-
-        if environ:
-            for key, value in environ.items():
-                docker_args.extend(["--env", f"{key}={value}"])
-
-        docker_args.append(self.image)
-        docker_args.append(command)
-
-        if args:
-            docker_args.extend(args)
-
-        try:
-            process = subprocess.run(
-                docker_args,
-                check=True,
-                input=stdin.encode() if stdin is not None else None,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(error.stderr.decode()) from error
-
-        return process.stdout.decode(), process.stderr.decode()
 
 
 class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[VersionT]):
@@ -939,3 +837,122 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
+
+
+def run_docker_container(image: str, command: str, additional_args: Optional[List[str]] = None,
+                         env: Optional[Dict[str, str]] = None, cwd: Optional[pathlib.Path] = None,
+                         stdin: Optional[str] = None, rm: bool = True, interactive: bool = True,
+                         dir_mapping: Optional[Dict[pathlib.Path, PathLike]] = None,
+                         local_only: bool = True) -> Tuple[str, str]:
+    """
+    Run a command within the Docker container.
+
+    .. caution::
+        Mounted directory paths are not checked for actually being directories.
+
+    .. danger::
+        Directories are **not** mounted in "read-only" mode.
+
+    .. caution::
+        Parameters of this function are meant to refer to the command within the Docker container,
+        and **not** the external command used to run the image.
+
+    :param image: The Docker image to use for the container, which must exist in the local cache.
+                  Passed verbatim to ``docker run``.
+    :param command: The command to be passed to ``docker run``. Can also be a path to a script within the container.
+    :param additional_args: Additional arguments to pass to the command.
+    :param env: Environment variables to be made available to the script.
+    :param cwd: Pass a path within the container to set the working directory, or else use the image default.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :param rm: Set to :obj:`True` to automatically remove the container when it exits.
+                Equivalent to passing ``--rm``.
+    :param interactive: Set to :obj:`True` to keep ``stdin`` open even if not attached.
+                        Equivalent to passing ``-i`` or ``--interactive``.
+    :param dir_mapping: A mapping of directories to paths to mount within the container. Values can be paths or strings.
+    :param local_only: When set to :obj:`True` (default), only locally cached images can be used.
+    :returns: The stdout and stderr of the script.
+    :raises RuntimeError: If the external script exits with a non-zero exit code.
+    :seealso: This function will call :func:`run_command`.
+    """
+    docker_args: List[str] = ["run"]
+
+    if rm:
+        docker_args.append("--rm")
+
+    if interactive:
+        docker_args.append("--interactive")
+
+    if dir_mapping:
+        for outer, inner in dir_mapping.items():
+            docker_args.extend(["--volume", f"{outer.absolute()!s}:{inner!s}"])
+
+    if cwd:
+        docker_args.extend(["--workdir", str(cwd)])
+
+    if local_only is True:
+        docker_args.extend(["--pull", "never"])
+
+    if env:
+        for key, value in env.items():
+            docker_args.extend(["--env", f"{key}={value}"])
+
+    docker_args.append(image)
+    docker_args.append(command)
+
+    if additional_args:
+        docker_args.extend(additional_args)
+
+    return run_command("docker", docker_args, stdin=stdin)
+
+
+def run_script(script_path: pathlib.Path, additional_args: Optional[List[str]] = None, env: Optional[Dict[str, str]] = None,
+               cwd: Optional[pathlib.Path] = None, stdin: Optional[str] = None) -> Tuple[str, str]:
+    """
+    Run an external script.
+
+    :param script_path: The path to the script to be run.
+    :param additional_args: Additional arguments to be passed to the script.
+    :param env: Environment variables to be made available to the script.
+    :param cwd: The working directory of the script. Defaults to current working directory.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :returns: The stdout and stderr of the script.
+    :raises FileNotFoundError: If the script does not exist.
+    :raises RuntimeError: If the external script exits with a non-zero exit code.
+    :seealso: This function will call :func:`run_command`.
+    """
+    if not script_path.is_file():
+        raise FileNotFoundError(f"No script found at {script_path}")
+
+    return run_command(str(script_path), additional_args, env=env, cwd=cwd, stdin=stdin)
+
+
+def run_command(command: str, additional_args: Optional[List[str]] = None, env: Optional[Dict[str, str]] = None,
+                cwd: Optional[pathlib.Path] = None, stdin: Optional[str] = None) -> Tuple[str, str]:
+    """
+    Run an external command.
+
+    :param command: The external command to be run.
+    :param additional_args: Additional arguments to be passed to the command.
+    :param env: Environment variables to be made available to the command.
+    :param cwd: The working directory of the command. Defaults to current working directory.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :returns: The stdout and stderr of the command.
+    :raises RuntimeError: If the external command exits with a non-zero exit code.
+    :seealso: This function is broadly equivalent to :func:`subprocess.run`.
+    """
+    try:
+        process = subprocess.run(
+            [command] + (additional_args or []),
+            env=env,
+            cwd=cwd,
+            check=True,
+            input=stdin.encode() if stdin is not None else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as error:
+        error_message: bytes = error.stderr
+        raise RuntimeError(error_message.decode()) from error
+
+    stdout, stderr = process.stdout.decode(), process.stderr.decode()
+    return stdout, stderr

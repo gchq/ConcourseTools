@@ -21,3 +21,13 @@ Test Wrappers
 
 .. autoclass:: concoursetools.testing.DockerConversionTestResourceWrapper
     :members:
+
+
+Running External Commands
+-------------------------
+
+.. autofunction:: concoursetools.testing.run_command
+
+.. autofunction:: concoursetools.testing.run_script
+
+.. autofunction:: concoursetools.testing.run_docker_container

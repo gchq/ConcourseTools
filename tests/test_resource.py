@@ -3,14 +3,14 @@ import pathlib
 import random
 import shutil
 import string
-import subprocess
 from tempfile import TemporaryDirectory
 from unittest import SkipTest, TestCase
 
 import concoursetools
 from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile
 from concoursetools.testing import (ConversionTestResourceWrapper, DockerConversionTestResourceWrapper, DockerTestResourceWrapper,
-                                    FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper)
+                                    FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper,
+                                    run_command)
 from tests.resource import TestResource, TestVersion
 
 
@@ -717,17 +717,6 @@ def _build_test_resource_docker_image() -> str:
         args = Namespace(str(temp_dir), resource_file="concourse.py")
         create_dockerfile(args)
 
-        try:
-            process = subprocess.run(
-                ["docker", "build", ".", "-q"],
-                cwd=str(temp_dir),
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(error.stderr.decode()) from error
-
-        stdout = process.stdout.decode()
+        stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
         return sha1_hash
