@@ -176,7 +176,7 @@ class SortableVersionMixin(ABC):
     """
     @abstractmethod
     def __lt__(self, other: Any) -> bool:
-        ...
+        pass
 
     def __le__(self, other: Any) -> bool:
         return bool(self < other or self == other)

@@ -301,7 +301,6 @@ class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersio
 
         :returns: A set of the latest subversions from the resource.
         """
-        ...
 
     def download_version(self, version: MultiVersionT, destination_dir: pathlib.Path, build_metadata: BuildMetadata,
                          file_name: Optional[str] = None, indent: Optional[int] = None) -> Tuple[MultiVersionT, Metadata]:
@@ -425,14 +424,15 @@ def combine_resource_types(resources: Dict[str, Type[ConcourseResource[VersionT]
         def _from_resource_config(cls, resource_config: ResourceConfig) -> "ConcourseResource[VersionT]":
             try:
                 resource_key = resource_config.pop(param_key)
-            except KeyError:
-                raise ValueError(f"Missing flag: {param_key!r}")
+            except KeyError as error:
+                raise ValueError(f"Missing flag: {param_key!r}") from error
 
             try:
                 resource_class = resources[resource_key]
-            except KeyError:
+            except KeyError as error:
                 possible = set(resources)
-                raise KeyError(f"Couldn't find resource matching {resource_key!r}: possible options: {possible}")
+                raise KeyError(f"Couldn't find resource matching {resource_key!r}: "
+                               f"possible options: {possible}") from error
 
             return resource_class(**resource_config)
 

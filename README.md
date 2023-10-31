@@ -7,7 +7,7 @@
 ![version](https://img.shields.io/badge/version-0.7.1-informational)
 ![pre-release](https://img.shields.io/badge/pre--release-beta-red)
 ![python](https://img.shields.io/badge/python-%3E%3D3.8-informational)
-![coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+![coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
 ![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=orange)
 
 A Python package for easily implementing Concourse [resource types](https://concourse-ci.org/implementing-resource-types.html).

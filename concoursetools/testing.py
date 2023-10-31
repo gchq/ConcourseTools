@@ -76,19 +76,16 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
     @abstractmethod
     def fetch_new_versions(self) -> Any:
         """Fetch new versions of the resource."""
-        ...
 
     @abstractmethod
     def download_version(self) -> Any:
         """Download a version and place its files within the resource directory in your pipeline."""
-        ...
 
     @abstractmethod
     def publish_new_version(self) -> Any:
         """
         Update a resource by publishing a new version.
         """
-        ...
 
     @contextmanager
     def capture_debugging(self) -> ContextManager[StringIOWrapper]:

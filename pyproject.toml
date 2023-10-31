@@ -6,7 +6,9 @@ omit = ["concoursetools/colour.py", "concoursetools/typing.py", "*/__init__.py",
 [tool.coverage.report]
 sort = "Cover"
 exclude_lines = [
+    "def __repr__",
     "pass",
+    "raise$",
     "raise RuntimeError"
 ]
 
