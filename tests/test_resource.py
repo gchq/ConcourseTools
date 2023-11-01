@@ -712,10 +712,22 @@ def _build_test_resource_docker_image() -> str:
         shutil.copyfile(path_to_test_resource_module, temporary_resource_file)
 
         temporary_requirements_file = temp_dir / "requirements.txt"
-        temporary_requirements_file.write_text(f"concoursetools=={concoursetools.__version__}")
+        temporary_requirements_file.touch()
+
+        temp_repo_path = temp_dir / "concoursetools"
+        temp_concoursetools_path = temp_repo_path / "concoursetools"
+
+        concoursetools_path = pathlib.Path(concoursetools.__file__).parent
+        shutil.copytree(concoursetools_path, temp_concoursetools_path)
+
+        for setup_file in ("setup.py", "setup.cfg", "pyproject.toml"):
+            try:
+                shutil.copyfile(concoursetools_path.parent / setup_file, temp_repo_path / setup_file)
+            except FileNotFoundError:
+                pass
 
         args = Namespace(str(temp_dir), resource_file="concourse.py")
-        create_dockerfile(args)
+        create_dockerfile(args, concoursetools_path=pathlib.Path("concoursetools"))
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
