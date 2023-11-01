@@ -2,10 +2,12 @@
 """
 Contains a test resource.
 """
+from dataclasses import dataclass
 import pathlib
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Type
 
 import concoursetools
+from concoursetools.metadata import BuildMetadata
 from concoursetools.typing import Metadata
 
 
@@ -46,3 +48,35 @@ class TestResource(concoursetools.ConcourseResource[TestVersion]):
         ref = ref_path.read_text()
         print("Uploading.")
         return TestVersion(ref), {}
+
+
+@dataclass
+class ConcourseMockVersion(concoursetools.TypedVersion):
+    version: int
+    privileged: bool
+
+
+@ConcourseMockVersion.flatten
+def _(obj: bool) -> str:
+    return str(obj).lower()
+
+
+@ConcourseMockVersion.un_flatten
+def _(_type: Type[bool], obj: str) -> bool:
+    return obj == "true"
+
+
+class ConcourseMockResource(concoursetools.ConcourseResource[ConcourseMockVersion]):
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(ConcourseMockVersion)
+
+    def fetch_new_versions(self, previous_version: Optional[ConcourseMockVersion] = None) -> List[ConcourseMockVersion]:
+        raise NotImplementedError
+
+    def download_version(self, version: ConcourseMockVersion, destination_dir: pathlib.Path,
+                         build_metadata: BuildMetadata) -> Tuple[ConcourseMockVersion, Metadata]:
+        raise NotImplementedError
+
+    def publish_new_version(self, sources_dir: pathlib.Path, build_metadata: BuildMetadata) -> Tuple[ConcourseMockVersion, Metadata]:
+        raise NotImplementedError

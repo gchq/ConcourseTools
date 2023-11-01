@@ -278,7 +278,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
@@ -306,7 +306,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
 
@@ -478,7 +478,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
@@ -508,7 +508,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     @classmethod
@@ -695,7 +695,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
         with self._directory_state:
             stdout, stderr = run_docker_container(self.image, "/opt/resource/check", additional_args=[], env={},
-                                                  cwd=pathlib.Path("/"), stdin=stdin)
+                                                  cwd=pathlib.Path("/"), stdin=stdin, hostname="resource")
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -720,7 +720,8 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         with self._directory_state:
             stdout, stderr = run_docker_container(self.image, "/opt/resource/in", additional_args=[inner_temp_dir],
                                                   env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
-                                                  dir_mapping={self._directory_state.path: inner_temp_dir})
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
+                                                  hostname="resource")
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -729,7 +730,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
@@ -746,7 +747,8 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         with self._directory_state:
             stdout, stderr = run_docker_container(self.image, "/opt/resource/out", additional_args=[inner_temp_dir],
                                                   env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
-                                                  dir_mapping={self._directory_state.path: inner_temp_dir})
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
+                                                  hostname="resource")
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -755,7 +757,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
 
@@ -840,7 +842,7 @@ def run_docker_container(image: str, command: str, additional_args: Optional[Lis
                          env: Optional[Dict[str, str]] = None, cwd: Optional[pathlib.Path] = None,
                          stdin: Optional[str] = None, rm: bool = True, interactive: bool = True,
                          dir_mapping: Optional[Dict[pathlib.Path, PathLike]] = None,
-                         local_only: bool = True) -> Tuple[str, str]:
+                         hostname: Optional[str] = None, local_only: bool = True) -> Tuple[str, str]:
     """
     Run a command within the Docker container.
 
@@ -866,6 +868,7 @@ def run_docker_container(image: str, command: str, additional_args: Optional[Lis
     :param interactive: Set to :obj:`True` to keep ``stdin`` open even if not attached.
                         Equivalent to passing ``-i`` or ``--interactive``.
     :param dir_mapping: A mapping of directories to paths to mount within the container. Values can be paths or strings.
+    :param hostname: Specify a hostname inside the container. Defaults to the container ID.
     :param local_only: When set to :obj:`True` (default), only locally cached images can be used.
     :returns: The stdout and stderr of the script.
     :raises RuntimeError: If the external script exits with a non-zero exit code.
@@ -885,6 +888,9 @@ def run_docker_container(image: str, command: str, additional_args: Optional[Lis
 
     if cwd:
         docker_args.extend(["--workdir", str(cwd)])
+
+    if hostname is not None:
+        docker_args.extend(["--hostname", hostname])
 
     if local_only is True:
         docker_args.extend(["--pull", "never"])
