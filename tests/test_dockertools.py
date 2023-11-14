@@ -41,9 +41,14 @@ class BasicTests(TestCase):
         }
         self.assertDictEqual(resource_classes, expected)
 
-    def test_importing_class(self) -> None:
+    def test_importing_class_no_name(self) -> None:
         file_path = pathlib.Path(test_resource.__file__).relative_to(pathlib.Path.cwd())
-        resource_class = import_resource_class_from_module(file_path)
+        with self.assertRaises(RuntimeError):
+            import_resource_class_from_module(file_path)
+
+    def test_importing_class_with_name(self) -> None:
+        file_path = pathlib.Path(test_resource.__file__).relative_to(pathlib.Path.cwd())
+        resource_class = import_resource_class_from_module(file_path, class_name=test_resource.TestResource.__name__)
         self.assertEqual(resource_class, test_resource.TestResource)
 
     def test_importing_class_no_options(self) -> None:

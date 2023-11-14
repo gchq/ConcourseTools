@@ -2,9 +2,10 @@
 """
 Contains a test resource.
 """
+from copy import copy
 from dataclasses import dataclass
 import pathlib
-from typing import List, Optional, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 
 import concoursetools
 from concoursetools.metadata import BuildMetadata
@@ -56,6 +57,10 @@ class ConcourseMockVersion(concoursetools.TypedVersion):
     privileged: bool
 
 
+ConcourseMockVersion._flatten_functions = copy(ConcourseMockVersion._flatten_functions)
+ConcourseMockVersion._un_flatten_functions = copy(ConcourseMockVersion._un_flatten_functions)
+
+
 @ConcourseMockVersion.flatten
 def _(obj: bool) -> str:
     return str(obj).lower()
@@ -68,7 +73,7 @@ def _(_type: Type[bool], obj: str) -> bool:
 
 class ConcourseMockResource(concoursetools.ConcourseResource[ConcourseMockVersion]):
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(ConcourseMockVersion)
 
     def fetch_new_versions(self, previous_version: Optional[ConcourseMockVersion] = None) -> List[ConcourseMockVersion]:

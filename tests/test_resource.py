@@ -727,7 +727,7 @@ def _build_test_resource_docker_image() -> str:
             except FileNotFoundError:
                 pass
 
-        args = Namespace(str(temp_dir), resource_file="concourse.py")
+        args = Namespace(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__)
         create_dockerfile(args, concoursetools_path=pathlib.Path("concoursetools"))
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
