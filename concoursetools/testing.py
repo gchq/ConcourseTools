@@ -13,9 +13,10 @@ from contextlib import contextmanager, redirect_stdout
 from io import StringIO
 import json
 import pathlib
+import secrets
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, Generator, Generic, List, Optional, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Generator, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
 from concoursetools.dockertools import create_script_file
@@ -75,19 +76,16 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
     @abstractmethod
     def fetch_new_versions(self) -> Any:
         """Fetch new versions of the resource."""
-        ...
 
     @abstractmethod
     def download_version(self) -> Any:
         """Download a version and place its files within the resource directory in your pipeline."""
-        ...
 
     @abstractmethod
     def publish_new_version(self) -> Any:
         """
         Update a resource by publishing a new version.
         """
-        ...
 
     @contextmanager
     def capture_debugging(self) -> ContextManager[StringIOWrapper]:
@@ -236,7 +234,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
 
         :param previous_version_config: The JSON configuration of the most recent version of the resource.
                                         This will be set to :obj:`None` if the resource has never been run before.
-        :returns: A list of new versions configurations.
+        :returns: A list of new version configurations.
         """
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
 
@@ -280,7 +278,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
@@ -308,13 +306,13 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
 
 class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
     """
-    A resource wrapper based on :class:`JSONTestResourceWrapper`, yet with the interface of :class:`SimpleTestResourceWrapper`
+    A resource wrapper based on :class:`JSONTestResourceWrapper`, yet with the interface of :class:`SimpleTestResourceWrapper`.
 
     All inputs and outputs are instances, but are converted to and from JSON internally.
 
@@ -426,20 +424,23 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Fetch new versions of the resource.
 
-        Calls the external check script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external check script using :func:`run_script` with the correct environment.
 
         .. caution::
             No environment variables are available to the check script.
 
         :param previous_version_config: The JSON configuration of the most recent version of the resource.
                                         This will be set to :obj:`None` if the resource has never been run before.
-        :returns: A list of new versions configurations.
+        :returns: A list of new version configurations.
         """
         if self.check_script is None:
             raise NotImplementedError("Check script not passed.")
 
+        env = {}
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
-        stdout, stderr = self.capture_output_from_script(self.check_script, stdin, additional_argv=[], env={})
+        stdout, stderr = run_script(self.check_script, additional_args=[], env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -453,7 +454,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         """
         Download a version and place its files within the resource directory in your pipeline.
 
-        Calls the external in script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external in script using :func:`run_script` with the correct environment.
 
         :param version_config: The JSON configuration of the version.
         :param params: A mapping of additional keyword parameters passed to the inner resource.
@@ -462,11 +463,13 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         if self.in_script is None:
             raise NotImplementedError("In script not passed.")
 
+        env = self.mocked_environ.copy()
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_in_input(self.inner_resource_config, version_config, params)
         with self._directory_state:
-            stdout, stderr = self.capture_output_from_script(self.in_script, stdin,
-                                                             additional_argv=[str(self._directory_state.path)],
-                                                             env=self.mocked_environ.copy())
+            stdout, stderr = run_script(self.in_script, additional_args=[str(self._directory_state.path)],
+                                        env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -475,14 +478,14 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
         """
         Update a resource by publishing a new version.
 
-        Calls the external out script using :meth:`capture_output_from_script` with the correct environment.
+        Calls the external out script using :func:`run_script` with the correct environment.
 
         :param params: A mapping of additional keyword parameters passed to the inner resource.
         :returns: The new version configuration, and a list of metadata pairs.
@@ -490,11 +493,13 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         if self.out_script is None:
             raise NotImplementedError("Out script not passed.")
 
+        env = self.mocked_environ.copy()
+        env["PYTHONPATH"] = f"{pathlib.Path.cwd()}:$PYTHONPATH"
+
         stdin = format_out_input(self.inner_resource_config, params)
         with self._directory_state:
-            stdout, stderr = self.capture_output_from_script(self.out_script, stdin,
-                                                             additional_argv=[str(self._directory_state.path)],
-                                                             env=self.mocked_environ.copy())
+            stdout, stderr = run_script(self.out_script, additional_args=[str(self._directory_state.path)],
+                                        env=env, stdin=stdin)
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -503,7 +508,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         except json.JSONDecodeError as error:
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         new_version_config: VersionConfig = output["version"]
-        metadata_pairs: List[MetadataPair] = output["metadata"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
     @classmethod
@@ -526,46 +531,6 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         return cls(inner_resource_config, check_script=assets_dir / "check", in_script=assets_dir / "in",
                    out_script=assets_dir / "out", directory_dict=directory_dict, one_off_build=one_off_build,
                    instance_vars=instance_vars, **env_vars)
-
-    def capture_output_from_script(self, script_path: pathlib.Path, stdin: str, additional_argv: List[str],
-                                   env: Dict[str, str], cwd: PathLike = pathlib.Path(".")) -> Tuple[str, str]:
-        """
-        Run an external script and capture the output.
-
-        The script is run using :func:`subprocess.run`.
-
-        :param script_path: The location of the script to run.
-        :param stdin: A string to be passed on :obj:`~sys.stdin`.
-        :param additional_argv: Additional strings to pass as :obj:`sys.argv`.
-                                The first argument is always the script path.
-        :param env: Environment variables to be made available to the script. ``PYTHONPATH`` is added by the method.
-        :param cwd: The working directory of the script. Defaults to current working directory.
-        :returns: The stdout and stderr of the script.
-        :raises FileNotFoundError: If the script path can not be resolved.
-        :raises RuntimeError: If the external script exists with a non-zero exit code.
-        """
-        if not script_path.is_file():
-            raise FileNotFoundError(f"No script found at {script_path}")
-
-        env["PYTHONPATH"] = f"{cwd}:$PYTHONPATH"
-
-        argv = [str(script_path)] + additional_argv
-
-        try:
-            process = subprocess.run(
-                argv,
-                env=env,
-                cwd=str(cwd),
-                check=True,
-                input=stdin.encode(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(cast(bytes, error.stderr).decode()) from error
-
-        stdout, stderr = process.stdout.decode(), process.stderr.decode()
-        return stdout, stderr
 
 
 class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[VersionT]):
@@ -681,3 +646,316 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
                 yield
         finally:
             setattr(self, attribute_name, None)
+
+
+class DockerTestResourceWrapper(TestResourceWrapper[Version]):
+    """
+    A resource wrapper which calls a Docker image.
+
+    The container only persists for the duration of the method call.
+
+    .. tip::
+        This is best to use if you want to be sure that your Docker image has been built properly,
+        or to test resource types which have **not** been built with Concourse Tools.
+
+    :param inner_resource_config: The JSON configuration for the resource.
+    :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
+    :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
+    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
+    :param env_vars: Pass additional environment variables, or overload the default ones.
+
+    .. caution::
+        If the image does not exist in the local cache, a :class:`RuntimeError` will be raised.
+
+    .. note::
+        The working directory is explicitly set to ``/`` within the container to ensure that
+        the resource is properly accounting for the paths it is passed.
+    """
+    def __init__(self, inner_resource_config: ResourceConfig, image: str,
+                 directory_dict: Optional[FolderDict] = None, one_off_build: bool = False,
+                 instance_vars: Optional[Dict[str, str]] = None, **env_vars: str) -> None:
+        super().__init__(directory_dict, one_off_build, instance_vars, **env_vars)
+        self.inner_resource_config = inner_resource_config
+        self.image = image
+
+    def fetch_new_versions(self, previous_version_config: Optional[VersionConfig] = None) -> List[VersionConfig]:
+        """
+        Fetch new versions of the resource.
+
+        Calls the ``/opt/resource/check`` script within the Docker container using :func:`run_docker_container`.
+
+        .. caution::
+            No environment variables are available to the check script.
+
+        :param previous_version_config: The JSON configuration of the most recent version of the resource.
+                                        This will be set to :obj:`None` if the resource has never been run before.
+        :returns: A list of new version configurations.
+        """
+        stdin = format_check_input(self.inner_resource_config, previous_version_config)
+        with self._directory_state:
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/check", additional_args=[], env={},
+                                                  cwd=pathlib.Path("/"), stdin=stdin, hostname="resource")
+
+        self._debugging_output.inner_io.write(stderr)
+
+        try:
+            version_configs: List[VersionConfig] = json.loads(stdout)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Unexpected output: {stdout.strip()}") from error
+        return version_configs
+
+    def download_version(self, version_config: VersionConfig, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
+        """
+        Download a version and place its files within the resource directory in your pipeline.
+
+        Calls the ``/opt/resource/in`` script within the Docker container using :func:`run_docker_container`.
+
+        :param version_config: The JSON configuration of the version.
+        :param params: A mapping of additional keyword parameters passed to the inner resource.
+        :returns: The version configuration (most likely unchanged), and a list of metadata pairs.
+        """
+        stdin = format_in_input(self.inner_resource_config, version_config, params)
+        inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
+        with self._directory_state:
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/in", additional_args=[inner_temp_dir],
+                                                  env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
+                                                  hostname="resource")
+
+        self._debugging_output.inner_io.write(stderr)
+
+        try:
+            output = json.loads(stdout)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Unexpected output: {stdout.strip()}") from error
+        new_version_config: VersionConfig = output["version"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
+        return new_version_config, metadata_pairs
+
+    def publish_new_version(self, params: Optional[Params] = None) -> Tuple[VersionConfig, List[MetadataPair]]:
+        """
+        Update a resource by publishing a new version.
+
+        Calls the ``/opt/resource/out`` script within the Docker container using :func:`run_docker_container`.
+
+        :param params: A mapping of additional keyword parameters passed to the inner resource.
+        :returns: The new version configuration, and a list of metadata pairs.
+        """
+        stdin = format_out_input(self.inner_resource_config, params)
+        inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
+        with self._directory_state:
+            stdout, stderr = run_docker_container(self.image, "/opt/resource/out", additional_args=[inner_temp_dir],
+                                                  env=self.mocked_environ.copy(), cwd=pathlib.Path("/"), stdin=stdin,
+                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
+                                                  hostname="resource")
+
+        self._debugging_output.inner_io.write(stderr)
+
+        try:
+            output = json.loads(stdout)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"Unexpected output: {stdout.strip()}") from error
+        new_version_config: VersionConfig = output["version"]
+        metadata_pairs: List[MetadataPair] = output["metadata"] or []
+        return new_version_config, metadata_pairs
+
+
+class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[VersionT]):
+    """
+    A resource wrapper based on :class:`DockerTestResourceWrapper`, yet with the interface of :class:`SimpleTestResourceWrapper`.
+
+    Inputs are converted to JSON and passed as in :class:`DockerTestResourceWrapper`.
+    The container only persists for the duration of the method call.
+
+    .. tip::
+        This is best to use if you want easier testing, but are concerned about the Dockerfile.
+
+    :param inner_resource_type: The :class:`~concoursetools.resource.ConcourseResource` subclass corresponding to the resource.
+    :param inner_resource_config: The JSON configuration for the resource.
+    :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
+    :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
+    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
+    :param env_vars: Pass additional environment variables, or overload the default ones.
+    """
+    def __init__(self, inner_resource_type: Type[ConcourseResource[VersionT]], inner_resource_config: ResourceConfig,
+                 image: str, directory_dict: Optional[FolderDict] = None, one_off_build: bool = False,
+                 instance_vars: Optional[Dict[str, str]] = None, **env_vars: str) -> None:
+        super().__init__(inner_resource_config, image, directory_dict=directory_dict, one_off_build=one_off_build,
+                         instance_vars=instance_vars, **env_vars)
+        self.inner_resource_type = inner_resource_type
+        inner_resource = inner_resource_type(**inner_resource_config)
+        self.inner_version_class = inner_resource.version_class
+
+    def fetch_new_versions(self, previous_version: Optional[VersionT] = None) -> List[VersionT]:
+        """
+        Fetch new versions of the resource.
+
+        Converts the version (if it exists) to JSON and then invokes :meth:`~DockerTestResourceWrapper.fetch_new_versions`.
+        The response is then converted back to :class:`~concoursetools.version.Version` instances.
+
+        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+                                 if the resource has never been run before.
+        :returns: A list of new versions.
+        """
+        previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
+        version_configs = super().fetch_new_versions(previous_version_config)
+        return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
+
+    def download_version(self, version: VersionT, **params: Any) -> Tuple[VersionT, Metadata]:
+        """
+        Download a version and place its files within the resource directory in your pipeline.
+
+        Converts the version to JSON and then invokes :meth:`~DockerTestResourceWrapper.download_version`
+        with the additional params as a :class:`dict`. The returned version configuration is then converted back to a
+        :class:`~concoursetools.version.Version` instance, and the metadata pairs converted to a standard :class:`dict`.
+
+        :param version: The version to be downloaded.
+        :param params: Additional keyword parameters passed to the inner resource.
+        :returns: The version (most likely unchanged), and a dictionary of metadata.
+        """
+        version_config = version.to_flat_dict()
+        new_version_config, metadata_pairs = super().download_version(version_config, params or {})
+        new_version = self.inner_version_class.from_flat_dict(new_version_config)
+        metadata = parse_metadata(metadata_pairs)
+        return new_version, metadata
+
+    def publish_new_version(self, **params: Any) -> Tuple[VersionT, Metadata]:
+        """
+        Update a resource by publishing a new version.
+
+        Converts the version to JSON and then invokes :meth:`~DockerTestResourceWrapper.publish_new_version`
+        with the additional params as a :class:`dict`. The returned version configuration is then converted back to a
+        :class:`~concoursetools.version.Version` instance, and the metadata pairs converted to a standard :class:`dict`.
+
+        :param params: Additional keyword parameters passed to the inner resource.
+        :returns: The new version, and a dictionary of metadata.
+        """
+        new_version_config, metadata_pairs = super().publish_new_version(params or {})
+        new_version = self.inner_version_class.from_flat_dict(new_version_config)
+        metadata = parse_metadata(metadata_pairs)
+        return new_version, metadata
+
+
+def run_docker_container(image: str, command: str, additional_args: Optional[List[str]] = None,
+                         env: Optional[Dict[str, str]] = None, cwd: Optional[pathlib.Path] = None,
+                         stdin: Optional[str] = None, rm: bool = True, interactive: bool = True,
+                         dir_mapping: Optional[Dict[pathlib.Path, PathLike]] = None,
+                         hostname: Optional[str] = None, local_only: bool = True) -> Tuple[str, str]:
+    """
+    Run a command within the Docker container.
+
+    .. caution::
+        Mounted directory paths are not checked for actually being directories.
+
+    .. danger::
+        Directories are **not** mounted in "read-only" mode.
+
+    .. caution::
+        Parameters of this function are meant to refer to the command within the Docker container,
+        and **not** the external command used to run the image.
+
+    :param image: The Docker image to use for the container, which must exist in the local cache.
+                  Passed verbatim to ``docker run``.
+    :param command: The command to be passed to ``docker run``. Can also be a path to a script within the container.
+    :param additional_args: Additional arguments to pass to the command.
+    :param env: Environment variables to be made available to the script.
+    :param cwd: Pass a path within the container to set the working directory, or else use the image default.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :param rm: Set to :obj:`True` to automatically remove the container when it exits.
+                Equivalent to passing ``--rm``.
+    :param interactive: Set to :obj:`True` to keep ``stdin`` open even if not attached.
+                        Equivalent to passing ``-i`` or ``--interactive``.
+    :param dir_mapping: A mapping of directories to paths to mount within the container. Values can be paths or strings.
+    :param hostname: Specify a hostname inside the container. Defaults to the container ID.
+    :param local_only: When set to :obj:`True` (default), only locally cached images can be used.
+    :returns: The stdout and stderr of the script.
+    :raises RuntimeError: If the external script exits with a non-zero exit code.
+    :seealso: This function will call :func:`run_command`.
+    """
+    docker_args: List[str] = ["run"]
+
+    if rm:
+        docker_args.append("--rm")
+
+    if interactive:
+        docker_args.append("--interactive")
+
+    if dir_mapping:
+        for outer, inner in dir_mapping.items():
+            docker_args.extend(["--volume", f"{outer.absolute()!s}:{inner!s}"])
+
+    if cwd:
+        docker_args.extend(["--workdir", str(cwd)])
+
+    if hostname is not None:
+        docker_args.extend(["--hostname", hostname])
+
+    if local_only is True:
+        docker_args.extend(["--pull", "never"])
+
+    if env:
+        for key, value in env.items():
+            docker_args.extend(["--env", f"{key}={value}"])
+
+    docker_args.append(image)
+    docker_args.append(command)
+
+    if additional_args:
+        docker_args.extend(additional_args)
+
+    return run_command("docker", docker_args, stdin=stdin)
+
+
+def run_script(script_path: pathlib.Path, additional_args: Optional[List[str]] = None, env: Optional[Dict[str, str]] = None,
+               cwd: Optional[pathlib.Path] = None, stdin: Optional[str] = None) -> Tuple[str, str]:
+    """
+    Run an external script.
+
+    :param script_path: The path to the script to be run.
+    :param additional_args: Additional arguments to be passed to the script.
+    :param env: Environment variables to be made available to the script.
+    :param cwd: The working directory of the script. Defaults to current working directory.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :returns: The stdout and stderr of the script.
+    :raises FileNotFoundError: If the script does not exist.
+    :raises RuntimeError: If the external script exits with a non-zero exit code.
+    :seealso: This function will call :func:`run_command`.
+    """
+    if not script_path.is_file():
+        raise FileNotFoundError(f"No script found at {script_path}")
+
+    return run_command(str(script_path), additional_args, env=env, cwd=cwd, stdin=stdin)
+
+
+def run_command(command: str, additional_args: Optional[List[str]] = None, env: Optional[Dict[str, str]] = None,
+                cwd: Optional[pathlib.Path] = None, stdin: Optional[str] = None) -> Tuple[str, str]:
+    """
+    Run an external command.
+
+    :param command: The external command to be run.
+    :param additional_args: Additional arguments to be passed to the command.
+    :param env: Environment variables to be made available to the command.
+    :param cwd: The working directory of the command. Defaults to current working directory.
+    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :returns: The stdout and stderr of the command.
+    :raises RuntimeError: If the external command exits with a non-zero exit code.
+    :seealso: This function is broadly equivalent to :func:`subprocess.run`.
+    """
+    try:
+        process = subprocess.run(
+            [command] + (additional_args or []),
+            env=env,
+            cwd=cwd,
+            check=True,
+            input=stdin.encode() if stdin is not None else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as error:
+        error_message: bytes = error.stderr
+        raise RuntimeError(error_message.decode()) from error
+
+    stdout, stderr = process.stdout.decode(), process.stderr.decode()
+    return stdout, stderr

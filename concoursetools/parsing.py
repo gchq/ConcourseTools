@@ -261,14 +261,15 @@ def _extract_source_config_from_payload(payload: Dict[str, Optional[Dict[str, An
         unsafe_source_config = payload["source"]
     except KeyError as error:
         raise RuntimeError("Could not extract source from payload") from error
-    else:
-        try:
-            unsafe_source_config = cast(Dict[str, Any], unsafe_source_config)
-            source_config = {str(key): value for key, value in unsafe_source_config.items()}
-        except AttributeError:
-            if unsafe_source_config is not None:
-                raise
-            source_config = {}
+
+    try:
+        unsafe_source_config = cast(Dict[str, Any], unsafe_source_config)
+        source_config = {str(key): value for key, value in unsafe_source_config.items()}
+    except AttributeError:
+        if unsafe_source_config is not None:
+            raise
+        source_config = {}
+
     return source_config
 
 

@@ -31,6 +31,12 @@ Multiple test wrappers are available:
     * - :class:`~concoursetools.testing.FileConversionTestResourceWrapper`
       - Python
       - External scripts
+    * - :class:`~concoursetools.testing.DockerTestResourceWrapper`
+      - JSON
+      - Docker container
+    * - :class:`~concoursetools.testing.DockerConversionTestResourceWrapper`
+      - Python
+      - Docker container
 
 Base Wrapper
 ------------

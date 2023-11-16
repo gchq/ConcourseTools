@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import importlib
 import inspect
 import pathlib
+import sys
 import textwrap
 from types import MethodType
 from typing import Any, Callable, Dict, Optional, Type, cast
@@ -14,15 +15,20 @@ from concoursetools import ConcourseResource
 from concoursetools.typing import VersionProtocol
 
 DEFAULT_EXECUTABLE = "/usr/bin/env python3"
+DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None:
+def create_dockerfile(args: "Namespace", encoding: Optional[str] = None,
+                      concoursetools_path: Optional[pathlib.Path] = None) -> None:
     """
     Create a skeleton dockerfile.
 
     :param args: The CLI args.
     :param encoding: The encoding of the file as passed to :meth:`~pathlib.Path.write_text`.
                      Setting to :obj:`None` (default) will use the user's default encoding.
+    :param concoursetools_path: A path to a local copy of concoursetools. If not set to :obj:`None`, this directory
+                                will be copied over an installed before any requirements. Path should be relative to
+                                the current directory.
     """
     directory_path = pathlib.Path(args.path)
     if directory_path.is_dir():
@@ -36,9 +42,23 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
 
     cli_command = " ".join(cli_split_command)
 
+    if concoursetools_path is None:
+        pip_install_command = """
+        RUN python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+        """.strip()
+    else:
+        pip_install_command = f"""
+        COPY {str(concoursetools_path)} concoursetools
+
+        RUN python3 -m pip install --upgrade pip && \\
+            pip install ./concoursetools && \\
+            pip install -r requirements.txt --no-deps
+        """.strip()
+
     if args.include_rsa:
         contents = textwrap.dedent(f"""
-        FROM python:3.8-alpine as builder
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as builder
 
         ARG ssh_known_hosts
         ARG ssh_private_key
@@ -53,11 +73,10 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
         # Activate venv
         ENV PATH="/opt/venv/bin:$PATH"
 
-        RUN python3 -m pip install --upgrade pip && \\
-            pip install -r requirements.txt --no-deps
+        {pip_install_command}
 
 
-        FROM python:3.8-alpine as runner
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as runner
         COPY --from=builder /opt/venv /opt/venv
         # Activate venv
         ENV PATH="/opt/venv/bin:$PATH"
@@ -70,12 +89,11 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None) -> None
         """).lstrip()
     else:
         contents = textwrap.dedent(f"""
-        FROM python:3.8-alpine
+        FROM python:{DEFAULT_PYTHON_VERSION}-alpine
 
         COPY requirements.txt requirements.txt
 
-        RUN python3 -m pip install --upgrade pip && \\
-            pip install -r requirements.txt --no-deps
+        {pip_install_command}
 
         WORKDIR /opt/resource/
         COPY {args.resource_file} ./{args.resource_file}
