@@ -14,6 +14,7 @@ See the Concourse :concourse:`implementing-resource-types.resource-metadata` doc
 """
 import json
 import os
+from string import Template as StringTemplate
 from typing import Any, Dict, Optional
 from urllib.parse import quote
 
@@ -160,7 +161,8 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         return f"{self.ATC_EXTERNAL_URL}/{quote(build_path)}{query_string}"
 
-    def format_string(self, string: str) -> str:
+    def format_string(self, string: str, additional_values: Optional[Dict[str, str]] = None,
+                      ignore_missing: bool = False) -> str:
         """
         Format a string with metadata using standard bash ``$`` notation.
 
@@ -169,12 +171,19 @@ class BuildMetadata:  # pylint: disable=invalid-name
         including :attr:`BUILD_CREATED_BY` if it exists. Any missing environment variable (such as in the case of a
         one-off build) will be empty. A ``$BUILD_URL`` variable is also added for ease.
 
-        .. note::
-            The interpolation is done by iterating over all possible variables and calling :meth:`str.replace`.
-            This is actually the `fastest method <https://stackoverflow.com/q/3411006>`_ for small strings.
+        .. danger::
+            By passing additional values you are allowing an arbitrary user to view these with the correct choice
+            of variable. You should take **great care** not to pass any sensitive values.
 
         :param string: The string to be interpolated.
+        :param additional_values: Additional values which can be used for interpolation.
+                                  The keys of the mapping should not include the ``$`` character.
+        :param ignore_missing: By default, if the variable is not available then a :class:`KeyError` will be raised.
+                               Setting this to :obj:`True` will ignore missing variables.
         :returns: The interpolated string.
+        :seealso: Interpolation is done using an instance of :class:`string.Template` by calling either
+                  :meth:`~string.Template.substitute` when ``ignore_missing`` is :obj:`False`, and
+                  :meth:`~string.Template.safe_substitute` otherwise.
 
         :Example:
             >>> from concoursetools.mocking import TestBuildMetadata
@@ -182,24 +191,26 @@ class BuildMetadata:  # pylint: disable=invalid-name
             >>> metadata.format_string("The build id is $BUILD_ID.")
             'The build id is 12345678.'
         """
-        possible_vars = {
-            "$BUILD_ID": self.BUILD_ID,
-            "$BUILD_TEAM_NAME": self.BUILD_TEAM_NAME,
-            "$BUILD_NAME": self.BUILD_NAME,
-            "$BUILD_JOB_NAME": self.BUILD_JOB_NAME,
-            "$BUILD_PIPELINE_NAME": self.BUILD_PIPELINE_NAME,
-            "$BUILD_PIPELINE_INSTANCE_VARS": self.BUILD_PIPELINE_INSTANCE_VARS,
-            "$ATC_EXTERNAL_URL": self.ATC_EXTERNAL_URL,
-            "$BUILD_URL": self.build_url(),
+        template = StringTemplate(string)
+        possible_values: Dict[str, str] = {
+            "BUILD_ID": self.BUILD_ID,
+            "BUILD_TEAM_NAME": self.BUILD_TEAM_NAME,
+            "BUILD_NAME": self.BUILD_NAME or "",
+            "BUILD_JOB_NAME": self.BUILD_JOB_NAME or "",
+            "BUILD_PIPELINE_NAME": self.BUILD_PIPELINE_NAME or "",
+            "BUILD_PIPELINE_INSTANCE_VARS": self.BUILD_PIPELINE_INSTANCE_VARS or "",
+            "ATC_EXTERNAL_URL": self.ATC_EXTERNAL_URL,
+            "BUILD_URL": self.build_url(),
         }
+        if additional_values is not None:
+            possible_values.update(additional_values)
+
         try:
-            possible_vars["$BUILD_CREATED_BY"] = self.BUILD_CREATED_BY
+            possible_values["$BUILD_CREATED_BY"] = self.BUILD_CREATED_BY
         except PermissionError:
             pass
 
-        for variable, value in possible_vars.items():
-            string = string.replace(variable, value or "")
-        return string
+        return template.safe_substitute(possible_values) if ignore_missing else template.substitute(possible_values)
 
     @classmethod
     def from_env(cls) -> "BuildMetadata":
