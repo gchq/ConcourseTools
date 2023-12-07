@@ -59,6 +59,7 @@ words:
   - unitless
   - urllib
   - vars
+  - versionadded
   - viewcode
   - WORKDIR
   - xkcd

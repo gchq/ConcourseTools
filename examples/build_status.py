@@ -136,6 +136,8 @@ class Resource(OutOnlyConcourseResource):
             else:
                 name = f"{build_metadata.BUILD_JOB_NAME} #{build_metadata.BUILD_NAME}"
 
+        description = build_metadata.format_string(description)
+
         if self.driver is Driver.SERVER:
             post_url = f"{self.endpoint}/rest/build-status/1.0/commits/{commit_hash}"
             if self.verify_ssl is False:
