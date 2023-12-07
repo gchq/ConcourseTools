@@ -179,7 +179,7 @@ Finally we submit the request and return the new version:
 
 Conclusion
 ----------
-The original repository scripts cover 12 Python files and a total of 433 lines. With Concourse tools, this same code is covered in 185 lines, and a single Python file:
+The original repository scripts cover 12 Python files and a total of 433 lines. With Concourse tools, this same code is covered in :linecount:`../../../examples/build_status.py` lines, and a single Python file:
 
 .. literalinclude:: ../../../examples/build_status.py
     :linenos:

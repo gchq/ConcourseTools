@@ -87,7 +87,7 @@ We don't intend for the resource to publish new comics (unless :wikipedia:`Randa
 xkcd Conclusion
 ---------------
 
-The final resource only requires **93 lines of code**, and looks like this:
+The final resource only requires :linecount:`../../../examples/xkcd.py` lines of code, and looks like this:
 
 .. literalinclude:: ../../../examples/xkcd.py
     :linenos:

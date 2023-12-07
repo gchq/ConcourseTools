@@ -34,6 +34,7 @@ words:
   - INPROGRESS
   - intersphinx
   - kwargs
+  - linecount
   - linenos
   - linkcheck
   - Liskov

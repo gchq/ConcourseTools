@@ -118,7 +118,7 @@ We start with the execution description. We include an optional parameter to all
 Pipeline Conclusion
 -------------------
 
-The final resource only requires **135 lines of code**, and looks like this:
+The final resource only requires :linecount:`../../../examples/pipeline.py` lines of code, and looks like this:
 
 .. literalinclude:: ../../../examples/pipeline.py
     :linenos:
