@@ -154,6 +154,18 @@ Next, we determine the URL to which to :func:`~requests.post` our request:
     :end-at: /statuses/build
     :dedent:
 
+.. tip::
+    .. versionadded:: 0.8.0
+
+        The :meth:`~concoursetools.metadata.BuildMetadata.format_string` method can be used to substitute build metadata
+        into the status description in order to allow users to reference the build:
+
+        .. literalinclude:: ../../../examples/build_status.py
+            :pyobject: Resource.publish_new_version
+            :start-at: build_metadata.format_string
+            :end-at: build_metadata.format_string
+            :dedent:
+
 Finally we submit the request and return the new version:
 
 .. literalinclude:: ../../../examples/build_status.py
@@ -167,7 +179,7 @@ Finally we submit the request and return the new version:
 
 Conclusion
 ----------
-The original repository scripts cover 12 Python files and a total of 433 lines. With Concourse tools, this same code is covered in 172 lines, and a single Python file:
+The original repository scripts cover 12 Python files and a total of 433 lines. With Concourse tools, this same code is covered in :linecount:`../../../examples/build_status.py` lines, and a single Python file:
 
 .. literalinclude:: ../../../examples/build_status.py
     :linenos:

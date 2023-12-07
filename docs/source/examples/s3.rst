@@ -70,7 +70,7 @@ Once the implicit :concourse:`get-step` is completed, the URL can then be :conco
 URL Conclusion
 --------------
 
-The final resource only requires **49 lines of code**, and looks like this:
+The final resource only requires :linecount:`../../../examples/s3.py` lines of code, and looks like this:
 
 .. literalinclude:: ../../../examples/s3.py
     :linenos:

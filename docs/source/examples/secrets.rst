@@ -71,7 +71,7 @@ The behaviour is as follows:
 AWS Secrets Conclusion
 ----------------------
 
-We have added a lot of functionality for this resource in only **104 lines of code**. The final module looks like this:
+We have added a lot of functionality for this resource in only :linecount:`../../../examples/secrets.py` lines of code. The final module looks like this:
 
 .. literalinclude:: ../../../examples/secrets.py
     :linenos:

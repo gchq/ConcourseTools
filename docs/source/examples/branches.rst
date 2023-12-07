@@ -84,7 +84,7 @@ When the branches change (either with new ones added or existing ones removed) a
 GitHub Branches Conclusion
 --------------------------
 
-The final module only requires **43 lines** (including docstrings) and looks like this:
+The final module only requires :linecount:`../../../examples/github_branches.py` lines (including docstrings) and looks like this:
 
 .. literalinclude:: ../../../examples/github_branches.py
     :linenos:

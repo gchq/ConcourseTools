@@ -16,7 +16,7 @@ try:
     from moto.sagemaker.models import FakePipelineExecution
     from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
 except ImportError:
-    raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements.txt'")
+    raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements-tests.txt'")
 
 from concoursetools.mocking import TestBuildMetadata
 from concoursetools.testing import SimpleTestResourceWrapper

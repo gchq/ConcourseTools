@@ -34,6 +34,7 @@ words:
   - INPROGRESS
   - intersphinx
   - kwargs
+  - linecount
   - linenos
   - linkcheck
   - Liskov
@@ -59,6 +60,7 @@ words:
   - unitless
   - urllib
   - vars
+  - versionadded
   - viewcode
   - WORKDIR
   - xkcd

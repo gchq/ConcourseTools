@@ -46,6 +46,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
     "extensions.concourse",
+    "extensions.linecount",
     "extensions.wikipedia",
     "extensions.xkcd",
 ]

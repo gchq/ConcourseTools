@@ -175,6 +175,14 @@ class MetadataFormattingTests(TestCase):
         self.assertEqual(new_string, "The build id is 12345678 and the job name is .")
 
     def test_interpolation_incorrect_value(self) -> None:
-        metadata = TestBuildMetadata(one_off_build=True)
-        new_string = metadata.format_string("The build id is $OTHER.")
+        with self.assertRaises(KeyError):
+            self.metadata.format_string("The build id is $OTHER.")
+
+    def test_interpolation_incorrect_value_ignore_missing(self) -> None:
+        new_string = self.metadata.format_string("The build id is $OTHER.", ignore_missing=True)
         self.assertEqual(new_string, "The build id is $OTHER.")
+
+    def test_interpolation_with_additional(self) -> None:
+        new_string = self.metadata.format_string("The build id is $OTHER.", additional_values={"OTHER": "value"},
+                                                 ignore_missing=True)
+        self.assertEqual(new_string, "The build id is value.")
