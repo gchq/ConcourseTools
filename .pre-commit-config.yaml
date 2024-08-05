@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -8,7 +8,7 @@ repos:
       - id: check-added-large-files
         args: [--enforce-all, --maxkb=100]
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.5
+    rev: 5.13.2
     hooks:
       - id: isort
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -19,12 +19,12 @@ repos:
       - id: forbid-binary
         exclude: docs/source/_static/.*.png
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.4.2
+    rev: v1.5.5
     hooks:
       - id: forbid-crlf
       - id: forbid-tabs
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v6.22.0
+    rev: v8.13.1
     hooks:
       - id: cspell
         exclude: \.gitignore|.*\.properties
@@ -46,7 +46,7 @@ repos:
     - id: pyroma
       args: ["-d", "--min=10", ".", "--skip-tests", "ValidREST"]
   - repo: https://github.com/johannsdg/pre-commit-license-headers
-    rev: v0.1.0
+    rev: d53087d331942f263cb553dc67b0e51ffa3a3481
     hooks:
       - id: check-license-headers
         types: [python]
