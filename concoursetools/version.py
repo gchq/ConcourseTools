@@ -277,13 +277,19 @@ class TypedVersion(Version):
     @classmethod
     def _flatten_object(cls, obj: Any) -> str:
         """Flatten a Python object to a string depending on its type."""
-        flatten_function = cls._flatten_functions.get(type(obj), cls._flatten_default)
+        try:  # for some reason `cls._flatten_functions.get` fails on 3.12
+            flatten_function = cls._flatten_functions[type(obj)]
+        except KeyError:
+            flatten_function = cls._flatten_default
         return flatten_function(obj)
 
     @classmethod
     def _un_flatten_object(cls, type_: Type[T], flat_obj: str) -> T:
         """Un-flatten an object from a string based on a destination type."""
-        un_flatten_function: Callable[[Type[T], str], T] = cls._un_flatten_functions.get(type_, cls._un_flatten_default)
+        try:  # for some reason `cls._un_flatten_functions.get` fails on 3.12
+            un_flatten_function: Callable[[Type[T], str], T] = cls._un_flatten_functions[type_]
+        except KeyError:
+            un_flatten_function = cls._un_flatten_default
         return un_flatten_function(type_, flat_obj)
 
     @classmethod

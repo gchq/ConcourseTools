@@ -9,11 +9,8 @@ For a full list see the documentation: https://www.sphinx-doc.org/en/master/usag
 
 import pathlib
 import sys
-from typing import Optional, cast
+from typing import Optional
 
-from bs4 import BeautifulSoup
-from bs4.element import Tag
-from sphinx.application import Sphinx
 import sphinx.config
 
 CONF_FILE_PATH = pathlib.Path(__file__).absolute()
@@ -51,6 +48,8 @@ extensions = [
     "extensions.xkcd",
 ]
 
+toc_object_entries_show_parents = "hide"  # don't show prefix in secondary TOC
+
 always_document_param_types = True
 autodoc_member_order = "bysource"
 
@@ -59,6 +58,8 @@ autodoc_custom_types = {
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
 }
+
+suppress_warnings = ["config.cache"]  # https://github.com/sphinx-doc/sphinx/issues/12300#issuecomment-2062238457
 
 
 def typehints_formatter(annotation, config: sphinx.config.Config) -> Optional[str]:
@@ -113,23 +114,3 @@ html_theme_options = {
         }
     ],
 }
-
-
-def reduce_method_names(app: Sphinx, exception: Optional[Exception]) -> None:
-    """Remove class prefixes from method names in table of contents."""
-    built_files_dir = pathlib.Path(app.outdir)
-    for html_file in built_files_dir.glob("*.html"):
-        soup = BeautifulSoup(html_file.read_text(), features="html.parser")
-        toc = soup.find("div", {"class": "toc-tree"}) or soup.find("div", {"class": "toctree-wrapper"})
-        if toc is None:
-            continue
-        toc = cast(Tag, toc)
-        for span in toc.find_all("span", {"class": "pre"}):
-            span = cast(Tag, span)
-            *_, new_text = span.text.split(".")
-            span.string = new_text
-        html_file.write_text(str(soup))
-
-
-def setup(app: Sphinx) -> None:
-    app.connect("build-finished", reduce_method_names)
