@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 import hashlib
 import json
+import os
 import pathlib
 from tempfile import TemporaryDirectory
 import unittest
@@ -12,11 +13,13 @@ import urllib.parse
 
 try:
     from dateutil.tz import tzlocal
-    from moto import mock_s3, mock_sagemaker, mock_secretsmanager
+    from moto import mock_aws
     from moto.sagemaker.models import FakePipelineExecution
     from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
 except ImportError:
-    raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements-tests.txt'")
+    allowed_to_skip = ("CI" not in os.environ)
+    if allowed_to_skip:
+        raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements-tests.txt'")
 
 from concoursetools.mocking import TestBuildMetadata
 from concoursetools.testing import SimpleTestResourceWrapper
@@ -133,7 +136,7 @@ class BranchesTests(unittest.TestCase):
         self.assertSetEqual(branches, set())
 
 
-@mock_s3
+@mock_aws
 class S3Tests(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -270,7 +273,7 @@ class XKCDInTests(unittest.TestCase):
         self.assertNotIn("alt.txt", folder_state)
 
 
-@mock_secretsmanager
+@mock_aws
 class SecretsCheckTests(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -311,7 +314,7 @@ class SecretsCheckTests(unittest.TestCase):
             resource.fetch_new_versions()
 
 
-@mock_secretsmanager
+@mock_aws
 class SecretsInTests(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -334,12 +337,6 @@ class SecretsInTests(unittest.TestCase):
         self.expected_metadata = {
             "ARN": self.string_secret["ARN"],
             "Name": "arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret",
-            "Description": "",
-            "RotationEnabled": False,
-            "RotationLambdaARN": "",
-            "RotationRules": {
-                "AutomaticallyAfterDays": 0,
-            },
             "LastChangedDate": now,
             "Tags": [
                 {
@@ -372,7 +369,7 @@ class SecretsInTests(unittest.TestCase):
         })
 
 
-@mock_secretsmanager
+@mock_aws
 class SecretsOutTests(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -423,7 +420,7 @@ class SecretsOutTests(unittest.TestCase):
         self.assertDictEqual(metadata, {"Version Staging Labels": "AWSCURRENT"})
 
 
-@mock_sagemaker
+@mock_aws
 class PipelineCheckTests(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -518,7 +515,7 @@ class PipelineCheckTests(unittest.TestCase):
             resource.fetch_new_versions()
 
 
-@mock_sagemaker
+@mock_aws
 class PipelineInTests(unittest.TestCase):
 
     def setUp(self):
@@ -624,7 +621,7 @@ class PipelineInTests(unittest.TestCase):
         self.assertNotIn("pipeline.json", folder_dict)
 
 
-@mock_sagemaker
+@mock_aws
 class PipelineOutTests(unittest.TestCase):
 
     def setUp(self) -> None:

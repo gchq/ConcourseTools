@@ -10,7 +10,7 @@ This example will showcase the :class:`~concoursetools.additional.TriggerOnChang
 Secrets Version
 ---------------
 
-Every secret in SecretsManager has a number of `versions <https://docs.aws.amazon.com/secretsmanager/latest/userguide/getting-started.html#term_version>`_ representing changes to the secret value. This is all the version needs to contain:
+Every secret in SecretsManager has a number of `versions <https://docs.aws.amazon.com/secretsmanager/latest/userguide/whats-in-a-secret.html#term_version>`_ representing changes to the secret value. This is all the version needs to contain:
 
 .. literalinclude:: ../../../examples/secrets.py
     :pyobject: SecretVersion

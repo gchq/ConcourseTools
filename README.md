@@ -15,7 +15,11 @@ A Python package for easily implementing Concourse [resource types](https://conc
 
 ## About
 
-[Concourse CI](https://concourse-ci.org/) is an "open-source continuous thing-doer" designed to enable general automation with intuitive and re-usable components. Resources represent all external inputs and outputs to and from the pipeline, and many of these have been implemented in open source. In order to best leverage the Python ecosystem of open-source packages, Concourse Tools abstracts away the implementation details of Concourse resource types to allow users to focus on writing the code they want to run.
+[Concourse CI](https://concourse-ci.org/) is an "open-source continuous thing-doer" designed to enable general
+automation with intuitive and re-usable components. Resources represent all external inputs and outputs to and from the
+pipeline, and many of these have been implemented in open source. In order to best leverage the Python ecosystem of
+open-source packages, Concourse Tools abstracts away the implementation details of Concourse resource types to allow
+users to focus on writing the code they want to run.
 
 
 ## Installation
@@ -30,7 +34,8 @@ $ pip install concoursetools
 
 Creating a Concourse resource type with Concourse Tools couldn't be simpler:
 
-1. Create subclasses of `concoursetools.version.Version` and `concoursetools.resource.ConcourseResource`, taking care to implement any required functions.
+1. Create subclasses of `concoursetools.version.Version` and `concoursetools.resource.ConcourseResource`, taking care to
+  implement any required functions.
 2. Create a Dockerfile containing your requirements and calling your resource.
 3. Upload the Docker image to a registry, and use it in your pipelines!
 
@@ -39,4 +44,6 @@ For more information, see the [documentation](https://concoursetools.readthedocs
 
 ## Bugs and Contributions
 
-Concourse Tools is in beta, and still under somewhat-active development.  Contributions, fixes, suggestions and bug reports are all welcome: Please familiarise yourself with our [contribution guidelines](https://github.com/gchq/ConcourseTools/blob/main/CONTRIBUTING.md).
+Concourse Tools is in beta, and still under somewhat-active development.  Contributions, fixes, suggestions and bug
+reports are all welcome: Please familiarise yourself with our
+[contribution guidelines](https://github.com/gchq/ConcourseTools/blob/main/CONTRIBUTING.md).
