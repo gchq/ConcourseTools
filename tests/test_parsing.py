@@ -1,7 +1,7 @@
 # (C) Crown Copyright GCHQ
 import re
 import textwrap
-from typing import cast
+from typing import Any, cast
 from unittest import TestCase
 
 from concoursetools.parsing import format_check_output, format_in_out_output, parse_check_payload, parse_in_payload, parse_out_payload
@@ -291,7 +291,7 @@ class FormatTests(TestCase):
         self.assertEqual(expected_output, format_check_output(versions, separators=(",", ":")))
 
     def test_check_format_not_strings(self) -> None:
-        versions = [
+        versions: list[dict[str, Any]] = [
             {"ref": 100},
             {"ref": True},
             {"ref": None},
@@ -303,7 +303,7 @@ class FormatTests(TestCase):
             { "ref": "None" }
         ]
         """)
-        self.assertEqual(expected_output, format_check_output(versions, separators=(",", ":")))  # type: ignore[arg-type]
+        self.assertEqual(expected_output, format_check_output(versions, separators=(",", ":")))
 
     def test_in_out_format(self) -> None:
         version = {"ref": "61cebf"}
@@ -323,8 +323,8 @@ class FormatTests(TestCase):
         self.assertEqual(expected_output, format_in_out_output(version, metadata, separators=(",", ":")))
 
     def test_in_out_format_not_strings(self) -> None:
-        version = {"ref": True}
-        metadata = {
+        version: dict[str, Any] = {"ref": True}
+        metadata: dict[str, Any] = {
             "commit": 100,
             "author": "HulkHogan",
         }
@@ -337,4 +337,4 @@ class FormatTests(TestCase):
             ]
         }
         """)
-        self.assertEqual(expected_output, format_in_out_output(version, metadata, separators=(",", ":")))  # type: ignore[arg-type]
+        self.assertEqual(expected_output, format_in_out_output(version, metadata, separators=(",", ":")))
