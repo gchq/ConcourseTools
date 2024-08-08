@@ -34,7 +34,7 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
     :param rawtext: A string containing the entire interpreted text input, including the role and markup.
     :param text: The interpreted text content.
     :param lineno: The line number where the interpreted text begins.
-    :param inliner: The :class:`docutils.parsers.rst.states.Inliner` object that called :func:`~.source_role`.
+    :param inliner: The :class:`docutils.parsers.rst.states.Inliner` object that called ``source_role``.
                     It contains the several attributes useful for error reporting and document tree access.
     :param options: A dictionary of directive options for customization (from the ``role`` directive),
                     to be interpreted by the function. Used for additional attributes for the generated elements
@@ -55,7 +55,7 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
         lang = inliner.document.settings.env.config.wikipedia_lang
 
     base_url: str = inliner.document.settings.env.config.wikipedia_base_url
-    ref = base_url.format(lang=lang, target=quote(target.replace(" ", "_"), safe=""))
+    ref = base_url.format(lang=lang, target=quote(target.replace(" ", "_"), safe="#"))
 
     node = nodes.reference(rawtext, title, refuri=str(ref), **options)
     return [node], []
