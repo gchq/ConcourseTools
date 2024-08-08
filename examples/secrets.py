@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import json as json_package
-import pathlib
+from pathlib import Path
 from typing import Any
 
 import boto3
@@ -17,7 +17,7 @@ from concoursetools.version import TypedVersion
 
 class DatetimeSafeJSONEncoder(json_package.JSONEncoder):
 
-    def default(self, o: Any) -> Any:
+    def default(self, o: object) -> object:
         if isinstance(o, datetime):
             return o.isoformat()
         return super().default(o)
@@ -28,11 +28,11 @@ class SecretVersion(TypedVersion):
     version_id: str
 
 
-class Resource(TriggerOnChangeConcourseResource):
+class Resource(TriggerOnChangeConcourseResource[SecretVersion]):
     """
     :param secret: The full Amazon Resource Name (ARN) of the secret.
     """
-    def __init__(self, secret: str):
+    def __init__(self, secret: str) -> None:
         super().__init__(SecretVersion)
         self.secret = secret
 
@@ -40,7 +40,7 @@ class Resource(TriggerOnChangeConcourseResource):
         _, _, _, region, _, _, _ = secret.split(":")
         self._client = boto3.client("secretsmanager", region_name=region)
 
-    def fetch_latest_version(self):
+    def fetch_latest_version(self) -> SecretVersion:
         try:
             response = self._client.list_secret_version_ids(SecretId=self.secret,
                                                             IncludeDeprecated=False)
@@ -55,11 +55,11 @@ class Resource(TriggerOnChangeConcourseResource):
                 return SecretVersion(version_id)
         raise RuntimeError("No current version of the secret could be found.")
 
-    def download_version(self, version: SecretVersion, destination_dir: pathlib.Path,
+    def download_version(self, version: SecretVersion, destination_dir: Path,
                          build_metadata: BuildMetadata, value: bool = False,
                          metadata_file: str = "metadata.json",
-                         value_file: str = "value"):
-        meta_response: dict = self._client.describe_secret(SecretId=self.secret)
+                         value_file: str = "value") -> tuple[SecretVersion, dict[str, str]]:
+        meta_response: dict[str, Any] = self._client.describe_secret(SecretId=self.secret)
         meta_response.pop("ResponseMetadata")
 
         metadata_path = destination_dir / metadata_file
@@ -80,10 +80,10 @@ class Resource(TriggerOnChangeConcourseResource):
 
         return version, {}
 
-    def publish_new_version(self, sources_dir: pathlib.Path,
+    def publish_new_version(self, sources_dir: Path,
                             build_metadata: BuildMetadata, string: str | None = None,
                             file: str | None = None,
-                            json: dict[str, str] | None = None):
+                            json: dict[str, str] | None = None) -> tuple[SecretVersion, dict[str, str]]:
         if json is not None:
             string = json_package.dumps(json)
 

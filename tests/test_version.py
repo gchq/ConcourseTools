@@ -2,8 +2,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import pathlib
-from typing import Any
+from pathlib import Path
 from unittest import TestCase
 
 from concoursetools import Version
@@ -28,15 +27,19 @@ class CreationTests(TestCase):
 
 class ComplexVersion(BasicVersion, SortableVersionMixin):
 
-    def __eq__(self, other: Any) -> bool:
-        return bool(self.file_name == other.file_name)
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.file_name == other.file_name
 
-    def __lt__(self, other: Any) -> bool:
-        return bool(self.file_path < other.file_path)
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.file_path < other.file_path
 
     @property
     def file_name(self) -> str:
-        return pathlib.Path(self.file_path).name
+        return Path(self.file_path).name
 
 
 class ComparisonTests(TestCase):
@@ -51,8 +54,10 @@ class ComparisonTests(TestCase):
             def __init__(self, file_path: str) -> None:
                 self.file_path = file_path
 
-            def __lt__(self, other: Any) -> bool:
-                return bool(self.file_path < other.file_path)
+            def __lt__(self, other: object) -> bool:
+                if not isinstance(other, type(self)):
+                    return NotImplemented
+                return self.file_path < other.file_path
 
         self.assertLess(MyVersion("aaa"), MyVersion("bbb"))
 
@@ -70,8 +75,10 @@ class ComparisonTests(TestCase):
         class MyTypedVersion(TypedVersion, SortableVersionMixin):
             file_path: str
 
-            def __lt__(self, other: Any) -> bool:
-                return bool(self.file_path < other.file_path)
+            def __lt__(self, other: object) -> bool:
+                if not isinstance(other, type(self)):
+                    return NotImplemented
+                return self.file_path < other.file_path
 
         self.assertLess(MyTypedVersion("aaa"), MyTypedVersion("bbb"))
 
@@ -203,7 +210,7 @@ class TypedTests(TestCase):
             "False": False,
             "1577881800": datetime(2020, 1, 1, 12, 30),
             "ONE": MyEnum.ONE,
-            "/path/to/somewhere": pathlib.Path("/path/to/somewhere"),
+            "/path/to/somewhere": Path("/path/to/somewhere"),
         }
         for flattened_obj, obj in expected.items():
             with self.subTest(obj=obj):

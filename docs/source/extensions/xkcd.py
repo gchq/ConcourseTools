@@ -12,7 +12,9 @@ In addition:
 
 Set ``xkcd_endpoint`` in ``conf.py`` to change the URL used.
 """
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -44,9 +46,9 @@ class XkcdDirective(SphinxDirective):
     @property
     def config(self) -> BuildEnvironment:
         """Return the config environment."""
-        return self.state.document.settings.env.config  # type: ignore[no-any-return]
+        return self.state.document.settings.env.config
 
-    def run(self) -> List[nodes.Node]:
+    def run(self) -> list[nodes.Node]:
         """
         Process the content of the shield directive.
         """
@@ -70,7 +72,7 @@ class XkcdDirective(SphinxDirective):
         figure_node += caption_node
         return [figure_node]
 
-    def get_comic_info(self, comic_number: int, endpoint: str = DEFAULT_XKCD) -> Dict[str, Any]:
+    def get_comic_info(self, comic_number: int, endpoint: str = DEFAULT_XKCD) -> dict[str, Any]:
         comic_link = f"{endpoint}/{comic_number}/"
         try:
             response = requests.get(f"{endpoint}/{comic_number}/info.0.json")
@@ -78,14 +80,14 @@ class XkcdDirective(SphinxDirective):
         except requests.ConnectionError:
             logger = logging.getLogger(__name__)
             logger.warning("Could not connect to xkcd endpoint")
-            response_json: Dict[str, Any] = {
+            response_json: dict[str, object] = {
                 "img": comic_link,
                 "alt": comic_link,
             }
         except requests.HTTPError:
             latest_response = requests.get(f"{endpoint}/info.0.json")
-            latest_json: Dict[str, Any] = latest_response.json()
-            most_recent_comic = latest_json["num"]
+            latest_json: dict[str, Any] = latest_response.json()
+            most_recent_comic: int = latest_json["num"]
             if most_recent_comic < comic_number:
                 raise ValueError(f"You asked for xkcd #{comic_number}, but the most recent available comic is #{most_recent_comic}")
             else:
@@ -97,7 +99,7 @@ class XkcdDirective(SphinxDirective):
 
 
 def make_xkcd_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner,
-                   options: Dict[str, Any] = {}, content: List[str] = []) -> Tuple[List[nodes.reference], List[nodes.system_message]]:
+                   options: dict[str, object] = {}, content: list[str] = []) -> tuple[list[nodes.reference], list[nodes.system_message]]:
     """
     Add a link to a page on the xkcd website.
 
@@ -115,17 +117,17 @@ def make_xkcd_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inl
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    text = nodes.unescape(text)
+    text = nodes.unescape(text)  # type: ignore[attr-defined]
     _, title, target = split_explicit_title(text)
 
-    endpoint: str = inliner.document.settings.env.config.xkcd_endpoint  # type: ignore
+    endpoint: str = inliner.document.settings.env.config.xkcd_endpoint
     ref = f"{endpoint}/{target}"
 
     node = nodes.reference(rawtext, title, refuri=str(ref), **options)
     return [node], []
 
 
-def setup(app: Sphinx) -> Dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, object]:
     """
     Attach the extension to the application.
 

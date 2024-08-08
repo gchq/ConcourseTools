@@ -11,7 +11,6 @@ It can also contain "{lang}" to allow the language code (e.g. "de") to be inject
 from __future__ import annotations
 
 import re
-from typing import Any
 from urllib.parse import quote
 
 from docutils import nodes
@@ -26,7 +25,7 @@ DEFAULT_BASE_URL = "https://{lang}.wikipedia.org/wiki/{target}"
 RE_WIKI_LANG = re.compile(":(.*?):(.*)")
 
 
-def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, Any] = {},
+def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
                         content: list[str] = []) -> tuple[list[nodes.reference], list[system_message]]:
     """
     Add a link to the given article on :wikipedia:`Wikipedia`.
@@ -45,7 +44,7 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    text = nodes.unescape(text)
+    text = nodes.unescape(text)  # type: ignore[attr-defined]
     has_explicit, title, target = split_explicit_title(text)
 
     if (match := RE_WIKI_LANG.match(target)):
@@ -53,16 +52,16 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
         if not has_explicit:
             title = target
     else:  # default language
-        lang: str = inliner.document.settings.env.config.wikipedia_lang  # type: ignore
+        lang = inliner.document.settings.env.config.wikipedia_lang
 
-    base_url: str = inliner.document.settings.env.config.wikipedia_base_url  # type: ignore
+    base_url: str = inliner.document.settings.env.config.wikipedia_base_url
     ref = base_url.format(lang=lang, target=quote(target.replace(" ", "_"), safe=""))
 
     node = nodes.reference(rawtext, title, refuri=str(ref), **options)
     return [node], []
 
 
-def setup(app: Sphinx) -> dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, object]:
     """
     Attach the extension to the application.
 

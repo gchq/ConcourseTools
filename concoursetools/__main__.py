@@ -15,26 +15,27 @@ To see additional options, run:
 
     python3 -m concoursetools -h
 """
+from __future__ import annotations
+
 import argparse
-import pathlib
+from pathlib import Path
 import sys
-from typing import List
 
 from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile, import_resource_class_from_module
 
 
-def main(args: List[str] = sys.argv[1:]) -> None:  # pylint: disable=dangerous-default-value
+def main(args: list[str] = sys.argv[1:]) -> None:  # pylint: disable=dangerous-default-value
     """Run the main function."""
     parsed_args = parse_args(args)
     if parsed_args.docker:
         create_dockerfile(parsed_args)
         return
 
-    resource_class = import_resource_class_from_module(parsed_args.resource_path, parsed_args.class_name)
-    create_asset_scripts(pathlib.Path(parsed_args.path), resource_class, parsed_args.executable)
+    resource_class = import_resource_class_from_module(parsed_args.resource_path, parsed_args.class_name)  # type: ignore[var-annotated]
+    create_asset_scripts(Path(parsed_args.path), resource_class, parsed_args.executable)
 
 
-def parse_args(args: List[str]) -> Namespace:
+def parse_args(args: list[str]) -> Namespace:
     """Parse command line args."""
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=str, help="The location at which to place the scripts")

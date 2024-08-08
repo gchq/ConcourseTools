@@ -1,5 +1,5 @@
 # (C) Crown Copyright GCHQ
-import pathlib
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
@@ -11,7 +11,7 @@ class FolderDictReadTests(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()  # type: ignore[attr-defined]
-        cls.root = pathlib.Path(cls.temp_dir.name)  # type: ignore[attr-defined]
+        cls.root = Path(cls.temp_dir.name)  # type: ignore[attr-defined]
 
         folder_1 = cls.root / "folder_1"  # type: ignore[attr-defined]
         folder_2 = cls.root / "folder_2"  # type: ignore[attr-defined]
@@ -74,7 +74,7 @@ class FolderDictWriteTests(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()  # type: ignore[attr-defined]
-        cls.root = pathlib.Path(cls.temp_dir.name)  # type: ignore[attr-defined]
+        cls.root = Path(cls.temp_dir.name)  # type: ignore[attr-defined]
 
     @classmethod
     def tearDownClass(cls) -> None:

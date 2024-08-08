@@ -1,7 +1,8 @@
 # (C) Crown Copyright GCHQ
+from __future__ import annotations
+
 from dataclasses import dataclass
 import re
-from typing import Set
 
 import requests
 
@@ -14,9 +15,9 @@ class BranchVersion(TypedVersion):
     name: str
 
 
-class Resource(MultiVersionConcourseResource):
+class Resource(MultiVersionConcourseResource[BranchVersion]):  # type: ignore[type-var]
     def __init__(self, owner: str, repo: str, regex: str = ".*",
-                 endpoint: str = "https://api.github.com"):
+                 endpoint: str = "https://api.github.com") -> None:
         """
         Initialise self.
 
@@ -30,7 +31,7 @@ class Resource(MultiVersionConcourseResource):
         self.api_route = f"{endpoint}/repos/{owner}/{repo}/branches"
         self.regex = re.compile(regex)
 
-    def fetch_latest_sub_versions(self) -> Set[BranchVersion]:
+    def fetch_latest_sub_versions(self) -> set[BranchVersion]:
         headers = {"Accept": "application/vnd.github+json"}
         response = requests.get(self.api_route, headers=headers)
         branches_info = response.json()

@@ -1,16 +1,18 @@
 # (C) Crown Copyright GCHQ
+from __future__ import annotations
+
 from http.client import HTTPResponse
 import json
 from pathlib import Path
 import ssl
-from typing import Any, List, Optional, Set, Tuple, cast
+from typing import cast
 from unittest import TestCase
 import urllib.request
 
 from concoursetools import BuildMetadata, ConcourseResource
-from concoursetools.additional import (DatetimeVersion, InOnlyConcourseResource, MultiVersion, MultiVersionConcourseResource,
-                                       OutOnlyConcourseResource, SelfOrganisingConcourseResource, TriggerOnChangeConcourseResource,
-                                       _create_multi_version_class, combine_resource_types)
+from concoursetools.additional import (DatetimeVersion, InOnlyConcourseResource, MultiVersionConcourseResource, OutOnlyConcourseResource,
+                                       SelfOrganisingConcourseResource, TriggerOnChangeConcourseResource, _create_multi_version_class,
+                                       combine_resource_types)
 from concoursetools.testing import JSONTestResourceWrapper, SimpleTestResourceWrapper
 from concoursetools.typing import Metadata, VersionConfig
 from concoursetools.version import SortableVersionMixin, Version
@@ -19,7 +21,9 @@ from tests.resource import TestVersion
 
 class SortableTestVersion(TestVersion, SortableVersionMixin):
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
         return bool(self.ref < other.ref)
 
 
@@ -29,19 +33,19 @@ class OrganisingResource(SelfOrganisingConcourseResource[SortableTestVersion]):
         super().__init__(SortableTestVersion)
 
     def download_version(self, version: SortableTestVersion, destination_dir: Path,
-                         build_metadata: BuildMetadata) -> Tuple[SortableTestVersion, Metadata]:
+                         build_metadata: BuildMetadata) -> tuple[SortableTestVersion, Metadata]:
         return version, {}
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> Tuple[SortableTestVersion, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[SortableTestVersion, Metadata]:
         return SortableTestVersion(""), {}
 
-    def fetch_all_versions(self) -> Set[SortableTestVersion]:
+    def fetch_all_versions(self) -> set[SortableTestVersion]:
         return {SortableTestVersion("222"), SortableTestVersion("333"), SortableTestVersion("111")}
 
 
 class FileVersion(Version):
 
-    def __init__(self, files: Set[str]) -> None:
+    def __init__(self, files: set[str]) -> None:
         self.files = files
 
     def to_flat_dict(self) -> VersionConfig:
@@ -60,10 +64,10 @@ class TriggerResource(TriggerOnChangeConcourseResource[FileVersion]):
     def fetch_latest_version(self) -> FileVersion:
         return FileVersion({"file.txt", "image.png"})
 
-    def download_version(self, version: FileVersion, destination_dir: Path, build_metadata: BuildMetadata) -> Tuple[FileVersion, Metadata]:
+    def download_version(self, version: FileVersion, destination_dir: Path, build_metadata: BuildMetadata) -> tuple[FileVersion, Metadata]:
         raise NotImplementedError
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> Tuple[FileVersion, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[FileVersion, Metadata]:
         raise NotImplementedError
 
 
@@ -86,7 +90,7 @@ class OrganisingTests(TestCase):
 
     def test_no_versions_at_all_passing_version(self) -> None:
         class EmptyOrganisingResource(OrganisingResource):
-            def fetch_all_versions(self) -> Set[SortableTestVersion]:
+            def fetch_all_versions(self) -> set[SortableTestVersion]:
                 return set()
 
         resource = EmptyOrganisingResource()
@@ -95,7 +99,7 @@ class OrganisingTests(TestCase):
 
     def test_no_versions_at_all_passing_none(self) -> None:
         class EmptyOrganisingResource(OrganisingResource):
-            def fetch_all_versions(self) -> Set[SortableTestVersion]:
+            def fetch_all_versions(self) -> set[SortableTestVersion]:
                 return set()
 
         resource = EmptyOrganisingResource()
@@ -140,16 +144,18 @@ class GitRepoSubVersionUnsortable(Version):
 
 class GitRepoSubVersion(GitRepoSubVersionUnsortable, SortableVersionMixin):
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
         return (self.project, self.repo) < (other.project, other.repo)
 
 
-class GitRepoMultiVersionResource(MultiVersionConcourseResource[MultiVersion[GitRepoSubVersion]]):
+class GitRepoMultiVersionResource(MultiVersionConcourseResource[GitRepoSubVersion]):
 
     def __init__(self) -> None:
         super().__init__("repos", GitRepoSubVersion)
 
-    def fetch_latest_sub_versions(self) -> Set[GitRepoSubVersion]:
+    def fetch_latest_sub_versions(self) -> set[GitRepoSubVersion]:
         return {GitRepoSubVersion("XYZ", "testing"), GitRepoSubVersion("XYZ", "repo"), GitRepoSubVersion("ABC", "alphabet")}
 
 
@@ -254,13 +260,13 @@ class ResourceA(ConcourseResource[VersionA]):
         super().__init__(VersionA)
         self.something = something_a
 
-    def fetch_new_versions(self, previous_version: Optional[VersionA] = None) -> List[VersionA]:
+    def fetch_new_versions(self, previous_version: VersionA | None = None) -> list[VersionA]:
         return [VersionA("")]
 
-    def download_version(self, version: VersionA, destination_dir: Path, build_metadata: BuildMetadata) -> Tuple[VersionA, Metadata]:
+    def download_version(self, version: VersionA, destination_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionA, Metadata]:
         return version, {"a": ""}
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> Tuple[VersionA, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionA, Metadata]:
         return VersionA(""), {}
 
 
@@ -270,11 +276,11 @@ class ResourceB(OutOnlyConcourseResource[VersionB]):
         super().__init__(VersionB)
         self.something = something_b
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> Tuple[VersionB, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionB, Metadata]:
         return VersionB(""), {}
 
 
-CombinedResource = combine_resource_types({"A": ResourceA, "B": ResourceB})
+CombinedResource = combine_resource_types({"A": ResourceA, "B": ResourceB})  # type: ignore[arg-type, var-annotated]
 
 
 class MultiResourceTests(TestCase):

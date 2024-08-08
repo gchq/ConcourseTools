@@ -7,13 +7,13 @@ For a full list see the documentation: https://www.sphinx-doc.org/en/master/usag
 """
 # -- Path setup --------------------------------------------------------------
 
-import pathlib
+from pathlib import Path
 import sys
-from typing import Optional
+from typing import Any
 
 import sphinx.config
 
-CONF_FILE_PATH = pathlib.Path(__file__).absolute()
+CONF_FILE_PATH = Path(__file__).absolute()
 SOURCE_FOLDER_PATH = CONF_FILE_PATH.parent
 DOCS_FOLDER_PATH = SOURCE_FOLDER_PATH.parent
 REPO_FOLDER_PATH = DOCS_FOLDER_PATH.parent
@@ -54,7 +54,6 @@ always_document_param_types = True
 autodoc_member_order = "bysource"
 
 autodoc_custom_types = {
-    concoursetools.typing.MultiVersionT: ":class:`~concoursetools.additional.MultiVersion`",
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
 }
@@ -62,7 +61,7 @@ autodoc_custom_types = {
 suppress_warnings = ["config.cache"]  # https://github.com/sphinx-doc/sphinx/issues/12300#issuecomment-2062238457
 
 
-def typehints_formatter(annotation, config: sphinx.config.Config) -> Optional[str]:
+def typehints_formatter(annotation: Any, config: sphinx.config.Config) -> str | None:
     """Properly replace custom type aliases."""
     return autodoc_custom_types.get(annotation)
 

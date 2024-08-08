@@ -12,7 +12,6 @@ Set ``concourse_base_url`` in ``conf.py`` to change the URL used. It must contai
 """
 from __future__ import annotations
 
-from typing import Any
 from urllib.parse import quote
 
 from docutils import nodes
@@ -26,7 +25,7 @@ __all__ = ("make_concourse_link", "setup")
 DEFAULT_BASE_URL = "https://concourse-ci.org/{target}"
 
 
-def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, Any] = {},
+def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
                         content: list[str] = []) -> tuple[list[nodes.reference], list[system_message]]:
     """
     Add a link to the given article on Concourse CI.
@@ -45,7 +44,7 @@ def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    text = nodes.unescape(text)
+    text = nodes.unescape(text)  # type: ignore[attr-defined]
     _, title, target = split_explicit_title(text)
 
     title = title.split(".")[-1].replace("-", " ")
@@ -57,14 +56,14 @@ def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner
     else:
         new_target = f"{page}.html"
 
-    base_url: str = inliner.document.settings.env.config.concourse_base_url  # type: ignore
+    base_url: str = inliner.document.settings.env.config.concourse_base_url
     ref = base_url.format(target=new_target)
 
     node = nodes.reference(rawtext, title, refuri=str(ref), **options)
     return [node], []
 
 
-def setup(app: Sphinx) -> dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, object]:
     """
     Attach the extension to the application.
 

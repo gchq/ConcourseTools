@@ -1,9 +1,11 @@
 # (C) Crown Copyright GCHQ
+from __future__ import annotations
+
+from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import datetime
 import json
-import pathlib
-from typing import Any
+from pathlib import Path
 import urllib.parse
 import xml.etree.ElementTree as ET
 
@@ -18,25 +20,27 @@ from concoursetools.version import SortableVersionMixin, TypedVersion
 class ComicVersion(TypedVersion, SortableVersionMixin):
     comic_id: int
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
         return self.comic_id < other.comic_id
 
 
-class XKCDResource(SelfOrganisingConcourseResource):
+class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
 
     def __init__(self, url: str = "https://xkcd.com"):
         super().__init__(ComicVersion)
         self.url = url
 
-    def fetch_all_versions(self):
+    def fetch_all_versions(self) -> set[ComicVersion]:
         atom_url = f"{self.url}/atom.xml"
         response = requests.get(atom_url)
         feed_data = response.text
         return {ComicVersion(comic_id) for comic_id in yield_comic_ids(feed_data)}
 
-    def download_version(self, version: ComicVersion, destination_dir: pathlib.Path,
+    def download_version(self, version: ComicVersion, destination_dir: Path,
                          build_metadata: BuildMetadata, image: bool = True,
-                         link: bool = True, alt: bool = True):
+                         link: bool = True, alt: bool = True) -> tuple[ComicVersion, dict[str, str]]:
         comic_info_url = f"{self.url}/{version.comic_id}/info.0.json"
         response = requests.get(comic_info_url)
         info = response.json()
@@ -72,18 +76,18 @@ class XKCDResource(SelfOrganisingConcourseResource):
 
         return version, metadata
 
-    def publish_new_version(self, sources_dir, build_metadata):
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[ComicVersion, dict[str, str]]:
         raise NotImplementedError
 
 
-def yield_comic_ids(xml_data: str):
+def yield_comic_ids(xml_data: str) -> Generator[int, None, None]:
     for comic_url in yield_comic_links(xml_data):
         parsed_url = urllib.parse.urlparse(comic_url)
         comic_id = parsed_url.path.strip("/")
         yield int(comic_id)
 
 
-def yield_comic_links(xml_data: str):
+def yield_comic_links(xml_data: str) -> Generator[str, None, None]:
     root = ET.fromstring(xml_data)
     for entry in root:
         if entry.tag.endswith("entry"):

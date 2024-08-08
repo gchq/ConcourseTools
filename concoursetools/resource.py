@@ -14,11 +14,13 @@ Find out more about resources in the :concourse:`Concourse resource documentatio
 To learn more about how Concourse resource types are actually implemented under the hood,
 check out :concourse:`implementing-resource-types` in Concourse.
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import contextlib
-import pathlib
+from pathlib import Path
 import sys
-from typing import Generic, List, Optional, Tuple, Type
+from typing import Generic
 
 from concoursetools import parsing
 from concoursetools.metadata import BuildMetadata
@@ -80,11 +82,11 @@ class ConcourseResource(ABC, Generic[VersionT]):
             The parameters need not be set as attributes if they can all be combined
             into a single class, such as an API wrapper or other construct.
     """
-    def __init__(self, version_class: Type[VersionT]):
+    def __init__(self, version_class: type[VersionT]):
         self.version_class = version_class
 
     @property
-    def certs_dir(self) -> pathlib.Path:
+    def certs_dir(self) -> Path:
         """
         The path to the Concourse worker's certificate directory.
 
@@ -94,10 +96,10 @@ class ConcourseResource(ABC, Generic[VersionT]):
 
         See the :concourse:`implementing-resource-types.resource-certs` documentation for more information.
         """
-        return pathlib.Path("/etc/ssl/certs")
+        return Path("/etc/ssl/certs")
 
     @abstractmethod
-    def fetch_new_versions(self, previous_version: Optional[VersionT] = None) -> List[VersionT]:
+    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -123,7 +125,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         """
 
     @abstractmethod
-    def download_version(self, version: VersionT, destination_dir: pathlib.Path, build_metadata: BuildMetadata) -> Tuple[VersionT, Metadata]:
+    def download_version(self, version: VersionT, destination_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -162,7 +164,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
 
         .. tip::
 
-            Any version returned by the :meth:`publish_new_version` method is passed to
+            object version returned by the :meth:`publish_new_version` method is passed to
             this method due to an implicit get step. The pipeline user has the option to
             set some additional parameters for this step, and so if you intend to upload
             something large in your put step, it might be worth including a flag in this
@@ -175,7 +177,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         """
 
     @abstractmethod
-    def publish_new_version(self, sources_dir: pathlib.Path, build_metadata: BuildMetadata) -> Tuple[VersionT, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionT, Metadata]:
         """
         Update a resource by publishing a new version.
 
@@ -273,7 +275,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         _output(output)
 
     @classmethod
-    def _parse_check_input(cls) -> Tuple["ConcourseResource[VersionT]", Optional[VersionT]]:
+    def _parse_check_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT | None]:
         """Parse input from the command line."""
         check_payload = sys.stdin.read()
 
@@ -289,12 +291,12 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, previous_version
 
     @classmethod
-    def _parse_in_input(cls) -> Tuple["ConcourseResource[VersionT]", VersionT, pathlib.Path, Params]:
+    def _parse_in_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT, Path, Params]:
         """Parse input from the command line."""
         in_payload = sys.stdin.read()
 
         try:
-            destination_dir = pathlib.Path(sys.argv[1])
+            destination_dir = Path(sys.argv[1])
         except IndexError as error:
             raise ValueError("Path to the destination directory for the resource "
                              "must be passed to the command line") from error
@@ -307,12 +309,12 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, version, destination_dir, params
 
     @classmethod
-    def _parse_out_input(cls) -> Tuple["ConcourseResource[VersionT]", pathlib.Path, Params]:
+    def _parse_out_input(cls) -> tuple["ConcourseResource[VersionT]", Path, Params]:
         """Parse input from the command line."""
         out_payload = sys.stdin.read()
 
         try:
-            sources_dir = pathlib.Path(sys.argv[1])
+            sources_dir = Path(sys.argv[1])
         except IndexError as error:
             raise ValueError("Path to the directory containing the build's full set of sources "
                              "must be passed to the command line") from error

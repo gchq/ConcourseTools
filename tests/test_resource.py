@@ -1,5 +1,5 @@
 # (C) Crown Copyright GCHQ
-import pathlib
+from pathlib import Path
 import random
 import shutil
 import string
@@ -297,14 +297,14 @@ class FileWrapperTests(TestCase):
     def setUp(self) -> None:
         """Code to run before each test."""
         self.temp_dir = TemporaryDirectory()
-        create_asset_scripts(pathlib.Path(self.temp_dir.name), TestResource, executable="/usr/bin/env python3")
+        create_asset_scripts(Path(self.temp_dir.name), TestResource, executable="/usr/bin/env python3")
 
         config = {
             "uri": "git://some-uri",
             "branch": "develop",
             "private_key": "...",
         }
-        self.wrapper = FileTestResourceWrapper.from_assets_dir(config, pathlib.Path(self.temp_dir.name))
+        self.wrapper = FileTestResourceWrapper.from_assets_dir(config, Path(self.temp_dir.name))
 
     def tearDown(self) -> None:
         """Code to run after each test."""
@@ -705,8 +705,8 @@ class DockerConversionWrapperTests(TestCase):
 
 def _build_test_resource_docker_image() -> str:
     with TemporaryDirectory() as temp_dir_name:
-        temp_dir = pathlib.Path(temp_dir_name)
-        path_to_this_file = pathlib.Path(__file__)
+        temp_dir = Path(temp_dir_name)
+        path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
 
         temporary_resource_file = temp_dir / "concourse.py"
@@ -718,7 +718,7 @@ def _build_test_resource_docker_image() -> str:
         temp_repo_path = temp_dir / "concoursetools"
         temp_concoursetools_path = temp_repo_path / "concoursetools"
 
-        concoursetools_path = pathlib.Path(concoursetools.__file__).parent
+        concoursetools_path = Path(concoursetools.__file__).parent
         shutil.copytree(concoursetools_path, temp_concoursetools_path)
 
         for setup_file in ("setup.py", "setup.cfg", "pyproject.toml"):
@@ -728,7 +728,7 @@ def _build_test_resource_docker_image() -> str:
                 pass
 
         args = Namespace(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__)
-        create_dockerfile(args, concoursetools_path=pathlib.Path("concoursetools"))
+        create_dockerfile(args, concoursetools_path=Path("concoursetools"))
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
