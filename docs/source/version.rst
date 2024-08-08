@@ -24,7 +24,7 @@ Concourse Tools has out-of-the-box support for a few common types:
 * :class:`~datetime.datetime`: The datetime object is mapped to an integer timestamp.
 * :class:`bool`: The boolean is mapped to the strings ``"True"`` or ``"False"``.
 * :class:`~enum.Enum`: Enums are mapped to their *names*, so ``MyEnum.ONE`` maps to ``ONE``.
-* :class:`~Path`: Paths are mapped to their string representations.
+* :class:`~pathlib.Path`: Paths are mapped to their string representations.
 
 
 Version Comparisons

@@ -28,8 +28,6 @@ Type Vars
 
 .. autodata:: concoursetools.typing.SortableVersionT
 
-.. autodata:: concoursetools.typing.MultiVersionT
-
 Protocols
 ---------
 
@@ -38,5 +36,3 @@ Protocols
 .. autoclass:: concoursetools.typing.TypedVersionProtocol
 
 .. autoclass:: concoursetools.typing.SortableVersionProtocol
-
-.. autoclass:: concoursetools.typing.MultiVersionProtocol

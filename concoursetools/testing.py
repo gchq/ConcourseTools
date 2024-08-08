@@ -554,7 +554,7 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
                        (See :func:`~concoursetools.dockertools.create_script_file`.)
     :param permissions: The (Linux) permissions the file should have. Defaults to ``rwxr-xr-x``.
                         (See :func:`~concoursetools.dockertools.create_script_file`.)
-    :param encoding: The encoding of the file as passed to :meth:`~Path.write_text`.
+    :param encoding: The encoding of the file as passed to :meth:`~pathlib.Path.write_text`.
                      Setting to :obj:`None` (default) will use the user's default encoding.
                      (See :func:`~concoursetools.dockertools.create_script_file`.)
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`

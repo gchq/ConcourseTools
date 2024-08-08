@@ -27,7 +27,7 @@ def create_dockerfile(args: "Namespace", encoding: str | None = None,
     Create a skeleton dockerfile.
 
     :param args: The CLI args.
-    :param encoding: The encoding of the file as passed to :meth:`~Path.write_text`.
+    :param encoding: The encoding of the file as passed to :meth:`~pathlib.Path.write_text`.
                      Setting to :obj:`None` (default) will use the user's default encoding.
     :param concoursetools_path: A path to a local copy of concoursetools. If not set to :obj:`None`, this directory
                                 will be copied over an installed before any requirements. Path should be relative to
@@ -140,7 +140,7 @@ def create_script_file(path: Path, method: Callable[[], None], executable: str =
     :param method: The method of the :class:`~concoursetools.resource.ConcourseResource` to be exported.
     :param executable: The executable to use for the script (at the top).
     :param permissions: The (Linux) permissions the file should have. Defaults to ``rwxr-xr-x``.
-    :param encoding: The encoding of the file as passed to :meth:`~Path.write_text`.
+    :param encoding: The encoding of the file as passed to :meth:`~pathlib.Path.write_text`.
                      Setting to :obj:`None` (default) will use the user's default encoding.
     """
     docstring = inspect.getdoc(method) or ""

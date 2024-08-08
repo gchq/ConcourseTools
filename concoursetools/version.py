@@ -149,7 +149,7 @@ class Version(ABC):
         .. tip::
 
             It is often useful to overload this method to deal with types such as :class:`set`,
-            :class:`~enum.Enum` and :class:`~Path`. However, it is also beneficial to
+            :class:`~enum.Enum` and :class:`~pathlib.Path`. However, it is also beneficial to
             instead inherit from :class:`~concoursetools.version.TypedVersion` instead.
         """
         return cls(**version_dict)

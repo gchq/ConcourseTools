@@ -45,7 +45,7 @@ The first parameter group are the authentication parameters: ``username``, ``pas
 
 .. literalinclude:: ../../../examples/build_status.py
     :pyobject: create_auth
-    :end-at: auth = HTTPBasicAuth
+    :end-at: auth: AuthBase = HTTPBasicAuth
 
 If the user instead passes ``client_id`` and ``client_secret``, we instead need to use OAuth to fetch a bearer token. Neither of these are available natively in :mod:`requests`, and so we need to implement our own. The original resource `has the following <https://github.com/SHyx0rmZ/bitbucket-build-status-resource/blob/v1.6.0/scripts/bitbucket/bitbucket.py#L39>`_:
 
@@ -119,7 +119,7 @@ Remember creating that Build Status enum? We should make use of it here:
     :end-at: {possible_values}
     :dedent:
 
-Next we need to fetch the commit hash (if it hasn't already been set). This is more or less a direct lift from the `original code <https://github.com/SHyx0rmZ/bitbucket-build-status-resource/blob/v1.6.0/scripts/out#L49>`_, except we can make use of the fact that ``sources_dir`` is both already available to us (no shenanigans with :obj:`sys.argv`), but is also a :class:`~Path` instance, which makes the code a bit shorter:
+Next we need to fetch the commit hash (if it hasn't already been set). This is more or less a direct lift from the `original code <https://github.com/SHyx0rmZ/bitbucket-build-status-resource/blob/v1.6.0/scripts/out#L49>`_, except we can make use of the fact that ``sources_dir`` is both already available to us (no shenanigans with :obj:`sys.argv`), but is also a :class:`~pathlib.Path` instance, which makes the code a bit shorter:
 
 .. literalinclude:: ../../../examples/build_status.py
     :pyobject: Resource.publish_new_version
