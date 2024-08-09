@@ -6,7 +6,7 @@
 
 ![version](https://img.shields.io/badge/version-0.7.1-informational)
 ![pre-release](https://img.shields.io/badge/pre--release-beta-red)
-![python](https://img.shields.io/badge/python-%3E%3D3.8-informational)
+![python](https://img.shields.io/badge/python-%3E%3D3.9-informational)
 ![coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
 ![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=orange)
 

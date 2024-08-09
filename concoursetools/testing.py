@@ -30,7 +30,6 @@ from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig
 T = TypeVar("T")
 ContextManager = Generator[T, None, None]
 FolderDict = dict[str, Any]
-PathLike = Path | str
 
 
 class TestResourceWrapper(ABC, Generic[VersionT]):
@@ -844,7 +843,7 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
 def run_docker_container(image: str, command: str, additional_args: list[str] | None = None,
                          env: dict[str, str] | None = None, cwd: Path | None = None,
                          stdin: str | None = None, rm: bool = True, interactive: bool = True,
-                         dir_mapping: dict[Path, PathLike] | None = None,
+                         dir_mapping: dict[Path, Path | str] | None = None,
                          hostname: str | None = None, local_only: bool = True) -> tuple[str, str]:
     """
     Run a command within the Docker container.

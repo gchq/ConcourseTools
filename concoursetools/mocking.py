@@ -21,7 +21,6 @@ from concoursetools import BuildMetadata
 T = TypeVar("T")
 ContextManager = Generator[T, None, None]
 FolderDict = dict[str, Any]
-PathLike = Path | str
 
 
 def create_env_vars(one_off_build: bool = False, instance_vars: dict[str, str] | None = None, **env_vars: str) -> dict[str, str]:

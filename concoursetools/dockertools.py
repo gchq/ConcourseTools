@@ -239,8 +239,19 @@ def import_resource_classes_from_module(file_path: Path,
             raise FileNotFoundError(file_path) from error
         raise
 
-    possible_resource_classes = {cls.__name__: cls for _, cls in inspect.getmembers(module, predicate=inspect.isclass)
-                                 if issubclass(cls, parent_class) and cls.__module__ == import_path and not cls.__name__.startswith("_")}
+    possible_resource_classes: dict[str, type[ConcourseResource[VersionT]]] = {}
+    for _, cls in inspect.getmembers(module, predicate=inspect.isclass):
+        try:
+            class_is_subclass_of_parent = issubclass(cls, parent_class)
+        except TypeError:
+            class_is_subclass_of_parent = False
+
+        class_is_defined_in_this_module = (cls.__module__ == import_path)
+        class_is_not_private = (not cls.__name__.startswith("_"))
+
+        if class_is_subclass_of_parent and class_is_defined_in_this_module and class_is_not_private:
+            possible_resource_classes[cls.__name__] = cls
+
     return possible_resource_classes
 
 
