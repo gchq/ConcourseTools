@@ -7,37 +7,45 @@ Concourse Tools contains a small number of additional types for easier resource 
     class breaks the :wikipedia:`Liskov substitution principle`. If you wish to utilise type hinting
     in your development process, then please switch off the check for this type of method overloading.
 """
-from typing import Any, Callable, Dict, List, Literal, Protocol, Set, Type, TypeVar
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any, Protocol, TypedDict, TypeVar
 
 T = TypeVar("T")
 
 
-ResourceConfig = Dict[str, Any]
+ResourceConfig = dict[str, Any]
 """
 Represents arbitrary configuration passed to a Concourse resource.
 See the :concourse:`config-basics.schema.config` schema for more information.
 """
 
-Params = Dict[str, Any]
+Params = dict[str, Any]
 """
 Represents arbitrary parameters passed to a Concourse resource.
 See the :concourse:`config-basics.schema.config` schema for more information.
 """
 
-Metadata = Dict[str, str]
+Metadata = dict[str, str]
 """
 Represents :ref:`Step Metadata` as used by Concourse Tools.
 Restrictions on key and value types are determined by :data:`MetadataPair`.
 """
 
-MetadataPair = Dict[Literal["name", "value"], str]
-"""
-Represents :ref:`Step Metadata` as used internally by Concourse.
-Restrictions on key and value types are determined by the
-`Go structure itself <https://github.com/concourse/concourse/blob/master/atc/resource_types.go#L9>`_.
-"""
 
-VersionConfig = Dict[str, str]
+class MetadataPair(TypedDict):
+    """
+    Represents :ref:`Step Metadata` as used internally by Concourse.
+
+    Restrictions on key and value types are determined by the
+    `Go structure itself <https://github.com/concourse/concourse/blob/master/atc/resource_types.go#L9>`_.
+    """
+    name: str
+    value: str
+
+
+VersionConfig = dict[str, str]
 """
 Represents a version of a Concourse resource.
 See the :concourse:`config-basics.schema.version` schema for more information.
@@ -54,16 +62,13 @@ SortableVersionT = TypeVar("SortableVersionT", bound="SortableVersionProtocol")
 
 SortableVersionCovariantT = TypeVar("SortableVersionCovariantT", bound="SortableVersionProtocol", covariant=True)
 
-MultiVersionT = TypeVar("MultiVersionT", bound="MultiVersionProtocol")  # type: ignore[type-arg]
-"""Represents a generic :class:`~concoursetools.additional.MultiVersion` subclass."""
-
 
 class VersionProtocol(Protocol):
     """Corresponds to a generic :class:`~concoursetools.version.Version` subclass."""
     def __repr__(self) -> str:
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         ...
 
     def __hash__(self) -> int:
@@ -73,7 +78,7 @@ class VersionProtocol(Protocol):
         ...
 
     @classmethod
-    def from_flat_dict(cls: Type[VersionT], version_dict: VersionConfig) -> VersionT:
+    def from_flat_dict(cls: type[VersionT], version_dict: VersionConfig) -> VersionT:
         ...
 
 
@@ -82,7 +87,7 @@ class SortableVersionProtocol(Protocol):
     def __repr__(self) -> str:
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         ...
 
     def __hash__(self) -> int:
@@ -92,13 +97,13 @@ class SortableVersionProtocol(Protocol):
         ...
 
     @classmethod
-    def from_flat_dict(cls: Type[VersionT], version_dict: VersionConfig) -> VersionT:
+    def from_flat_dict(cls: type[VersionT], version_dict: VersionConfig) -> VersionT:
         ...
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
         ...
 
-    def __le__(self, other: Any) -> bool:
+    def __le__(self, other: object) -> bool:
         ...
 
 
@@ -107,7 +112,7 @@ class TypedVersionProtocol(Protocol):
     def __repr__(self) -> str:
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         ...
 
     def __hash__(self) -> int:
@@ -117,7 +122,7 @@ class TypedVersionProtocol(Protocol):
         ...
 
     @classmethod
-    def from_flat_dict(cls: Type[VersionT], version_dict: VersionConfig) -> VersionT:
+    def from_flat_dict(cls: type[VersionT], version_dict: VersionConfig) -> VersionT:
         ...
 
     @classmethod
@@ -125,11 +130,11 @@ class TypedVersionProtocol(Protocol):
         ...
 
     @classmethod
-    def _un_flatten_object(cls, type_: Type[TypedVersionT], flat_obj: str) -> TypedVersionT:
+    def _un_flatten_object(cls, type_: type[TypedVersionT], flat_obj: str) -> TypedVersionT:
         ...
 
     @classmethod
-    def _get_attribute_type(cls, attribute_name: str) -> Type[Any]:
+    def _get_attribute_type(cls, attribute_name: str) -> type[Any]:
         ...
 
     @classmethod
@@ -137,27 +142,27 @@ class TypedVersionProtocol(Protocol):
         ...
 
     @classmethod
-    def un_flatten(cls, func: Callable[[Type[T], str], T]) -> Callable[[Type[T], str], T]:
+    def un_flatten(cls, func: Callable[[type[T], str], T]) -> Callable[[type[T], str], T]:
         ...
 
     @staticmethod
-    def _flatten_default(obj: Any) -> str:
+    def _flatten_default(obj: object) -> str:
         ...
 
     @staticmethod
-    def _un_flatten_default(type_: Type[T], flat_obj: str) -> T:
+    def _un_flatten_default(type_: type[T], flat_obj: str) -> T:
         ...
 
 
 class MultiVersionProtocol(Protocol[SortableVersionCovariantT]):
     """Corresponds to a generic :class:`~concoursetools.additional.MultiVersion` subclass."""
-    def __init__(self, versions: Set[SortableVersionCovariantT]):
+    def __init__(self, versions: set[SortableVersionCovariantT]):
         ...
 
     def __repr__(self) -> str:
         ...
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         ...
 
     def __hash__(self) -> int:
@@ -168,16 +173,16 @@ class MultiVersionProtocol(Protocol[SortableVersionCovariantT]):
         ...
 
     @property
-    def sub_version_class(self) -> Type[SortableVersionCovariantT]:
+    def sub_version_class(self) -> type[SortableVersionCovariantT]:
         ...
 
     @property
-    def sub_version_data(self) -> List[VersionConfig]:
+    def sub_version_data(self) -> list[VersionConfig]:
         ...
 
     def to_flat_dict(self) -> VersionConfig:
         ...
 
     @classmethod
-    def from_flat_dict(cls: Type[VersionT], version_dict: VersionConfig) -> VersionT:
+    def from_flat_dict(cls: type[VersionT], version_dict: VersionConfig) -> VersionT:
         ...

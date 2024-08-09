@@ -5,8 +5,9 @@ from datetime import datetime
 import hashlib
 import json
 import os
-import pathlib
+from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 import unittest
 import unittest.mock
 import urllib.parse
@@ -36,19 +37,19 @@ class MockedTextResponse:
     """
     Represents a mocked requests.Response object containing a body.
     """
-    def __init__(self, data: str, status_code: int = 200):
+    def __init__(self, data: str, status_code: int = 200) -> None:
         self._data = data
         self._status_code = status_code
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self._data
 
-    def get(self, *args, **kwargs):
+    def get(self, *args: object, **kwargs: object) -> "MockedTextResponse":
         return self
 
     @classmethod
-    def from_file(cls, file_path: str, status_code: int = 200):
+    def from_file(cls, file_path: str, status_code: int = 200) -> "MockedTextResponse":
         with open(file_path) as rf:
             data = rf.read()
         return cls(data, status_code)
@@ -58,14 +59,14 @@ class MockedJSONResponse:
     """
     Represents a mocked requests.Response object containing valid JSON within the body.
     """
-    def __init__(self, json_data, status_code: int = 200):
+    def __init__(self, json_data: Any, status_code: int = 200) -> None:
         self._json_data = json_data
         self._status_code = status_code
 
-    def get(self, *args, **kwargs):
+    def get(self, *args: object, **kwargs: object) -> "MockedJSONResponse":
         return self
 
-    def json(self):
+    def json(self) -> Any:
         return self._json_data
 
 
@@ -144,7 +145,7 @@ class S3Tests(unittest.TestCase):
         super().setUp()
         self.resource = S3SignedURLConcourseResource("my-bucket", "eu-west-1")
         self.temp_dir = TemporaryDirectory()
-        self.destination_dir = pathlib.Path(self.temp_dir.name) / "s3"
+        self.destination_dir = Path(self.temp_dir.name) / "s3"
         self.destination_dir.mkdir()
         self.build_metadata = TestBuildMetadata()
 
@@ -156,7 +157,7 @@ class S3Tests(unittest.TestCase):
         url_path = self.destination_dir / "url"
         self.assertFalse(url_path.exists())
 
-        expires_in = {"minutes": 30, "seconds": 15}
+        expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
         self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in)
 
         self.assertTrue(url_path.exists())
@@ -173,7 +174,7 @@ class S3Tests(unittest.TestCase):
         url_path = self.destination_dir / "url-new"
         self.assertFalse(url_path.exists())
 
-        expires_in = {"minutes": 30, "seconds": 15}
+        expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
         self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in,
                                     url_file="url-new")
 
@@ -183,7 +184,7 @@ class S3Tests(unittest.TestCase):
         url_path = self.destination_dir / "url"
         self.assertFalse(url_path.exists())
 
-        expires_in = {"minutes": 30, "seconds": 15}
+        expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
         self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in,
                                     file_name="file.txt")
 
@@ -349,7 +350,7 @@ class SecretsInTests(unittest.TestCase):
             },
             "CreatedDate": now,
         }
-        self.version: SecretVersion = self.resource.fetch_latest_version()
+        self.version = self.resource.fetch_latest_version()
 
     def test_getting_metadata_only(self) -> None:
         wrapper = SimpleTestResourceWrapper(self.resource)
@@ -472,7 +473,7 @@ class PipelineCheckTests(unittest.TestCase):
         self.assertListEqual(versions, [])
 
     def test_fetch_secret_no_version_with_pending(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances  # type: ignore
+        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
         execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
 
         for execution_arn in self.execution_arns[3:]:
@@ -484,7 +485,7 @@ class PipelineCheckTests(unittest.TestCase):
         self.assertEqual(version, expected_version)
 
     def test_fetch_secret_no_version_with_pending_and_all_statuses(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances  # type: ignore
+        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
         execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
 
         for execution_arn in self.execution_arns[3:]:
@@ -518,7 +519,7 @@ class PipelineCheckTests(unittest.TestCase):
 @mock_aws
 class PipelineInTests(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Code to run before each test."""
         pipeline_name = "my-pipeline"
         resource = PipelineResource("arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
@@ -592,7 +593,7 @@ class PipelineInTests(unittest.TestCase):
         self.assertDictEqual(metadata, expected_metadata)
 
     def test_download_failed_execution(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances  # type: ignore
+        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
         execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
 
         fake_execution = execution_mapping[self.version_minimum.execution_arn]
@@ -656,7 +657,7 @@ class PipelineOutTests(unittest.TestCase):
         )
 
     def test_execution_creation(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances  # type: ignore
+        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
         initial_execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
 
         resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
@@ -669,7 +670,7 @@ class PipelineOutTests(unittest.TestCase):
 
 
 def _new_response_list_pipeline_executions_empty(self: SageMakerResponse) -> TYPE_RESPONSE:
-    response = {
+    response: dict[str, object] = {
         "PipelineExecutionSummaries": [],
     }
     return 200, {}, json.dumps(response)

@@ -2,7 +2,7 @@
 """
 Tests for the dockertools module.
 """
-import pathlib
+from pathlib import Path
 import shutil
 import sys
 from tempfile import TemporaryDirectory
@@ -20,18 +20,18 @@ class BasicTests(TestCase):
     Tests for the utility functions.
     """
     def test_import_path_creation(self) -> None:
-        file_path = pathlib.Path("path/to/python.py")
+        file_path = Path("path/to/python.py")
         import_path = file_path_to_import_path(file_path)
         self.assertEqual(import_path, "path.to.python")
 
     def test_import_path_creation_wrong_extension(self) -> None:
-        file_path = pathlib.Path("path/to/file.txt")
+        file_path = Path("path/to/file.txt")
         with self.assertRaises(ValueError):
             file_path_to_import_path(file_path)
 
     def test_importing_classes(self) -> None:
-        file_path = pathlib.Path(additional.__file__).relative_to(pathlib.Path.cwd())
-        resource_classes = import_resource_classes_from_module(file_path)
+        file_path = Path(additional.__file__).relative_to(Path.cwd())
+        resource_classes = import_resource_classes_from_module(file_path)  # type: ignore[var-annotated]
         expected = {
             "InOnlyConcourseResource": additional.InOnlyConcourseResource,
             "OutOnlyConcourseResource": additional.OutOnlyConcourseResource,
@@ -42,29 +42,30 @@ class BasicTests(TestCase):
         self.assertDictEqual(resource_classes, expected)
 
     def test_importing_class_no_name(self) -> None:
-        file_path = pathlib.Path(test_resource.__file__).relative_to(pathlib.Path.cwd())
+        file_path = Path(test_resource.__file__).relative_to(Path.cwd())
         with self.assertRaises(RuntimeError):
             import_resource_class_from_module(file_path)
 
     def test_importing_class_with_name(self) -> None:
-        file_path = pathlib.Path(test_resource.__file__).relative_to(pathlib.Path.cwd())
-        resource_class = import_resource_class_from_module(file_path, class_name=test_resource.TestResource.__name__)
+        file_path = Path(test_resource.__file__).relative_to(Path.cwd())
+        resource_class = import_resource_class_from_module(file_path, class_name=test_resource.TestResource.__name__)  # type: ignore[var-annotated]
         self.assertEqual(resource_class, test_resource.TestResource)
 
     def test_importing_class_no_options(self) -> None:
-        file_path = pathlib.Path("pathlib.py")
+        file_path = Path("pathlib.py")
         with self.assertRaises(RuntimeError):
             import_resource_class_from_module(file_path)
 
     def test_importing_class_multiple_options(self) -> None:
-        file_path = pathlib.Path(additional.__file__).relative_to(pathlib.Path.cwd())
+        file_path = Path(additional.__file__).relative_to(Path.cwd())
         with self.assertRaises(RuntimeError):
             import_resource_class_from_module(file_path)
 
     def test_importing_class_multiple_options_specify_name(self) -> None:
-        file_path = pathlib.Path(additional.__file__).relative_to(pathlib.Path.cwd())
-        resource_class = import_resource_class_from_module(file_path, class_name=additional.InOnlyConcourseResource.__name__)
-        self.assertEqual(resource_class, additional.InOnlyConcourseResource)
+        file_path = Path(additional.__file__).relative_to(Path.cwd())
+        parent_class = additional.InOnlyConcourseResource
+        resource_class = import_resource_class_from_module(file_path, class_name=parent_class.__name__)  # type: ignore[var-annotated]
+        self.assertEqual(resource_class, parent_class)
 
 
 class DockerTests(TestCase):
@@ -74,9 +75,9 @@ class DockerTests(TestCase):
     def setUp(self) -> None:
         """Code to run before each test."""
         self._temp_dir = TemporaryDirectory()
-        self.temp_dir = pathlib.Path(self._temp_dir.name)
+        self.temp_dir = Path(self._temp_dir.name)
 
-        path_to_this_file = pathlib.Path(__file__)
+        path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
         shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
         self.args = Namespace(str(self.temp_dir), resource_file="concourse.py")

@@ -3,13 +3,15 @@
 Concourse Tools contains a number of simple functions for mapping
 between Python and the Concourse resource type paradigm.
 """
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, cast
 
 from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig
 
 
-def parse_check_payload(raw_json: str) -> Tuple[ResourceConfig, Optional[VersionConfig]]:
+def parse_check_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig | None]:
     """
     Parse raw input JSON for a :concourse:`check payload <implementing-resource-types.resource-check>`.
 
@@ -31,7 +33,7 @@ def parse_check_payload(raw_json: str) -> Tuple[ResourceConfig, Optional[Version
     .. note::
         If the version has not been passed, then :obj:`None` will be returned, and **not** an empty :class:`dict`.
     """
-    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    payload: dict[str, dict[str, object] | None] = json.loads(raw_json)
     source_config = _extract_source_config_from_payload(payload)
 
     try:
@@ -42,7 +44,7 @@ def parse_check_payload(raw_json: str) -> Tuple[ResourceConfig, Optional[Version
     return source_config, version_config
 
 
-def parse_in_payload(raw_json: str) -> Tuple[ResourceConfig, VersionConfig, Params]:
+def parse_in_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig, Params]:
     """
     Parse raw input JSON for an :concourse:`in payload <implementing-resource-types.resource-in>`.
 
@@ -62,7 +64,7 @@ def parse_in_payload(raw_json: str) -> Tuple[ResourceConfig, VersionConfig, Para
 
     :returns: The source and version configuration, and parameters passed to the get step.
     """
-    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    payload: dict[str, dict[str, object] | None] = json.loads(raw_json)
     source_config = _extract_source_config_from_payload(payload)
     params_config = _extract_param_config_from_payload(payload)
 
@@ -74,7 +76,7 @@ def parse_in_payload(raw_json: str) -> Tuple[ResourceConfig, VersionConfig, Para
     return source_config, version_config, params_config
 
 
-def parse_out_payload(raw_json: str) -> Tuple[ResourceConfig, Params]:
+def parse_out_payload(raw_json: str) -> tuple[ResourceConfig, Params]:
     """
     Parse raw input JSON for an :concourse:`out payload <implementing-resource-types.resource-out>`.
 
@@ -95,14 +97,14 @@ def parse_out_payload(raw_json: str) -> Tuple[ResourceConfig, Params]:
 
     :returns: The source configuration, and parameters passed to the put step.
     """
-    payload: Dict[str, Optional[Dict[str, Any]]] = json.loads(raw_json)
+    payload: dict[str, dict[str, object] | None] = json.loads(raw_json)
     source_config = _extract_source_config_from_payload(payload)
     params_config = _extract_param_config_from_payload(payload)
 
     return source_config, params_config
 
 
-def parse_metadata(metadata_pairs: List[MetadataPair]) -> Metadata:
+def parse_metadata(metadata_pairs: list[MetadataPair]) -> Metadata:
     """
     Convert key-value pairs toa key-value mapping.
 
@@ -112,7 +114,7 @@ def parse_metadata(metadata_pairs: List[MetadataPair]) -> Metadata:
     return {pair["name"]: pair["value"] for pair in metadata_pairs}
 
 
-def format_check_output(version_configs: List[VersionConfig], **json_kwargs: Any) -> str:
+def format_check_output(version_configs: list[VersionConfig], **json_kwargs: Any) -> str:
     """
     Format :concourse:`check output <implementing-resource-types.resource-check>` as a JSON string.
 
@@ -161,7 +163,7 @@ def format_in_out_output(version_config: VersionConfig, metadata: Metadata, **js
     return json.dumps(output, **json_kwargs)
 
 
-def format_metadata(metadata: Metadata) -> List[MetadataPair]:
+def format_metadata(metadata: Metadata) -> list[MetadataPair]:
     """
     Convert a key-value mapping to key-value pairs.
 
@@ -171,7 +173,7 @@ def format_metadata(metadata: Metadata) -> List[MetadataPair]:
     return [{"name": str(name), "value": str(value)} for name, value in metadata.items()]
 
 
-def format_check_input(resource_config: ResourceConfig, version_config: Optional[VersionConfig] = None, **json_kwargs: Any) -> str:
+def format_check_input(resource_config: ResourceConfig, version_config: VersionConfig | None = None, **json_kwargs: Any) -> str:
     """
     Format :concourse:`check input <implementing-resource-types.resource-check>` as a JSON string.
 
@@ -197,7 +199,7 @@ def format_check_input(resource_config: ResourceConfig, version_config: Optional
     return json.dumps(payload, **json_kwargs)
 
 
-def format_in_input(resource_config: ResourceConfig, version_config: VersionConfig, params: Optional[Params] = None, **json_kwargs: Any) -> str:
+def format_in_input(resource_config: ResourceConfig, version_config: VersionConfig, params: Params | None = None, **json_kwargs: Any) -> str:
     """
     Format :concourse:`in input <implementing-resource-types.resource-in>` as a JSON string.
 
@@ -228,7 +230,7 @@ def format_in_input(resource_config: ResourceConfig, version_config: VersionConf
     return json.dumps(payload, **json_kwargs)
 
 
-def format_out_input(resource_config: ResourceConfig, params: Optional[Params] = None, **json_kwargs: Any) -> str:
+def format_out_input(resource_config: ResourceConfig, params: Params | None = None, **json_kwargs: Any) -> str:
     """
     Format :concourse:`out input <implementing-resource-types.resource-out>` as a JSON string.
 
@@ -256,14 +258,14 @@ def format_out_input(resource_config: ResourceConfig, params: Optional[Params] =
     return json.dumps(payload, **json_kwargs)
 
 
-def _extract_source_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+def _extract_source_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
     try:
         unsafe_source_config = payload["source"]
     except KeyError as error:
         raise RuntimeError("Could not extract source from payload") from error
 
     try:
-        unsafe_source_config = cast(Dict[str, Any], unsafe_source_config)
+        unsafe_source_config = cast(dict[str, Any], unsafe_source_config)
         source_config = {str(key): value for key, value in unsafe_source_config.items()}
     except AttributeError:
         if unsafe_source_config is not None:
@@ -273,15 +275,15 @@ def _extract_source_config_from_payload(payload: Dict[str, Optional[Dict[str, An
     return source_config
 
 
-def _extract_version_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+def _extract_version_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
     unsafe_version_config = payload["version"]
-    unsafe_version_config = cast(Dict[str, Any], unsafe_version_config)
+    unsafe_version_config = cast(dict[str, Any], unsafe_version_config)
     version_config = {str(key): str(value) for key, value in unsafe_version_config.items()}
     return version_config
 
 
-def _extract_param_config_from_payload(payload: Dict[str, Optional[Dict[str, Any]]]) -> Dict[str, Any]:
+def _extract_param_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
     unsafe_params_config = payload.get("params", {})
-    unsafe_params_config = cast(Dict[str, Any], unsafe_params_config)
+    unsafe_params_config = cast(dict[str, Any], unsafe_params_config)
     params_config = {str(key): value for key, value in unsafe_params_config.items()}
     return params_config

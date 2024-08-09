@@ -10,7 +10,6 @@ This is the same  path passed to literalinclude.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from docutils import nodes
 from docutils.nodes import system_message
@@ -20,8 +19,8 @@ from sphinx.application import Sphinx
 __all__ = ("count_lines", "setup")
 
 
-def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, Any] = {},
-                content: list[str] = []) -> tuple[list[nodes.reference], list[system_message]]:
+def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
+                content: list[str] = []) -> tuple[list[nodes.Node], list[system_message]]:
     """
     Add a text node containing the number of lines.
 
@@ -39,8 +38,8 @@ def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inline
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    path = Path(nodes.unescape(text))
-    page_path = Path(Path(inliner.document.settings._source))  # type: ignore
+    path = Path(nodes.unescape(text))  # type: ignore[attr-defined]
+    page_path = Path(Path(inliner.document.settings._source))
     resolved_path = (page_path.parent / path).resolve()
     with open(resolved_path) as rf:
         line_count = sum(1 for _ in rf)
@@ -49,7 +48,7 @@ def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inline
     return [node], []
 
 
-def setup(app: Sphinx) -> dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, object]:
     """
     Attach the extension to the application.
 

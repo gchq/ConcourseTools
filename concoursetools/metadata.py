@@ -12,10 +12,12 @@ The :meth:`~concoursetools.resource.ConcourseResource.download_version` and
 
 See the Concourse :concourse:`implementing-resource-types.resource-metadata` documentation for more information.
 """
+from __future__ import annotations
+
 import json
 import os
 from string import Template as StringTemplate
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import quote
 
 
@@ -42,9 +44,9 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         These can still be accessed via :obj:`os.environ`, but they are not supported by Concourse Tools.
     """
-    def __init__(self, BUILD_ID: str, BUILD_TEAM_NAME: str, ATC_EXTERNAL_URL: str, BUILD_NAME: Optional[str] = None,
-                 BUILD_JOB_NAME: Optional[str] = None, BUILD_PIPELINE_NAME: Optional[str] = None,
-                 BUILD_PIPELINE_INSTANCE_VARS: Optional[str] = None):
+    def __init__(self, BUILD_ID: str, BUILD_TEAM_NAME: str, ATC_EXTERNAL_URL: str, BUILD_NAME: str | None = None,
+                 BUILD_JOB_NAME: str | None = None, BUILD_PIPELINE_NAME: str | None = None,
+                 BUILD_PIPELINE_INSTANCE_VARS: str | None = None):
         self.BUILD_ID = BUILD_ID
         self.BUILD_TEAM_NAME = BUILD_TEAM_NAME
 
@@ -97,7 +99,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         """Return :obj:`True` if this is an :concourse:`instanced pipeline <instanced-pipelines>`."""
         return self.BUILD_PIPELINE_INSTANCE_VARS is not None
 
-    def instance_vars(self) -> Dict[str, Any]:
+    def instance_vars(self) -> dict[str, object]:
         """
         Return the instance vars set on this pipeline as a mapping.
 
@@ -137,7 +139,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
                     }
                 }
         """
-        instance_vars: Dict[str, Any] = json.loads(self.BUILD_PIPELINE_INSTANCE_VARS or "{}")
+        instance_vars: dict[str, object] = json.loads(self.BUILD_PIPELINE_INSTANCE_VARS or "{}")
         return instance_vars
 
     def build_url(self) -> str:
@@ -161,14 +163,14 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         return f"{self.ATC_EXTERNAL_URL}/{quote(build_path)}{query_string}"
 
-    def format_string(self, string: str, additional_values: Optional[Dict[str, str]] = None,
+    def format_string(self, string: str, additional_values: dict[str, str] | None = None,
                       ignore_missing: bool = False) -> str:
         """
         Format a string with metadata using standard bash ``$`` notation.
 
         Only a handful of "safe" values will be interpolated, not arbitrary attributes on the instance.
         These are the :concourse:`original environment variables <implementing-resource-types.resource-metadata>`,
-        including :attr:`BUILD_CREATED_BY` if it exists. Any missing environment variable (such as in the case of a
+        including :attr:`BUILD_CREATED_BY` if it exists. object missing environment variable (such as in the case of a
         one-off build) will be empty. A ``$BUILD_URL`` variable is also added for ease.
 
         .. danger::
@@ -192,7 +194,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
             'The build id is 12345678.'
         """
         template = StringTemplate(string)
-        possible_values: Dict[str, str] = {
+        possible_values: dict[str, str] = {
             "BUILD_ID": self.BUILD_ID,
             "BUILD_TEAM_NAME": self.BUILD_TEAM_NAME,
             "BUILD_NAME": self.BUILD_NAME or "",
@@ -226,7 +228,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         )
 
 
-def _flatten_dict(d: Dict[str, Any]) -> Dict[str, Any]:
+def _flatten_dict(d: dict[str, Any]) -> dict[str, Any]:
     """
     Flatten a nested dictionary into a single-level dictionary.
 
@@ -241,7 +243,7 @@ def _flatten_dict(d: Dict[str, Any]) -> Dict[str, Any]:
         >>> _flatten_dict(d)
         {'key_1': 'value_1', 'key_2.1': 'value_2_1', 'key_2.2': 'value_2_2'}
     """
-    flattened_dict: Dict[str, Any] = {}
+    flattened_dict: dict[str, object] = {}
     for key, value in d.items():
         if isinstance(value, dict):
             sub_flattened_dict = _flatten_dict(value)

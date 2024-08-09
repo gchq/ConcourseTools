@@ -83,7 +83,7 @@ The Dockerfile should look something like:
 
 .. code:: Dockerfile
 
-    FROM python:3.8-alpine
+    FROM python:3.9
 
     COPY requirements.txt requirements.txt
 
@@ -118,7 +118,7 @@ If any of your requirements are private (Concourse Tools is not a public project
 
 .. code:: Dockerfile
 
-    FROM python:3.8 as builder
+    FROM python:3.9 as builder
 
     RUN apk update --no-progress && apk add openssh-client && apk add --no-cache --no-progress git
 
@@ -139,7 +139,7 @@ If any of your requirements are private (Concourse Tools is not a public project
         pip install -r requirements.txt --no-deps
 
 
-    FROM python:3.8-alpine as runner
+    FROM python:3.9-slim as runner
     COPY --from=builder /opt/venv /opt/venv
     # Activate venv
     ENV PATH="/opt/venv/bin:$PATH"

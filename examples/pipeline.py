@@ -1,11 +1,11 @@
 # (C) Crown Copyright GCHQ
 from __future__ import annotations
 
+from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import datetime
 import json
-import pathlib
-from typing import Any, Dict
+from pathlib import Path
 
 import boto3
 
@@ -16,7 +16,7 @@ from concoursetools.version import TypedVersion
 
 class DatetimeSafeJSONEncoder(json.JSONEncoder):
 
-    def default(self, o: Any) -> Any:
+    def default(self, o: object) -> object:
         if isinstance(o, datetime):
             return o.isoformat()
         return super().default(o)
@@ -29,7 +29,7 @@ class ExecutionVersion(TypedVersion):
 
 class PipelineResource(ConcourseResource[ExecutionVersion]):
 
-    def __init__(self, pipeline: str, statuses: list[str] = ["Succeeded", "Stopped", "Failed"]):
+    def __init__(self, pipeline: str, statuses: list[str] = ["Succeeded", "Stopped", "Failed"]) -> None:
         super().__init__(ExecutionVersion)
         # arn:aws:sagemaker:<region>:<account>:pipeline:<name>
         _, _, _, region, _, _, pipeline_name = pipeline.split(":")
@@ -37,7 +37,7 @@ class PipelineResource(ConcourseResource[ExecutionVersion]):
         self.pipeline_name = pipeline_name
         self.statuses = statuses
 
-    def fetch_new_versions(self, previous_version: ExecutionVersion | None = None):
+    def fetch_new_versions(self, previous_version: ExecutionVersion | None = None) -> list[ExecutionVersion]:
         potential_versions = iter(self._yield_potential_execution_versions())
         if previous_version is None:
             try:
@@ -53,15 +53,15 @@ class PipelineResource(ConcourseResource[ExecutionVersion]):
                 if potential_version == previous_version:
                     break
             else:
-                new_versions = new_versions[0]
+                new_versions = [new_versions[0]]
 
         new_versions.reverse()
         return new_versions
 
-    def download_version(self, version: ExecutionVersion, destination_dir: pathlib.Path,
+    def download_version(self, version: ExecutionVersion, destination_dir: Path,
                          build_metadata: BuildMetadata, download_pipeline: bool = True,
                          metadata_file: str = "metadata.json",
-                         pipeline_file: str = "pipeline.json"):
+                         pipeline_file: str = "pipeline.json") -> tuple[ExecutionVersion, dict[str, str]]:
         response = self._client.describe_pipeline_execution(PipelineExecutionArn=version.execution_arn)
         response.pop("ResponseMetadata")
 
@@ -87,12 +87,12 @@ class PipelineResource(ConcourseResource[ExecutionVersion]):
 
         return version, metadata
 
-    def publish_new_version(self, sources_dir: pathlib.Path, build_metadata: BuildMetadata,
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata,
                             display_name: str | None = None, description: str | None = None,
-                            parameters: dict[str, str] = {}):
+                            parameters: dict[str, str] = {}) -> tuple[ExecutionVersion, dict[str, str]]:
         default_description = (f"Execution from build #{build_metadata.BUILD_ID} "
                                f"of pipeline {build_metadata.BUILD_PIPELINE_NAME}")
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, object] = {
             "PipelineName": self.pipeline_name,
             "PipelineExecutionDescription": description or default_description,
         }
@@ -113,7 +113,7 @@ class PipelineResource(ConcourseResource[ExecutionVersion]):
         new_version = ExecutionVersion(execution_arn)
         return new_version, metadata
 
-    def _yield_potential_execution_versions(self):
+    def _yield_potential_execution_versions(self) -> Generator[ExecutionVersion, None, None]:
         kwargs = {
             "PipelineName": self.pipeline_name,
             "SortOrder": "Descending",

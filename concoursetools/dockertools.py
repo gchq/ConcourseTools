@@ -2,24 +2,27 @@
 """
 Functions for creating the Dockerfile or asset files.
 """
+from __future__ import annotations
+
+from collections.abc import Callable
 from dataclasses import dataclass
 import importlib
 import inspect
-import pathlib
+from pathlib import Path
 import sys
 import textwrap
 from types import MethodType
-from typing import Any, Callable, Dict, Optional, Type, cast
+from typing import cast
 
 from concoursetools import ConcourseResource
-from concoursetools.typing import VersionProtocol
+from concoursetools.typing import VersionProtocol, VersionT
 
 DEFAULT_EXECUTABLE = "/usr/bin/env python3"
 DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-def create_dockerfile(args: "Namespace", encoding: Optional[str] = None,
-                      concoursetools_path: Optional[pathlib.Path] = None) -> None:
+def create_dockerfile(args: "Namespace", encoding: str | None = None,
+                      concoursetools_path: Path | None = None) -> None:
     """
     Create a skeleton dockerfile.
 
@@ -30,7 +33,7 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None,
                                 will be copied over an installed before any requirements. Path should be relative to
                                 the current directory.
     """
-    directory_path = pathlib.Path(args.path)
+    directory_path = Path(args.path)
     if directory_path.is_dir():
         file_path = directory_path / "Dockerfile"
     else:
@@ -105,7 +108,7 @@ def create_dockerfile(args: "Namespace", encoding: Optional[str] = None,
     file_path.write_text(contents, encoding=encoding)
 
 
-def create_asset_scripts(assets_folder: pathlib.Path, resource_class: Type[ConcourseResource],  # type: ignore[type-arg]
+def create_asset_scripts(assets_folder: Path, resource_class: type[ConcourseResource],  # type: ignore[type-arg]
                          executable: str = DEFAULT_EXECUTABLE) -> None:
     """
     Create the scripts in a given folder.
@@ -118,7 +121,7 @@ def create_asset_scripts(assets_folder: pathlib.Path, resource_class: Type[Conco
     """
     assets_folder.mkdir(parents=True, exist_ok=True)
 
-    file_to_method: Dict[str, Callable[[], None]] = {
+    file_to_method: dict[str, Callable[[], None]] = {
         "check": resource_class.check_main,
         "in": resource_class.in_main,
         "out": resource_class.out_main,
@@ -128,8 +131,8 @@ def create_asset_scripts(assets_folder: pathlib.Path, resource_class: Type[Conco
         create_script_file(file_path, method, executable)
 
 
-def create_script_file(path: pathlib.Path, method: Callable[[], None], executable: str = DEFAULT_EXECUTABLE,
-                       permissions: int = 0o755, encoding: Optional[str] = None) -> None:
+def create_script_file(path: Path, method: Callable[[], None], executable: str = DEFAULT_EXECUTABLE,
+                       permissions: int = 0o755, encoding: str | None = None) -> None:
     """
     Create a script file at a given path.
 
@@ -144,8 +147,8 @@ def create_script_file(path: pathlib.Path, method: Callable[[], None], executabl
     docstring_header, *_ = docstring.split("\n")
 
     method = cast(MethodType, method)
-    resource_class = cast(Type[ConcourseResource[VersionProtocol]], method.__self__)  # type: ignore[attr-defined]
-    method_name = method.__name__  # type: ignore[attr-defined]
+    resource_class = cast(type[ConcourseResource[VersionProtocol]], method.__self__)
+    method_name = method.__name__
 
     contents = textwrap.dedent(f"""
     #!{executable}
@@ -163,7 +166,7 @@ def create_script_file(path: pathlib.Path, method: Callable[[], None], executabl
     path.chmod(permissions)
 
 
-def file_path_to_import_path(file_path: pathlib.Path) -> str:
+def file_path_to_import_path(file_path: Path) -> str:
     """
     Convert a file path to an import path.
 
@@ -171,9 +174,9 @@ def file_path_to_import_path(file_path: pathlib.Path) -> str:
     :raises ValueError: If the path doesn't end in a '.py' extension.
 
     :Example:
-        >>> file_path_to_import_path(pathlib.Path("module.py"))
+        >>> file_path_to_import_path(Path("module.py"))
         'module'
-        >>> file_path_to_import_path(pathlib.Path("path/to/module.py"))
+        >>> file_path_to_import_path(Path("path/to/module.py"))
         'path.to.module'
     """
     *path_components, file_name = file_path.parts
@@ -186,8 +189,8 @@ def file_path_to_import_path(file_path: pathlib.Path) -> str:
     return import_path
 
 
-def import_resource_class_from_module(file_path: pathlib.Path, class_name: Optional[str] = None,
-                                      parent_class: Type[Any] = ConcourseResource) -> Type[Any]:
+def import_resource_class_from_module(file_path: Path, class_name: str | None = None,
+                                      parent_class: type[ConcourseResource[VersionT]] = ConcourseResource) -> type[ConcourseResource[VersionT]]:
     """
     Import the resource class from the module.
 
@@ -216,8 +219,9 @@ def import_resource_class_from_module(file_path: pathlib.Path, class_name: Optio
     return resource_class
 
 
-def import_resource_classes_from_module(file_path: pathlib.Path,
-                                        parent_class: Type[Any] = ConcourseResource) -> Dict[str, Type[Any]]:
+def import_resource_classes_from_module(file_path: Path,
+                                        parent_class: type[ConcourseResource[VersionT]] = ConcourseResource
+                                        ) -> dict[str, type[ConcourseResource[VersionT]]]:
     """
     Import all available resource classes from the module.
 
@@ -235,8 +239,19 @@ def import_resource_classes_from_module(file_path: pathlib.Path,
             raise FileNotFoundError(file_path) from error
         raise
 
-    possible_resource_classes = {cls.__name__: cls for _, cls in inspect.getmembers(module, predicate=inspect.isclass)
-                                 if issubclass(cls, parent_class) and cls.__module__ == import_path and not cls.__name__.startswith("_")}
+    possible_resource_classes: dict[str, type[ConcourseResource[VersionT]]] = {}
+    for _, cls in inspect.getmembers(module, predicate=inspect.isclass):
+        try:
+            class_is_subclass_of_parent = issubclass(cls, parent_class)
+        except TypeError:
+            class_is_subclass_of_parent = False
+
+        class_is_defined_in_this_module = (cls.__module__ == import_path)
+        class_is_not_private = (not cls.__name__.startswith("_"))
+
+        if class_is_subclass_of_parent and class_is_defined_in_this_module and class_is_not_private:
+            possible_resource_classes[cls.__name__] = cls
+
     return possible_resource_classes
 
 
@@ -255,11 +270,11 @@ class Namespace:
     path: str
     executable: str = DEFAULT_EXECUTABLE
     resource_file: str = "concourse.py"
-    class_name: Optional[str] = None
+    class_name: str | None = None
     docker: bool = False
     include_rsa: bool = False
 
     @property
-    def resource_path(self) -> pathlib.Path:
+    def resource_path(self) -> Path:
         """Return a path object pointing to the resource file."""
-        return pathlib.Path(self.resource_file)
+        return Path(self.resource_file)

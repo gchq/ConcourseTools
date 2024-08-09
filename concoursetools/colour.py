@@ -11,8 +11,11 @@ and so a handful of rudimentary functions for formatting with colour are include
     Concourse Tools specifically has no external dependencies, and so these
     must be actively installed and managed by a user.
 """
+from __future__ import annotations
+
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator
+from typing import Any
 
 END_COLOUR = "\033[0m"
 BOLD = "\033[1m"
@@ -49,7 +52,7 @@ def colourise(string: str, colour: str) -> str:
     return f"{colour}{string}{END_COLOUR}"
 
 
-def colour_print(*values: Any, colour: str = MISSING_COLOUR, bold: bool = False, underline: bool = False,
+def colour_print(*values: object, colour: str = MISSING_COLOUR, bold: bool = False, underline: bool = False,
                  **print_kwargs: Any) -> None:
     """
     Print something in colour.

@@ -1,9 +1,11 @@
 # (C) Crown Copyright GCHQ
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum, auto
-import pathlib
+from pathlib import Path
 import subprocess
-from typing import Optional, Tuple
+from typing import Any
 
 import requests
 from requests.auth import AuthBase, HTTPBasicAuth
@@ -39,7 +41,7 @@ class BitbucketOAuth(AuthBase):
         return request
 
     @classmethod
-    def from_client_credentials(cls, client_id: str, client_secret: str):
+    def from_client_credentials(cls, client_id: str, client_secret: str) -> "BitbucketOAuth":
         token_auth = HTTPBasicAuth(client_id, client_secret)
 
         url = "https://bitbucket.org/site/oauth2/access_token"
@@ -56,11 +58,11 @@ class Version(TypedVersion):
     build_status: BuildStatus
 
 
-class Resource(OutOnlyConcourseResource):
+class Resource(OutOnlyConcourseResource[Version]):
 
-    def __init__(self, repository: Optional[str] = None, endpoint: Optional[str] = None,
-                 username: Optional[str] = None, password: Optional[str] = None,
-                 client_id: Optional[str] = None, client_secret: Optional[str] = None,
+    def __init__(self, repository: str | None = None, endpoint: str | None = None,
+                 username: str | None = None, password: str | None = None,
+                 client_id: str | None = None, client_secret: str | None = None,
                  verify_ssl: bool = True, driver: str = "Bitbucket Server",
                  debug: bool = False) -> None:
         super().__init__(Version)
@@ -89,11 +91,11 @@ class Resource(OutOnlyConcourseResource):
             if repository is None:
                 raise ValueError("Must set repository when using Bitbucket Cloud.")
 
-    def publish_new_version(self, sources_dir: pathlib.Path, build_metadata: BuildMetadata,
-                            repository: str, build_status: str, key: Optional[str] = None,
-                            name: Optional[str] = None, build_url: Optional[str] = None,
-                            description: Optional[str] = None,
-                            commit_hash: Optional[str] = None) -> Tuple[Version, Metadata]:
+    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata,
+                            repository: str, build_status: str, key: str | None = None,
+                            name: str | None = None, build_url: str | None = None,
+                            description: str | None = None,
+                            commit_hash: str | None = None) -> tuple[Version, Metadata]:
         self.debug("--DEBUG MODE--")
 
         try:
@@ -167,17 +169,17 @@ class Resource(OutOnlyConcourseResource):
         }
         return version, metadata
 
-    def debug(self, *args, colour=Colour.CYAN, **kwargs):
+    def debug(self, *args: object, colour: str = Colour.CYAN, **kwargs: Any) -> None:
         if self._debug:
             colour_print(*args, colour=colour, **kwargs)
 
 
-def create_auth(username: Optional[str] = None,
-                password: Optional[str] = None,
-                client_id: Optional[str] = None,
-                client_secret: Optional[str] = None) -> AuthBase:
+def create_auth(username: str | None = None,
+                password: str | None = None,
+                client_id: str | None = None,
+                client_secret: str | None = None) -> AuthBase:
     if username is not None and password is not None:
-        auth = HTTPBasicAuth(username, password)
+        auth: AuthBase = HTTPBasicAuth(username, password)
     elif client_id is not None and client_secret is not None:
         auth = BitbucketOAuth.from_client_credentials(client_id, client_secret)
     else:

@@ -45,7 +45,7 @@ The first parameter group are the authentication parameters: ``username``, ``pas
 
 .. literalinclude:: ../../../examples/build_status.py
     :pyobject: create_auth
-    :end-at: auth = HTTPBasicAuth
+    :end-at: auth: AuthBase = HTTPBasicAuth
 
 If the user instead passes ``client_id`` and ``client_secret``, we instead need to use OAuth to fetch a bearer token. Neither of these are available natively in :mod:`requests`, and so we need to implement our own. The original resource `has the following <https://github.com/SHyx0rmZ/bitbucket-build-status-resource/blob/v1.6.0/scripts/bitbucket/bitbucket.py#L39>`_:
 
