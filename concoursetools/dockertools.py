@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-import importlib
+import importlib.util
 import inspect
 from pathlib import Path
 import sys
@@ -233,7 +233,15 @@ def import_resource_classes_from_module(file_path: Path,
     import_path = file_path_to_import_path(file_path)
 
     try:
-        module = importlib.import_module(import_path)
+        spec = importlib.util.spec_from_file_location(import_path, file_path)
+        if spec is None:
+            raise RuntimeError("Imported module spec is unexpectedly 'None'")
+        if spec.loader is None:
+            raise RuntimeError("Imported module spec loader is unexpectedly 'None'")
+
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[import_path] = module
+        spec.loader.exec_module(module)
     except ModuleNotFoundError as error:
         if not file_path.exists():
             raise FileNotFoundError(file_path) from error

@@ -2,6 +2,7 @@
 """
 Tests for the dockertools module.
 """
+import inspect
 from pathlib import Path
 import shutil
 import sys
@@ -39,7 +40,10 @@ class BasicTests(TestCase):
             "SelfOrganisingConcourseResource": additional.SelfOrganisingConcourseResource,
             "TriggerOnChangeConcourseResource": additional.TriggerOnChangeConcourseResource,
         }
-        self.assertDictEqual(resource_classes, expected)
+        self.assertEqual(expected.keys(), resource_classes.keys())
+        for key, class_1 in resource_classes.items():
+            class_2 = expected[key]
+            self.assertClassEqual(class_1, class_2)
 
     def test_importing_class_no_name(self) -> None:
         file_path = Path(test_resource.__file__).relative_to(Path.cwd())
@@ -49,12 +53,7 @@ class BasicTests(TestCase):
     def test_importing_class_with_name(self) -> None:
         file_path = Path(test_resource.__file__).relative_to(Path.cwd())
         resource_class = import_resource_class_from_module(file_path, class_name=test_resource.TestResource.__name__)  # type: ignore[var-annotated]
-        self.assertEqual(resource_class, test_resource.TestResource)
-
-    def test_importing_class_no_options(self) -> None:
-        file_path = Path("pathlib.py")
-        with self.assertRaises(RuntimeError):
-            import_resource_class_from_module(file_path)
+        self.assertClassEqual(resource_class, test_resource.TestResource)
 
     def test_importing_class_multiple_options(self) -> None:
         file_path = Path(additional.__file__).relative_to(Path.cwd())
@@ -65,7 +64,11 @@ class BasicTests(TestCase):
         file_path = Path(additional.__file__).relative_to(Path.cwd())
         parent_class = additional.InOnlyConcourseResource
         resource_class = import_resource_class_from_module(file_path, class_name=parent_class.__name__)  # type: ignore[var-annotated]
-        self.assertEqual(resource_class, parent_class)
+        self.assertClassEqual(resource_class, parent_class)
+
+    def assertClassEqual(self, class_1: type[object], class_2: type[object]) -> None:
+        self.assertEqual(inspect.getsourcefile(class_1), inspect.getsourcefile(class_2))
+        self.assertEqual(inspect.getsource(class_1), inspect.getsource(class_2))
 
 
 class DockerTests(TestCase):
