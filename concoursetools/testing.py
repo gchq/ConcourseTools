@@ -22,7 +22,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Generic, TypeVar
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
-from concoursetools.dockertools import create_script_file
+from concoursetools.dockertools import MethodName, ScriptName, create_script_file
 from concoursetools.mocking import StringIOWrapper, TemporaryDirectoryState, create_env_vars, mock_argv, mock_environ, mock_stdin
 from concoursetools.parsing import format_check_input, format_in_input, format_out_input, parse_metadata
 from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig, VersionT
@@ -590,7 +590,7 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :returns: A list of new versions.
         """
         previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
-        with self._temporarily_create_script_file("check", self.inner_resource_type.check_main):
+        with self._temporarily_create_script_file("check", "check_main"):
             version_configs = super().fetch_new_versions(previous_version_config)
         return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
 
@@ -611,7 +611,7 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :returns: The version (most likely unchanged), and a dictionary of metadata.
         """
         version_config = version.to_flat_dict()
-        with self._temporarily_create_script_file("in", self.inner_resource_type.in_main):
+        with self._temporarily_create_script_file("in", "in_main"):
             new_version_config, metadata_pairs = super().download_version(version_config, params or {})
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
@@ -631,19 +631,19 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :param params: Additional keyword parameters passed to the inner resource.
         :returns: The new version, and a dictionary of metadata.
         """
-        with self._temporarily_create_script_file("out", self.inner_resource_type.out_main):
+        with self._temporarily_create_script_file("out", "out_main"):
             new_version_config, metadata_pairs = super().publish_new_version(params or {})
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
 
     @contextmanager
-    def _temporarily_create_script_file(self, script_name: str, method: Callable[[], None]) -> ContextManager[None]:
+    def _temporarily_create_script_file(self, script_name: ScriptName, method_name: MethodName) -> ContextManager[None]:
         attribute_name = f"{script_name}_script"
         try:
             with TemporaryDirectory() as temp_dir:
                 script_path = Path(temp_dir) / script_name
-                create_script_file(script_path, method, self.executable, self.permissions, self.encoding)
+                create_script_file(script_path, self.inner_resource_type, method_name, self.executable, self.permissions, self.encoding)
                 setattr(self, attribute_name, script_path)
                 yield
         finally:

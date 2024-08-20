@@ -7,7 +7,7 @@ import textwrap
 
 from concoursetools.cli.parser import CLI
 from concoursetools.colour import Colour, colour_print
-from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile
+from concoursetools.dockertools import MethodName, Namespace, ScriptName, create_dockerfile, create_script_file
 from concoursetools.importing import import_single_class_from_module
 from concoursetools.resource import ConcourseResource
 
@@ -28,7 +28,17 @@ def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
     """
     resource_class = import_single_class_from_module(Path(resource_file), parent_class=ConcourseResource,  # type: ignore[type-abstract]
                                                      class_name=class_name)
-    create_asset_scripts(Path(path), resource_class, executable)
+    assets_folder = Path(path)
+    assets_folder.mkdir(parents=True, exist_ok=True)
+
+    file_name_to_method_name: dict[ScriptName, MethodName] = {
+        "check": "check_main",
+        "in": "in_main",
+        "out": "out_main",
+    }
+    for file_name, method_name in file_name_to_method_name.items():
+        file_path = assets_folder / file_name
+        create_script_file(file_path, resource_class, method_name, executable)
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
