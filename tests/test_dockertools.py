@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 import textwrap
 from unittest import TestCase
 
-from concoursetools.dockertools import Namespace, create_dockerfile
+from concoursetools.cli import commands as cli_commands
 
 
 class DockerTests(TestCase):
@@ -24,7 +24,6 @@ class DockerTests(TestCase):
         path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
         shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
-        self.args = Namespace(str(self.temp_dir), resource_file="concourse.py")
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 
@@ -35,7 +34,7 @@ class DockerTests(TestCase):
         self._temp_dir.cleanup()
 
     def test_basic_config(self) -> None:
-        create_dockerfile(self.args)
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py")
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}-alpine
@@ -54,8 +53,7 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_with_different_name(self) -> None:
-        self.args.resource_file = "resource.py"
-        create_dockerfile(self.args)
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="resource.py")
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}-alpine
@@ -74,9 +72,8 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_rsa_config(self) -> None:
-        self.args.include_rsa = True
         self.maxDiff = None
-        create_dockerfile(self.args)
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", include_rsa=True)
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}-alpine as builder
@@ -111,18 +108,24 @@ class DockerTests(TestCase):
         """).lstrip()
         self.assertEqual(dockerfile_contents, expected_contents)
 
+    def test_dev_config(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", dev=True)
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}-alpine
 
-# @contextmanager
-# def _chdir(new_dir: Path) -> Generator[None, None, None]:
-#     original_dir = Path.cwd()
-#     try:
-#         os.chdir(new_dir)
-#         yield
-#     finally:
-#         os.chdir(original_dir)
+        COPY requirements.txt requirements.txt
 
+        COPY concoursetools concoursetools
 
-# def _random_python_file(num_bytes: int = 4, prefix: str = "test_") -> tuple[str, str]:
-#     import_path = f"{prefix}{secrets.token_hex(num_bytes)}"
-#     file_name = f"{import_path}.py"
-#     return import_path, file_name
+        RUN python3 -m pip install --upgrade pip && \\
+            pip install ./concoursetools && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)

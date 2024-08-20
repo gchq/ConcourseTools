@@ -9,7 +9,6 @@ from unittest import SkipTest, TestCase
 import concoursetools
 from concoursetools.cli import commands as cli_commands
 from concoursetools.colour import colourise
-from concoursetools.dockertools import Namespace, create_dockerfile
 from concoursetools.testing import (ConversionTestResourceWrapper, DockerConversionTestResourceWrapper, DockerTestResourceWrapper,
                                     FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper,
                                     run_command)
@@ -729,8 +728,7 @@ def _build_test_resource_docker_image() -> str:
             except FileNotFoundError:
                 pass
 
-        args = Namespace(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__)
-        create_dockerfile(args, concoursetools_path=Path("concoursetools"))
+        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__, dev=True)
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
