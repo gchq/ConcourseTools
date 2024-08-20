@@ -68,13 +68,8 @@ It is these files which get called by Concourse as part of the resource. Note th
 
 .. tip::
 
-    Because this pattern is suitable for almost every resource type, you can automate the creation of the ``assets`` folder by running ``python3 -m concoursetools assets``. You can also pass the following options:
-
-    * ``-e``, ``--executable``: The python executable to place at the top of the file. Defaults to ``/usr/bin/env python3``.
-    * ``-r``, ``--resource-file``: The path to your resource module. Defaults to ``concourse.py``.
-    * ``-c``, ``--class-name``: The name of the resource class to import from the module. If there is only one subclass of :class:`~concoursetools.resource.ConcourseResource`, then this will be automatically selected. If there are multiple subclasses and this option is not set then an error will be raised.
-
-    This corresponds to the :func:`~concoursetools.dockertools.create_asset_scripts` function.
+    Because this pattern is suitable for almost every resource type, you can automate the creation of the ``assets``
+    folder with the :ref:`cli.assets` CLI command.
 
 Dockerfile
 ----------
@@ -92,7 +87,7 @@ The Dockerfile should look something like:
 
     WORKDIR /opt/resource/
     COPY concourse.py ./concourse.py
-    RUN python3 -m concoursetools . -r concourse.py
+    RUN python3 -m concoursetools assets . -r concourse.py
 
     ENTRYPOINT ["python3"]
 
@@ -100,15 +95,7 @@ You should adjust the base image according to your requirements. If you **cannot
 
 .. tip::
 
-    You can automate the creation of this file with
-
-    .. code:: shell
-
-        $ python3 -m concoursetools --docker .
-
-    The same arguments from the :ref:`previous section <Assets>` can also be passed here, and will be used by the inner call to the CLI.
-
-    This corresponds to the :func:`~concoursetools.dockertools.create_dockerfile` function.
+    You can automate the creation of this file with the :ref:`cli.dockerfile` CLI command.
 
 
 Including Certs in your Docker Build
@@ -146,7 +133,7 @@ If any of your requirements are private (Concourse Tools is not a public project
 
     WORKDIR /opt/resource/
     COPY concourse.py ./concourse.py
-    RUN python3 -m concoursetools . -r concourse.py
+    RUN python3 -m concoursetools assets . -r concourse.py
 
     ENTRYPOINT ["python3"]
 
@@ -164,11 +151,11 @@ The Python :mod:`venv` module is necessary to easily copy the installed requirem
 
 .. tip::
 
-    You can easily generate this skeleton with
+    You can easily generate this skeleton with the :ref:`cli.dockerfile` CLI command:
 
     .. code:: shell
 
-        $ python3 -m concoursetools --docker . --include-rsa
+        $ python3 -m concoursetools dockerfile . --include-rsa
 
 Dockertools Reference
 ---------------------

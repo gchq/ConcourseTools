@@ -20,6 +20,7 @@ words:
   - bysource
   - classmethod
   - Colors
+  - colspec
   - concoursetools
   - dataclass
   - dataclasses
@@ -47,6 +48,7 @@ words:
   - pathlib
   - pyobject
   - Quickstart
+  - refid
   - refuri
   - rstrip
   - rwxr
@@ -54,6 +56,8 @@ words:
   - srcset
   - stringifying
   - termcolor
+  - tgroup
+  - thead
   - toctree
   - typehints
   - undoc
