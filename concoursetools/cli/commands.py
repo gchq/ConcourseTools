@@ -32,6 +32,24 @@ def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
+def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
+               class_name: str | None = None, include_rsa: bool = False) -> None:
+    """
+    Create the Dockerfile.
+
+    :param path: The location to which to write the Dockerfile.
+                 Pass '.' to write it to the current directory.
+    :param executable: The python executable to place at the top of the file. Defaults to '/usr/bin/env python3'.
+    :param resource_file: The path to the module containing the resource class. Defaults to 'concourse.py'.
+    :param class_name: The name of the resource class in the module, if there are multiple.
+    :param include_rsa: Enable the Dockerfile to (securely) use your RSA private key during building.
+    """
+    parsed_args = Namespace(path=path, executable=executable, resource_file=resource_file, class_name=class_name,
+                            docker=True, include_rsa=include_rsa)
+    create_dockerfile(parsed_args)
+
+
+@cli.register(allow_short={"executable", "class_name", "resource_file"})
 def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
            class_name: str | None = None, docker: bool = False, include_rsa: bool = False) -> None:
     """
@@ -49,10 +67,7 @@ def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
     Please refer to the documentation or help pages for the up to date CLI.
     This CLI will be removed in version 0.10.0, or in version 1.0.0, whichever is sooner.
     """), colour=Colour.RED)
-    parsed_args = Namespace(path=path, executable=executable, resource_file=resource_file, class_name=class_name,
-                            docker=docker, include_rsa=include_rsa)
-    if parsed_args.docker:
-        create_dockerfile(parsed_args)
-        return
-
+    if docker:
+        return dockerfile(path, executable=executable, resource_file=resource_file, class_name=class_name,
+                          include_rsa=include_rsa)
     assets(path, executable=executable, resource_file=resource_file, class_name=class_name)

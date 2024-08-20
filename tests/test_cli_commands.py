@@ -48,6 +48,56 @@ class AssetTests(unittest.TestCase):
         self.assertSetEqual({path.name for path in asset_dir.iterdir()}, {"check", "in", "out"})
 
 
+class DockerfileTests(unittest.TestCase):
+    """
+    Tests for creating the Dockerfile.
+    """
+    def setUp(self) -> None:
+        """Code to run before each test."""
+        self._temp_dir = TemporaryDirectory()
+        self.temp_dir = Path(self._temp_dir.name)
+        self._original_dir = Path.cwd()
+
+        path_to_this_file = Path(__file__)
+        path_to_test_resource_module = path_to_this_file.parent / "resource.py"
+        shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
+        self.dockerfile_path = self.temp_dir / "Dockerfile"
+        self.assertFalse(self.dockerfile_path.exists())
+
+        self.current_python_string = f"{sys.version_info.major}.{sys.version_info.minor}"
+
+        os.chdir(self.temp_dir)
+
+    def tearDown(self) -> None:
+        """Code to run after each test."""
+        os.chdir(self._original_dir)
+        self._temp_dir.cleanup()
+
+    def test_docker(self) -> None:
+        new_stdout = StringIO()
+        with redirect_stdout(new_stdout):
+            cli.invoke(["dockerfile", "."])
+
+        self.assertEqual(new_stdout.getvalue(), "")
+
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}-alpine
+
+        COPY requirements.txt requirements.txt
+
+        RUN python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+
 class LegacyTests(unittest.TestCase):
     """
     Tests for the legacy CLI.
