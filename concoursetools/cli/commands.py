@@ -7,7 +7,9 @@ import textwrap
 
 from concoursetools.cli.parser import CLI
 from concoursetools.colour import Colour, colour_print
-from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile, import_resource_class_from_module
+from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile
+from concoursetools.importing import import_single_class_from_module
+from concoursetools.resource import ConcourseResource
 
 cli = CLI()
 
@@ -36,5 +38,6 @@ def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
         create_dockerfile(parsed_args)
         return
 
-    resource_class = import_resource_class_from_module(parsed_args.resource_path, parsed_args.class_name)  # type: ignore[var-annotated]
+    resource_class = import_single_class_from_module(parsed_args.resource_path, parent_class=ConcourseResource,  # type: ignore[type-abstract]
+                                                     class_name=parsed_args.class_name)
     create_asset_scripts(Path(parsed_args.path), resource_class, parsed_args.executable)

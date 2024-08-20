@@ -23,6 +23,7 @@ sys.path.extend([str(DOCS_FOLDER_PATH), str(SOURCE_FOLDER_PATH), str(REPO_FOLDER
 
 import concoursetools
 import concoursetools.additional
+import concoursetools.importing
 import concoursetools.resource
 import concoursetools.typing
 import concoursetools.version
@@ -54,6 +55,7 @@ always_document_param_types = True
 autodoc_member_order = "bysource"
 
 autodoc_custom_types = {
+    concoursetools.importing.T: ":class:`object`",
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
 }

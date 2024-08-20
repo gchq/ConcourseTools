@@ -2,73 +2,18 @@
 """
 Tests for the dockertools module.
 """
-import inspect
+from collections.abc import Generator
+from contextlib import contextmanager
+import os
 from pathlib import Path
+import secrets
 import shutil
 import sys
 from tempfile import TemporaryDirectory
 import textwrap
 from unittest import TestCase
 
-from concoursetools import additional
-from concoursetools.dockertools import (Namespace, create_dockerfile, file_path_to_import_path, import_resource_class_from_module,
-                                        import_resource_classes_from_module)
-from tests import resource as test_resource
-
-
-class BasicTests(TestCase):
-    """
-    Tests for the utility functions.
-    """
-    def test_import_path_creation(self) -> None:
-        file_path = Path("path/to/python.py")
-        import_path = file_path_to_import_path(file_path)
-        self.assertEqual(import_path, "path.to.python")
-
-    def test_import_path_creation_wrong_extension(self) -> None:
-        file_path = Path("path/to/file.txt")
-        with self.assertRaises(ValueError):
-            file_path_to_import_path(file_path)
-
-    def test_importing_classes(self) -> None:
-        file_path = Path(additional.__file__).relative_to(Path.cwd())
-        resource_classes = import_resource_classes_from_module(file_path)  # type: ignore[var-annotated]
-        expected = {
-            "InOnlyConcourseResource": additional.InOnlyConcourseResource,
-            "OutOnlyConcourseResource": additional.OutOnlyConcourseResource,
-            "MultiVersionConcourseResource": additional.MultiVersionConcourseResource,
-            "SelfOrganisingConcourseResource": additional.SelfOrganisingConcourseResource,
-            "TriggerOnChangeConcourseResource": additional.TriggerOnChangeConcourseResource,
-        }
-        self.assertEqual(expected.keys(), resource_classes.keys())
-        for key, class_1 in resource_classes.items():
-            class_2 = expected[key]
-            self.assertClassEqual(class_1, class_2)
-
-    def test_importing_class_no_name(self) -> None:
-        file_path = Path(test_resource.__file__).relative_to(Path.cwd())
-        with self.assertRaises(RuntimeError):
-            import_resource_class_from_module(file_path)
-
-    def test_importing_class_with_name(self) -> None:
-        file_path = Path(test_resource.__file__).relative_to(Path.cwd())
-        resource_class = import_resource_class_from_module(file_path, class_name=test_resource.TestResource.__name__)  # type: ignore[var-annotated]
-        self.assertClassEqual(resource_class, test_resource.TestResource)
-
-    def test_importing_class_multiple_options(self) -> None:
-        file_path = Path(additional.__file__).relative_to(Path.cwd())
-        with self.assertRaises(RuntimeError):
-            import_resource_class_from_module(file_path)
-
-    def test_importing_class_multiple_options_specify_name(self) -> None:
-        file_path = Path(additional.__file__).relative_to(Path.cwd())
-        parent_class = additional.InOnlyConcourseResource
-        resource_class = import_resource_class_from_module(file_path, class_name=parent_class.__name__)  # type: ignore[var-annotated]
-        self.assertClassEqual(resource_class, parent_class)
-
-    def assertClassEqual(self, class_1: type[object], class_2: type[object]) -> None:
-        self.assertEqual(inspect.getsourcefile(class_1), inspect.getsourcefile(class_2))
-        self.assertEqual(inspect.getsource(class_1), inspect.getsource(class_2))
+from concoursetools.dockertools import Namespace, create_dockerfile
 
 
 class DockerTests(TestCase):
@@ -169,3 +114,19 @@ class DockerTests(TestCase):
         ENTRYPOINT ["python3"]
         """).lstrip()
         self.assertEqual(dockerfile_contents, expected_contents)
+
+
+@contextmanager
+def _chdir(new_dir: Path) -> Generator[None, None, None]:
+    original_dir = Path.cwd()
+    try:
+        os.chdir(new_dir)
+        yield
+    finally:
+        os.chdir(original_dir)
+
+
+def _random_python_file(num_bytes: int = 4, prefix: str = "test_") -> tuple[str, str]:
+    import_path = f"{prefix}{secrets.token_hex(num_bytes)}"
+    file_name = f"{import_path}.py"
+    return import_path, file_name

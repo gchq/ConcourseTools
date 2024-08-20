@@ -6,16 +6,17 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-import importlib.util
 import inspect
 from pathlib import Path
 import sys
 import textwrap
 from types import MethodType
-from typing import cast
+from typing import TypeVar, cast
 
 from concoursetools import ConcourseResource
-from concoursetools.typing import VersionProtocol, VersionT
+from concoursetools.typing import VersionProtocol
+
+T = TypeVar("T")
 
 DEFAULT_EXECUTABLE = "/usr/bin/env python3"
 DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
@@ -164,103 +165,6 @@ def create_script_file(path: Path, method: Callable[[], None], executable: str =
 
     path.write_text(contents, encoding=encoding)
     path.chmod(permissions)
-
-
-def file_path_to_import_path(file_path: Path) -> str:
-    """
-    Convert a file path to an import path.
-
-    :param file_path: The path to a Python file.
-    :raises ValueError: If the path doesn't end in a '.py' extension.
-
-    :Example:
-        >>> file_path_to_import_path(Path("module.py"))
-        'module'
-        >>> file_path_to_import_path(Path("path/to/module.py"))
-        'path.to.module'
-    """
-    *path_components, file_name = file_path.parts
-    module_name, extension = file_name.split(".")
-    if extension != "py":
-        raise ValueError(f"{file_path!r} does not appear to be a valid Python module")
-
-    path_components.append(module_name)
-    import_path = ".".join(path_components)
-    return import_path
-
-
-def import_resource_class_from_module(file_path: Path, class_name: str | None = None,
-                                      parent_class: type[ConcourseResource[VersionT]] = ConcourseResource) -> type[ConcourseResource[VersionT]]:
-    """
-    Import the resource class from the module.
-
-    Similar to :func:`import_resource_classes_from_module`, but ensures only one class is returned.
-
-    :param file_path: The location of the module as a file path.
-    :param class_name: The name of the class to extract. Required if multiple are returned.
-    :param parent_class: All subclasses of this class defined within the module
-                         (not imported from elsewhere) will be extracted.
-    :returns: The extracted class.
-    :raises RuntimeError: If too many or too few classes are available in the module, unless the class name is specified.
-    """
-    possible_resource_classes = import_resource_classes_from_module(file_path, parent_class=parent_class)
-
-    if class_name is None:
-        if len(possible_resource_classes) == 1:
-            _, resource_class = possible_resource_classes.popitem()
-        else:
-            if len(possible_resource_classes) == 0:
-                raise RuntimeError(f"No subclasses of {parent_class.__name__!r} found in {file_path}")
-            raise RuntimeError(f"Multiple subclasses of {parent_class.__name__!r} found in {file_path}:"
-                               f" {set(possible_resource_classes)}")
-    else:
-        resource_class = possible_resource_classes[class_name]
-
-    return resource_class
-
-
-def import_resource_classes_from_module(file_path: Path,
-                                        parent_class: type[ConcourseResource[VersionT]] = ConcourseResource
-                                        ) -> dict[str, type[ConcourseResource[VersionT]]]:
-    """
-    Import all available resource classes from the module.
-
-    :param file_path: The location of the module as a file path.
-    :param parent_class: All subclasses of this class defined within the module
-                         (not imported from elsewhere) will be extracted.
-    :returns: A mapping of class name to class.
-    """
-    import_path = file_path_to_import_path(file_path)
-
-    try:
-        spec = importlib.util.spec_from_file_location(import_path, file_path)
-        if spec is None:
-            raise RuntimeError("Imported module spec is unexpectedly 'None'")
-        if spec.loader is None:
-            raise RuntimeError("Imported module spec loader is unexpectedly 'None'")
-
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[import_path] = module
-        spec.loader.exec_module(module)
-    except ModuleNotFoundError as error:
-        if not file_path.exists():
-            raise FileNotFoundError(file_path) from error
-        raise
-
-    possible_resource_classes: dict[str, type[ConcourseResource[VersionT]]] = {}
-    for _, cls in inspect.getmembers(module, predicate=inspect.isclass):
-        try:
-            class_is_subclass_of_parent = issubclass(cls, parent_class)
-        except TypeError:
-            class_is_subclass_of_parent = False
-
-        class_is_defined_in_this_module = (cls.__module__ == import_path)
-        class_is_not_private = (not cls.__name__.startswith("_"))
-
-        if class_is_subclass_of_parent and class_is_defined_in_this_module and class_is_not_private:
-            possible_resource_classes[cls.__name__] = cls
-
-    return possible_resource_classes
 
 
 @dataclass
