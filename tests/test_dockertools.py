@@ -2,11 +2,7 @@
 """
 Tests for the dockertools module.
 """
-from collections.abc import Generator
-from contextlib import contextmanager
-import os
 from pathlib import Path
-import secrets
 import shutil
 import sys
 from tempfile import TemporaryDirectory
@@ -51,7 +47,7 @@ class DockerTests(TestCase):
 
         WORKDIR /opt/resource/
         COPY concourse.py ./concourse.py
-        RUN python3 -m concoursetools . -r concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
 
         ENTRYPOINT ["python3"]
         """).lstrip()
@@ -71,7 +67,7 @@ class DockerTests(TestCase):
 
         WORKDIR /opt/resource/
         COPY resource.py ./resource.py
-        RUN python3 -m concoursetools . -r resource.py
+        RUN python3 -m concoursetools assets . -r resource.py
 
         ENTRYPOINT ["python3"]
         """).lstrip()
@@ -109,24 +105,24 @@ class DockerTests(TestCase):
 
         WORKDIR /opt/resource/
         COPY concourse.py ./concourse.py
-        RUN python3 -m concoursetools . -r concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
 
         ENTRYPOINT ["python3"]
         """).lstrip()
         self.assertEqual(dockerfile_contents, expected_contents)
 
 
-@contextmanager
-def _chdir(new_dir: Path) -> Generator[None, None, None]:
-    original_dir = Path.cwd()
-    try:
-        os.chdir(new_dir)
-        yield
-    finally:
-        os.chdir(original_dir)
+# @contextmanager
+# def _chdir(new_dir: Path) -> Generator[None, None, None]:
+#     original_dir = Path.cwd()
+#     try:
+#         os.chdir(new_dir)
+#         yield
+#     finally:
+#         os.chdir(original_dir)
 
 
-def _random_python_file(num_bytes: int = 4, prefix: str = "test_") -> tuple[str, str]:
-    import_path = f"{prefix}{secrets.token_hex(num_bytes)}"
-    file_name = f"{import_path}.py"
-    return import_path, file_name
+# def _random_python_file(num_bytes: int = 4, prefix: str = "test_") -> tuple[str, str]:
+#     import_path = f"{prefix}{secrets.token_hex(num_bytes)}"
+#     file_name = f"{import_path}.py"
+#     return import_path, file_name

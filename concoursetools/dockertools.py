@@ -40,7 +40,7 @@ def create_dockerfile(args: "Namespace", encoding: str | None = None,
     else:
         file_path = directory_path
 
-    cli_split_command = ["python3", "-m", "concoursetools", ".", "-r", args.resource_file]
+    cli_split_command = ["python3", "-m", "concoursetools", "assets", ".", "-r", args.resource_file]
     if args.class_name is not None:
         cli_split_command.extend(["-c", args.class_name])
 

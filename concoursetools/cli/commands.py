@@ -15,6 +15,23 @@ cli = CLI()
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
+def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
+           class_name: str | None = None) -> None:
+    """
+    Create the assets script directory.
+
+    :param path: The location at which to the script files will be written.
+                 Pass '.' to write scripts to the current directory.
+    :param executable: The python executable to place at the top of the file. Defaults to '/usr/bin/env python3'.
+    :param resource_file: The path to the module containing the resource class. Defaults to 'concourse.py'.
+    :param class_name: The name of the resource class in the module, if there are multiple.
+    """
+    resource_class = import_single_class_from_module(Path(resource_file), parent_class=ConcourseResource,  # type: ignore[type-abstract]
+                                                     class_name=class_name)
+    create_asset_scripts(Path(path), resource_class, executable)
+
+
+@cli.register(allow_short={"executable", "class_name", "resource_file"})
 def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
            class_name: str | None = None, docker: bool = False, include_rsa: bool = False) -> None:
     """
@@ -38,6 +55,4 @@ def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
         create_dockerfile(parsed_args)
         return
 
-    resource_class = import_single_class_from_module(parsed_args.resource_path, parent_class=ConcourseResource,  # type: ignore[type-abstract]
-                                                     class_name=parsed_args.class_name)
-    create_asset_scripts(Path(parsed_args.path), resource_class, parsed_args.executable)
+    assets(path, executable=executable, resource_file=resource_file, class_name=class_name)
