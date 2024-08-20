@@ -31,7 +31,7 @@ def parse_check_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig | 
     :returns: The source and version configuration (if it exists).
 
     .. note::
-        If the version has not been passed, then :obj:`None` will be returned, and **not** an empty :class:`dict`.
+        If the version has not been passed, then :data:`None` will be returned, and **not** an empty :class:`dict`.
     """
     payload: dict[str, dict[str, object] | None] = json.loads(raw_json)
     source_config = _extract_source_config_from_payload(payload)
@@ -178,7 +178,7 @@ def format_check_input(resource_config: ResourceConfig, version_config: VersionC
     Format :concourse:`check input <implementing-resource-types.resource-check>` as a JSON string.
 
     :param resource_config: A resource configuration.
-    :param version_config: A version configuration, or :obj:`None` if no version currently exists.
+    :param version_config: A version configuration, or :data:`None` if no version currently exists.
     :param json_kwargs: Additional keyword arguments to pass to :func:`json.dumps`.
     :returns: A formatted JSON string as Concourse will pass to a Check:
 

@@ -63,7 +63,7 @@ Next we write the metadata to a file, in case the user wishes to use it themselv
     :start-at: info_path =
     :end-before: if image
 
-We optionally (but defaulting to :obj:`True`) download the image:
+We optionally (but defaulting to :data:`True`) download the image:
 
 .. literalinclude:: ../../../examples/xkcd.py
     :pyobject: XKCDResource.download_version

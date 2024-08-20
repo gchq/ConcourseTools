@@ -42,7 +42,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         * ``BUILD_TEAM_ID``
         * ``BUILD_PIPELINE_ID``
 
-        These can still be accessed via :obj:`os.environ`, but they are not supported by Concourse Tools.
+        These can still be accessed via :data:`os.environ`, but they are not supported by Concourse Tools.
     """
     def __init__(self, BUILD_ID: str, BUILD_TEAM_NAME: str, ATC_EXTERNAL_URL: str, BUILD_NAME: str | None = None,
                  BUILD_JOB_NAME: str | None = None, BUILD_PIPELINE_NAME: str | None = None,
@@ -78,7 +78,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
     @property
     def is_one_off_build(self) -> bool:
         """
-        Return :obj:`True` if this build is one-off, and :obj:`False` otherwise.
+        Return :data:`True` if this build is one-off, and :data:`False` otherwise.
 
         A build is a "one-off" is it is triggered via the Concourse CLI
         :concourse:`execute command <tasks.running-tasks>`.
@@ -96,7 +96,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
     @property
     def is_instanced_pipeline(self) -> bool:
-        """Return :obj:`True` if this is an :concourse:`instanced pipeline <instanced-pipelines>`."""
+        """Return :data:`True` if this is an :concourse:`instanced pipeline <instanced-pipelines>`."""
         return self.BUILD_PIPELINE_INSTANCE_VARS is not None
 
     def instance_vars(self) -> dict[str, object]:
@@ -181,10 +181,10 @@ class BuildMetadata:  # pylint: disable=invalid-name
         :param additional_values: Additional values which can be used for interpolation.
                                   The keys of the mapping should not include the ``$`` character.
         :param ignore_missing: By default, if the variable is not available then a :class:`KeyError` will be raised.
-                               Setting this to :obj:`True` will ignore missing variables.
+                               Setting this to :data:`True` will ignore missing variables.
         :returns: The interpolated string.
         :seealso: Interpolation is done using an instance of :class:`string.Template` by calling either
-                  :meth:`~string.Template.substitute` when ``ignore_missing`` is :obj:`False`, and
+                  :meth:`~string.Template.substitute` when ``ignore_missing`` is :data:`False`, and
                   :meth:`~string.Template.safe_substitute` otherwise.
 
         :Example:

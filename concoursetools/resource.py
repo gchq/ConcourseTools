@@ -104,7 +104,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         Fetch new versions of the resource.
 
         The method will be passed the previous version (an instance of the :class:`~concoursetools.version.Version`
-        class) if it exists, or :obj:`None` if this is the first version. It should return a list of version instances
+        class) if it exists, or :data:`None` if this is the first version. It should return a list of version instances
         in **chronological order with the oldest first**, "including the requested version if it's still valid.".
 
         .. attention::
@@ -119,7 +119,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
             newer versions due to something wrong with the external resource, such as a git repo which has been
             force pushed and can no longer be properly compared.
 
-        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+        :param previous_version: The most recent version of the resource. This will be set to :data:`None`
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """

@@ -59,13 +59,13 @@ ________________________
 
 The first behaviour we will implement is the :concourse:`check <implementing-resource-types.resource-check>`, when the external resource is queried for new executions. There are a few cases that we need to handle:
 
-1. If no previous version is passed (i.e., the parameter is :obj:`None`), then we know that this is the first request and we need to return the *latest valid version*.
+1. If no previous version is passed (i.e., the parameter is :data:`None`), then we know that this is the first request and we need to return the *latest valid version*.
 2. If no versions are available *at all* then an empty list should be returned.
 3. If there are new executions which have finished since the previous version, then they need to be returned in "oldest-to-newest" order, including the previous version "if it's still valid".
 4. If there have been no more executions since the previous version then the response should *only* include the previous version.
 5. If the previous version is no longer in the set of versions (i.e., something has gone wrong or the external resource has somehow changed) then the latest version should be returned. In practice this rarely happens, but should be planned for.
 
-We start by defining a private method on the resource to yield "potential versions" from the external source. This is just to allow us to check equality with the previous version directly, which is cleaner than worrying about a potential :class:`AttributeError` if the previous version is :obj:`None`. It also allows us to handle the way in which AWS batches up its response when calling `list_pipeline_executions <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sagemaker/client/list_pipeline_executions.html>`_. All we need be concerned with is that this method will yield instances of ``ExecutionVersion`` in newest-to-oldest order until the server runs out.
+We start by defining a private method on the resource to yield "potential versions" from the external source. This is just to allow us to check equality with the previous version directly, which is cleaner than worrying about a potential :class:`AttributeError` if the previous version is :data:`None`. It also allows us to handle the way in which AWS batches up its response when calling `list_pipeline_executions <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sagemaker/client/list_pipeline_executions.html>`_. All we need be concerned with is that this method will yield instances of ``ExecutionVersion`` in newest-to-oldest order until the server runs out.
 
 .. literalinclude:: ../../../examples/pipeline.py
     :pyobject: PipelineResource._yield_potential_execution_versions
@@ -99,7 +99,7 @@ We start by describing the execution, removing the ``ResponseMetadata`` (no reas
 .. literalinclude:: ../../../examples/pipeline.py
     :pyobject: DatetimeSafeJSONEncoder
 
-Next, we check if the user wishes to download the pipeline, and then write the definition to file. Again, each of these are configurable and the defaults are handled with default parameters. Finally, we create the metadata. It is a lot easier to deal with a Python :class:`dict` than JSON in bash, and we can take advantage of the numerous ways to update and mutate the dictionary. Here, we specifically filter out any pieces of metadata with a value of :obj:`None` to reduce the amount of code we need to write. Finally, both the original version and the metadata are returned.
+Next, we check if the user wishes to download the pipeline, and then write the definition to file. Again, each of these are configurable and the defaults are handled with default parameters. Finally, we create the metadata. It is a lot easier to deal with a Python :class:`dict` than JSON in bash, and we can take advantage of the numerous ways to update and mutate the dictionary. Here, we specifically filter out any pieces of metadata with a value of :data:`None` to reduce the amount of code we need to write. Finally, both the original version and the metadata are returned.
 
 Publishing New Executions
 _________________________

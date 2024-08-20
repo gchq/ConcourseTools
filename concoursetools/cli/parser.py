@@ -53,8 +53,8 @@ class _CLIParser(ABC):
         :param title: The title of the section.
         :param options: Keys and values for the options.
         :param spacing: The size of the indent for the keys and values, as well as the minimum spacing between keys and values.
-        :param key_width: The width of the key column. If set to :obj:`None`, the width will be determined as the maximum length of all of the keys.
-        :param sort_keys: Set to :obj:`True` to sort the keys before printing. Otherwise they are printed in dictionary order.
+        :param key_width: The width of the key column. If set to :data:`None`, the width will be determined as the maximum length of all of the keys.
+        :param sort_keys: Set to :data:`True` to sort the keys before printing. Otherwise they are printed in dictionary order.
         """
         print(f"{title}:")
         margin = " " * spacing
@@ -420,7 +420,7 @@ class Option(Parameter[T]):
     :param param_type: The Python type of the option.
     :param description: An optional description of the option.
     :param default: The option default, if set.
-    :param allow_short: Set to :obj:`True` to allow a short option, i.e. ``-o`` as well as ``--option``.
+    :param allow_short: Set to :data:`True` to allow a short option, i.e. ``-o`` as well as ``--option``.
     """
     default: T | None = None
     allow_short: bool = False
@@ -441,7 +441,7 @@ class FlagOption(Option[bool]):
 
     :param name: The name of the flag.
     :param description: An optional description of the flag.
-    :param default: The option default, if set. Should be either :obj:`True` or :obj:`False`.
+    :param default: The option default, if set. Should be either :data:`True` or :data:`False`.
     """
     def __init__(self, name: str, description: str | None, default: bool):
         super().__init__(name, bool, description, default, allow_short=False)

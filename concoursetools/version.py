@@ -130,7 +130,7 @@ class Version(ABC):
         :Example:
 
             A user may wish to include whether or not the commit is a "merge commit" within
-            the version. However, :code:`bool("False")` will still return :obj:`True`.
+            the version. However, :code:`bool("False")` will still return :data:`True`.
             Instead, the user should do something like this:
 
             .. code-block:: python3
@@ -160,7 +160,7 @@ class SortableVersionMixin(ABC):
     A mixin for :class:`Version` subclasses which allows comparisons between instances.
 
     .. note::
-        Once :obj:`~object.__lt__` has been implemented, you will be able to use ``<``, ``>``, ``<=`` and ``>=`` with your version classes.
+        Once :meth:`~object.__lt__` has been implemented, you will be able to use ``<``, ``>``, ``<=`` and ``>=`` with your version classes.
 
     :Example:
         >>> import datetime
