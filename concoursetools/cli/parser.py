@@ -10,15 +10,35 @@ from collections.abc import Callable, Generator
 from dataclasses import dataclass
 import inspect
 import shutil
+import sys
 import textwrap
 from typing import Any, Generic, TypeVar
 
 from concoursetools import __version__
 from concoursetools.cli.docstring import Docstring
 
+_CURRENT_PYTHON_VERSION = (sys.version_info.major, sys.version_info.minor)
+
+if _CURRENT_PYTHON_VERSION >= (3, 10):
+    from types import UnionType
+    _ANNOTATIONS_TO_TYPES: dict[type[Any] | UnionType | str, type] = {}
+else:
+    _ANNOTATIONS_TO_TYPES: dict[type[Any] | Any | str, type] = {}  # type: ignore[no-redef]
+
 CLIFunction = Callable[..., None]
 CLIFunctionT = TypeVar("CLIFunctionT", bound=CLIFunction)
 T = TypeVar("T")
+
+_AVAILABLE_TYPES = (str, bool, int, float)
+
+for type_ in _AVAILABLE_TYPES:
+    _ANNOTATIONS_TO_TYPES.update({
+        type_: type_,
+        type_.__name__: type_,
+        f"{type_.__name__} | None": type_,
+    })
+    if _CURRENT_PYTHON_VERSION >= (3, 10):
+        _ANNOTATIONS_TO_TYPES[type_ | None] = type_
 
 
 class _CLIParser(ABC):
@@ -372,14 +392,8 @@ class Parameter(ABC, Generic[T]):
         docstring = Docstring.from_object(func)
 
         for parameter_name, parameter in inspect.signature(func).parameters.items():
-            parameter_type = parameter.annotation
             parameter_help = docstring.parameters.get(parameter_name)
-
-            from types import UnionType
-            if issubclass(type(parameter_type), UnionType):  # isinstance won't work here
-                parameter_type, other_type = getattr(parameter_type, "__args__")
-                if not issubclass(other_type, type(None)):  # 'other_type is None' won't work here'
-                    raise RuntimeError(f"Could not handle type: {parameter.annotation!r}")
+            parameter_type = _ANNOTATIONS_TO_TYPES[parameter.annotation]
 
             if parameter.kind is inspect._ParameterKind.POSITIONAL_ONLY:
                 yield PositionalArgument(parameter_name, parameter_type, parameter_help)

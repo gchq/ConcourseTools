@@ -9,7 +9,7 @@ import unittest
 import unittest.mock
 
 from concoursetools import __version__
-from concoursetools.cli.parser import CLI, Docstring
+from concoursetools.cli.parser import _ANNOTATIONS_TO_TYPES, _CURRENT_PYTHON_VERSION, CLI, Docstring
 
 
 class ParsingTests(unittest.TestCase):
@@ -231,6 +231,41 @@ class HelpTests(unittest.TestCase):
         _, current_height = shutil.get_terminal_size()
         with unittest.mock.patch("shutil.get_terminal_size", lambda: (new_width, current_height)):
             yield
+
+
+class AnnotationTests(unittest.TestCase):
+    """
+    Tests for the _ANNOTATIONS_TO_TYPE mapping.
+    """
+    def test_strings(self) -> None:
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["str"], str)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["bool"], bool)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["int"], int)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["float"], float)
+
+    def test_optional_strings(self) -> None:
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["str | None"], str)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["bool | None"], bool)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["int | None"], int)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES["float | None"], float)
+
+    def test_types(self) -> None:
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[str], str)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[bool], bool)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[int], int)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[float], float)
+
+    def test_optional_types(self) -> None:
+        if _CURRENT_PYTHON_VERSION < (3, 10):
+            self.skipTest("Union types with '|' only valid for Python >= 3.10.")
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[str | None], str)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[bool | None], bool)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[int | None], int)
+        self.assertEqual(_ANNOTATIONS_TO_TYPES[float | None], float)
+
+    def test_reversed_optional_string_fails(self) -> None:
+        with self.assertRaises(KeyError):
+            _ANNOTATIONS_TO_TYPES["None | str"]
 
 
 class DocstringTests(unittest.TestCase):

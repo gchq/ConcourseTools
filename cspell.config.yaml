@@ -48,6 +48,7 @@ words:
   - pathlib
   - pyobject
   - Quickstart
+  - redef
   - refid
   - refuri
   - rstrip
