@@ -7,8 +7,8 @@ from tempfile import TemporaryDirectory
 from unittest import SkipTest, TestCase
 
 import concoursetools
+from concoursetools.cli import commands as cli_commands
 from concoursetools.colour import colourise
-from concoursetools.dockertools import Namespace, create_asset_scripts, create_dockerfile
 from concoursetools.testing import (ConversionTestResourceWrapper, DockerConversionTestResourceWrapper, DockerTestResourceWrapper,
                                     FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper,
                                     run_command)
@@ -297,7 +297,8 @@ class FileWrapperTests(TestCase):
     def setUp(self) -> None:
         """Code to run before each test."""
         self.temp_dir = TemporaryDirectory()
-        create_asset_scripts(Path(self.temp_dir.name), TestResource, executable="/usr/bin/env python3")
+        cli_commands.assets(self.temp_dir.name, resource_file="tests/resource.py",
+                            class_name=TestResource.__name__, executable="/usr/bin/env python3")
 
         config = {
             "uri": "git://some-uri",
@@ -727,8 +728,7 @@ def _build_test_resource_docker_image() -> str:
             except FileNotFoundError:
                 pass
 
-        args = Namespace(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__)
-        create_dockerfile(args, concoursetools_path=Path("concoursetools"))
+        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__, dev=True)
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()

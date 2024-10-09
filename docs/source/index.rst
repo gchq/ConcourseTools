@@ -44,6 +44,7 @@ Contents
 
     quickstart
     api_reference
+    cli_reference
     debugging
     testing
     deployment

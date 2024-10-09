@@ -27,7 +27,7 @@ def create_env_vars(one_off_build: bool = False, instance_vars: dict[str, str] |
     """
     Create fake environment variables for a Concourse stage.
 
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
 
@@ -79,7 +79,7 @@ class TestBuildMetadata(BuildMetadata):
 
         >>> metadata = BuildMetadata(**create_env_vars(...))
 
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -180,7 +180,7 @@ class TemporaryDirectoryState:
               of the file will be used instead.
             * A **folder** is represented by a dictionary yielding more files and folders.
 
-        If a folder has not been descended into (due to the depth limit) then it is represented by an :obj:`Ellipsis` (``...``).
+        If a folder has not been descended into (due to the depth limit) then it is represented by an :data:`Ellipsis` (``...``).
 
         :param folder_path: The path to the folder.
         :param max_depth: The maximum depth into which the function can descend. A value of 1 will not enter any subdirectories,
@@ -230,13 +230,13 @@ class TemporaryDirectoryState:
 
 class StringIOWrapper:
     r"""
-    A basic wrapper around a :class:`~io.StringIO` instance for capturing :obj:`~sys.stdout` and :obj:`~sys.stderr`.
+    A basic wrapper around a :class:`~io.StringIO` instance for capturing :data:`~sys.stdout` and :data:`~sys.stderr`.
 
     An instance of this class acts a bit like a string, to the extent that
     ``==`` will compare the :attr:`value` of the instance to a string.
 
     :Example:
-        Capture :obj:`~sys.stderr` with :meth:`capture_stderr`:
+        Capture :data:`~sys.stderr` with :meth:`capture_stderr`:
 
         >>> output = StringIOWrapper()
         >>> with output.capture_stderr():
@@ -246,7 +246,7 @@ class StringIOWrapper:
         >>> output == "def\n"
         True
 
-        Or capture both :obj:`~sys.stdout` and :obj:`~sys.stderr` with :meth:`capture_stdout_and_stderr`:
+        Or capture both :data:`~sys.stdout` and :data:`~sys.stderr` with :meth:`capture_stdout_and_stderr`:
 
         >>> output = StringIOWrapper()
         >>> with output.capture_stdout_and_stderr():
@@ -280,7 +280,7 @@ class StringIOWrapper:
     @contextmanager
     def capture_stdout_and_stderr(self) -> ContextManager["StringIOWrapper"]:
         """
-        Capture both :obj:`~sys.stdout` and :obj:`~sys.stderr`.
+        Capture both :data:`~sys.stdout` and :data:`~sys.stderr`.
 
         :seealso: :func:`contextlib.redirect_stdout`, :func:`contextlib.redirect_stderr`
         """
@@ -291,7 +291,7 @@ class StringIOWrapper:
     @contextmanager
     def capture_stderr(self) -> ContextManager["StringIOWrapper"]:
         """
-        Capture :obj:`~sys.stderr`.
+        Capture :data:`~sys.stderr`.
 
         :seealso: :func:`contextlib.redirect_stderr`
         """
@@ -302,7 +302,7 @@ class StringIOWrapper:
 @contextmanager
 def mock_environ(new_environ: dict[str, str]) -> ContextManager[None]:
     """
-    Mock :obj:`os.environ` in a context manager.
+    Mock :data:`os.environ` in a context manager.
 
     :param new_environ: The new environment variables. No existing environment variables are carried forward.
 
@@ -319,7 +319,7 @@ def mock_environ(new_environ: dict[str, str]) -> ContextManager[None]:
 @contextmanager
 def mock_stdin(stdin: str) -> ContextManager[None]:
     """
-    Mock :obj:`~sys.stdin` in a context manager.
+    Mock :data:`~sys.stdin` in a context manager.
 
     :param stdin: A new string to be used for the stdin.
 
@@ -329,9 +329,9 @@ def mock_stdin(stdin: str) -> ContextManager[None]:
         new_stdin
 
     .. warning::
-        As it's a :term:`file object`, :obj:`sys.stdin`
+        As it's a :term:`file object`, :data:`sys.stdin`
         is only mocked once by this decorator, and subsequent calls to
-        :meth:`~io.TextIOBase.read` will return :obj:`None`.
+        :meth:`~io.TextIOBase.read` will return :data:`None`.
     """
     with mock.patch.object(sys, "stdin", StringIO(stdin)):
         yield
@@ -340,7 +340,7 @@ def mock_stdin(stdin: str) -> ContextManager[None]:
 @contextmanager
 def mock_argv(*args: str) -> ContextManager[None]:
     """
-    Mock :obj:`sys.argv` in a context manager.
+    Mock :data:`sys.argv` in a context manager.
 
     :param args: New args to be used.
 

@@ -49,7 +49,7 @@ By default, two versions are equal if they have the same :func:`hash`. However, 
         def __init__(self, branch_name: str):
             self.branch_name = branch_name
 
-Under the default behaviour, ``GitBranch("main")`` and ``GitBranch("origin/main")`` will be not be considered equal, but this might not be ideal. The fastest way to fix this is to overload :obj:`~object.__eq__` like so:
+Under the default behaviour, ``GitBranch("main")`` and ``GitBranch("origin/main")`` will be not be considered equal, but this might not be ideal. The fastest way to fix this is to overload :meth:`~object.__eq__` like so:
 
 .. code:: python3
 
@@ -65,7 +65,7 @@ Under the default behaviour, ``GitBranch("main")`` and ``GitBranch("origin/main"
 Ordering
 ________
 
-Sometimes you need to order versions to simplify your scripts (returning the latest version, etc.), but by default versions are **not** comparable in this way. This can be fixed by also inheriting from :class:`SortableVersionMixin`, which expects you to implement :obj:`~object.__lt__`. We want ``version_a <= version_b`` if and only if ``version_a`` is **no older** than ``version_b``.
+Sometimes you need to order versions to simplify your scripts (returning the latest version, etc.), but by default versions are **not** comparable in this way. This can be fixed by also inheriting from :class:`SortableVersionMixin`, which expects you to implement :meth:`~object.__lt__`. We want ``version_a <= version_b`` if and only if ``version_a`` is **no older** than ``version_b``.
 
 .. autoclass:: concoursetools.version.SortableVersionMixin
     :members:

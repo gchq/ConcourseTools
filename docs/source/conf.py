@@ -7,11 +7,13 @@ For a full list see the documentation: https://www.sphinx-doc.org/en/master/usag
 """
 # -- Path setup --------------------------------------------------------------
 
+from collections.abc import Callable
 from pathlib import Path
 import sys
 from typing import Any
 
 import sphinx.config
+from sphinx_autodoc_typehints import format_annotation
 
 CONF_FILE_PATH = Path(__file__).absolute()
 SOURCE_FOLDER_PATH = CONF_FILE_PATH.parent
@@ -23,6 +25,8 @@ sys.path.extend([str(DOCS_FOLDER_PATH), str(SOURCE_FOLDER_PATH), str(REPO_FOLDER
 
 import concoursetools
 import concoursetools.additional
+import concoursetools.cli.parser
+import concoursetools.importing
 import concoursetools.resource
 import concoursetools.typing
 import concoursetools.version
@@ -42,6 +46,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
+    "extensions.cli",
     "extensions.concourse",
     "extensions.linecount",
     "extensions.wikipedia",
@@ -54,6 +59,8 @@ always_document_param_types = True
 autodoc_member_order = "bysource"
 
 autodoc_custom_types = {
+    concoursetools.cli.parser.CLIFunctionT: format_annotation(Callable[..., None], sphinx.config.Config()),
+    concoursetools.importing.T: ":class:`object`",
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
 }

@@ -22,7 +22,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Generic, TypeVar
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
-from concoursetools.dockertools import create_script_file
+from concoursetools.dockertools import MethodName, ScriptName, create_script_file
 from concoursetools.mocking import StringIOWrapper, TemporaryDirectoryState, create_env_vars, mock_argv, mock_environ, mock_stdin
 from concoursetools.parsing import format_check_input, format_in_input, format_out_input, parse_metadata
 from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig, VersionT
@@ -46,7 +46,7 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         methods to capture the debugging output and directory state changes respectively.
 
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
 
@@ -151,7 +151,7 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
 
     :param inner_resource: The resource to be wrapped.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -167,7 +167,7 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
 
         Calls the inner resource whilst capturing debugging output.
 
-        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+        :param previous_version: The most recent version of the resource. This will be set to :data:`None`
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
@@ -214,7 +214,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
     :param inner_resource_type: The :class:`~concoursetools.resource.ConcourseResource` subclass corresponding to the resource.
     :param inner_resource_config: The JSON configuration for the resource.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -235,7 +235,7 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
             No environment variables are available to the check script.
 
         :param previous_version_config: The JSON configuration of the most recent version of the resource.
-                                        This will be set to :obj:`None` if the resource has never been run before.
+                                        This will be set to :data:`None` if the resource has never been run before.
         :returns: A list of new version configurations.
         """
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
@@ -325,7 +325,7 @@ class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
     :param inner_resource_type: The :class:`~concoursetools.resource.ConcourseResource` subclass corresponding to the resource.
     :param inner_resource_config: The JSON configuration for the resource.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -344,7 +344,7 @@ class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
         Converts the version (if it exists) to JSON, and then invokes :meth:`~JSONTestResourceWrapper.fetch_new_versions`.
         The response is then converted back to :class:`~concoursetools.version.Version` instances.
 
-        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+        :param previous_version: The most recent version of the resource. This will be set to :data:`None`
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
@@ -398,16 +398,16 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
 
     :param inner_resource_config: The JSON configuration for the resource.
     :param check_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-check>`.
-                         Setting to :obj:`None` (default) means that :meth:`fetch_new_versions`
+                         Setting to :data:`None` (default) means that :meth:`fetch_new_versions`
                          raises :class:`NotImplementedError`.
     :param in_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-in>`.
-                      Setting to :obj:`None` (default) means that :meth:`download_version`
+                      Setting to :data:`None` (default) means that :meth:`download_version`
                       raises :class:`NotImplementedError`.
     :param out_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-out>`.
-                       Setting to :obj:`None` (default) means that :meth:`publish_new_version`
+                       Setting to :data:`None` (default) means that :meth:`publish_new_version`
                        raises :class:`NotImplementedError`.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
 
@@ -432,7 +432,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
             No environment variables are available to the check script.
 
         :param previous_version_config: The JSON configuration of the most recent version of the resource.
-                                        This will be set to :obj:`None` if the resource has never been run before.
+                                        This will be set to :data:`None` if the resource has never been run before.
         :returns: A list of new version configurations.
         """
         if self.check_script is None:
@@ -526,7 +526,7 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
                            If not found, then no error will be raised unless the corresponding
                            method is called.
         :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-        :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+        :param one_off_build: Set to :data:`True` if you are testing a one-off build.
         :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
         :param env_vars: Pass additional environment variables, or overload the default ones.
         """
@@ -554,10 +554,10 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
     :param permissions: The (Linux) permissions the file should have. Defaults to ``rwxr-xr-x``.
                         (See :func:`~concoursetools.dockertools.create_script_file`.)
     :param encoding: The encoding of the file as passed to :meth:`~pathlib.Path.write_text`.
-                     Setting to :obj:`None` (default) will use the user's default encoding.
+                     Setting to :data:`None` (default) will use the user's default encoding.
                      (See :func:`~concoursetools.dockertools.create_script_file`.)
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -585,12 +585,12 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         .. caution::
             The external script file only exists for the duration of this method and is not cached.
 
-        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+        :param previous_version: The most recent version of the resource. This will be set to :data:`None`
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
         previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
-        with self._temporarily_create_script_file("check", self.inner_resource_type.check_main):
+        with self._temporarily_create_script_file("check", "check_main"):
             version_configs = super().fetch_new_versions(previous_version_config)
         return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
 
@@ -611,7 +611,7 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :returns: The version (most likely unchanged), and a dictionary of metadata.
         """
         version_config = version.to_flat_dict()
-        with self._temporarily_create_script_file("in", self.inner_resource_type.in_main):
+        with self._temporarily_create_script_file("in", "in_main"):
             new_version_config, metadata_pairs = super().download_version(version_config, params or {})
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
@@ -631,19 +631,19 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :param params: Additional keyword parameters passed to the inner resource.
         :returns: The new version, and a dictionary of metadata.
         """
-        with self._temporarily_create_script_file("out", self.inner_resource_type.out_main):
+        with self._temporarily_create_script_file("out", "out_main"):
             new_version_config, metadata_pairs = super().publish_new_version(params or {})
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
 
     @contextmanager
-    def _temporarily_create_script_file(self, script_name: str, method: Callable[[], None]) -> ContextManager[None]:
+    def _temporarily_create_script_file(self, script_name: ScriptName, method_name: MethodName) -> ContextManager[None]:
         attribute_name = f"{script_name}_script"
         try:
             with TemporaryDirectory() as temp_dir:
                 script_path = Path(temp_dir) / script_name
-                create_script_file(script_path, method, self.executable, self.permissions, self.encoding)
+                create_script_file(script_path, self.inner_resource_type, method_name, self.executable, self.permissions, self.encoding)
                 setattr(self, attribute_name, script_path)
                 yield
         finally:
@@ -663,7 +663,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
     :param inner_resource_config: The JSON configuration for the resource.
     :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
 
@@ -691,7 +691,7 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
             No environment variables are available to the check script.
 
         :param previous_version_config: The JSON configuration of the most recent version of the resource.
-                                        This will be set to :obj:`None` if the resource has never been run before.
+                                        This will be set to :data:`None` if the resource has never been run before.
         :returns: A list of new version configurations.
         """
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
@@ -777,7 +777,7 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
     :param inner_resource_config: The JSON configuration for the resource.
     :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
-    :param one_off_build: Set to :obj:`True` if you are testing a one-off build.
+    :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
@@ -797,7 +797,7 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
         Converts the version (if it exists) to JSON and then invokes :meth:`~DockerTestResourceWrapper.fetch_new_versions`.
         The response is then converted back to :class:`~concoursetools.version.Version` instances.
 
-        :param previous_version: The most recent version of the resource. This will be set to :obj:`None`
+        :param previous_version: The most recent version of the resource. This will be set to :data:`None`
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
@@ -864,14 +864,14 @@ def run_docker_container(image: str, command: str, additional_args: list[str] | 
     :param additional_args: Additional arguments to pass to the command.
     :param env: Environment variables to be made available to the script.
     :param cwd: Pass a path within the container to set the working directory, or else use the image default.
-    :param stdin: A string to be passed on :obj:`~sys.stdin`.
-    :param rm: Set to :obj:`True` to automatically remove the container when it exits.
+    :param stdin: A string to be passed on :data:`~sys.stdin`.
+    :param rm: Set to :data:`True` to automatically remove the container when it exits.
                 Equivalent to passing ``--rm``.
-    :param interactive: Set to :obj:`True` to keep ``stdin`` open even if not attached.
+    :param interactive: Set to :data:`True` to keep ``stdin`` open even if not attached.
                         Equivalent to passing ``-i`` or ``--interactive``.
     :param dir_mapping: A mapping of directories to paths to mount within the container. Values can be paths or strings.
     :param hostname: Specify a hostname inside the container. Defaults to the container ID.
-    :param local_only: When set to :obj:`True` (default), only locally cached images can be used.
+    :param local_only: When set to :data:`True` (default), only locally cached images can be used.
     :returns: The stdout and stderr of the script.
     :raises RuntimeError: If the external script exits with a non-zero exit code.
     :seealso: This function will call :func:`run_command`.
@@ -919,7 +919,7 @@ def run_script(script_path: Path, additional_args: list[str] | None = None, env:
     :param additional_args: Additional arguments to be passed to the script.
     :param env: Environment variables to be made available to the script.
     :param cwd: The working directory of the script. Defaults to current working directory.
-    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :param stdin: A string to be passed on :data:`~sys.stdin`.
     :returns: The stdout and stderr of the script.
     :raises FileNotFoundError: If the script does not exist.
     :raises RuntimeError: If the external script exits with a non-zero exit code.
@@ -940,7 +940,7 @@ def run_command(command: str, additional_args: list[str] | None = None, env: dic
     :param additional_args: Additional arguments to be passed to the command.
     :param env: Environment variables to be made available to the command.
     :param cwd: The working directory of the command. Defaults to current working directory.
-    :param stdin: A string to be passed on :obj:`~sys.stdin`.
+    :param stdin: A string to be passed on :data:`~sys.stdin`.
     :returns: The stdout and stderr of the command.
     :raises RuntimeError: If the external command exits with a non-zero exit code.
     :seealso: This function is broadly equivalent to :func:`subprocess.run`.
