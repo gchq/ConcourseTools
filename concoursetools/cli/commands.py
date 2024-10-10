@@ -47,19 +47,22 @@ def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
-               class_name: str | None = None, include_rsa: bool = False, encoding: str | None = None,
-               dev: bool = False) -> None:
+def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix: str | None = None,
+               resource_file: str = "concourse.py", class_name: str | None = None, include_rsa: bool = False,
+               encoding: str | None = None, no_venv: bool = False, dev: bool = False) -> None:
     """
     Create the Dockerfile.
 
     :param path: The location to which to write the Dockerfile.
                  Pass '.' to write it to the current directory.
     :param executable: The python executable to place at the top of the file. Defaults to '/usr/bin/env python3'.
+    :param suffix: An optional suffix to combine with the tag to create the full tag.
     :param resource_file: The path to the module containing the resource class. Defaults to 'concourse.py'.
     :param class_name: The name of the resource class in the module, if there are multiple.
     :param include_rsa: Enable the Dockerfile to (securely) use your RSA private key during building.
     :param encoding: The encoding of the created file. If not passed, Concourse Tools will use the user's default encoding.
+    :param no_venv: Pass to explicitly not use a virtual environment within the image. This is not recommended and exists
+                    to ensure legacy behaviour.
     :param dev: Pass to copy a local version of Concourse Tools to the image, instead of installing from PyPI.
                 The onus is on the user to ensure that the "concoursetools" exists in the working directory at
                 Docker build time.
@@ -75,66 +78,143 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", resour
         cli_split_command.extend(["-c", class_name])
 
     cli_command = " ".join(cli_split_command)
-
-    if dev is False:
-        pip_install_command = """
-        RUN python3 -m pip install --upgrade pip && \\
-            pip install -r requirements.txt --no-deps
-        """.strip()
+    if suffix is None:
+        image = f"python:{DEFAULT_PYTHON_VERSION}"
     else:
-        pip_install_command = """
-        COPY concoursetools concoursetools
-
-        RUN python3 -m pip install --upgrade pip && \\
-            pip install ./concoursetools && \\
-            pip install -r requirements.txt --no-deps
-        """.strip()
+        image = f"python:{DEFAULT_PYTHON_VERSION}-{suffix}"
 
     if include_rsa:
-        contents = textwrap.dedent(f"""
-        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as builder
+        if dev:
+            if no_venv:
+                raise ValueError("Can only specify --no-venv in production mode")
+            contents = textwrap.dedent(f"""
+            FROM {image}
 
-        ARG ssh_known_hosts
-        ARG ssh_private_key
+            RUN python3 -m venv /opt/venv
+            # Activate venv
+            ENV PATH="/opt/venv/bin:$PATH"
 
-        RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
-        RUN echo "$ssh_known_hosts" > /root/.ssh/known_hosts && chmod 600 /root/.ssh/known_hosts
-        RUN echo "$ssh_private_key" > /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa
+            COPY requirements.txt requirements.txt
 
-        COPY requirements.txt requirements.txt
+            COPY concoursetools concoursetools
 
-        RUN python3 -m venv /opt/venv
-        # Activate venv
-        ENV PATH="/opt/venv/bin:$PATH"
+            RUN \\
+                --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
+                --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
+                python3 -m pip install --upgrade pip && \\
+                pip install ./concoursetools && \\
+                pip install -r requirements.txt --no-deps
 
-        {pip_install_command}
+            WORKDIR /opt/resource/
+            COPY {resource_file} ./{resource_file}
+            RUN {cli_command}
 
+            ENTRYPOINT ["python3"]
+            """).lstrip()
+        else:
+            if no_venv:
+                contents = textwrap.dedent(f"""
+                FROM {image}
 
-        FROM python:{DEFAULT_PYTHON_VERSION}-alpine as runner
-        COPY --from=builder /opt/venv /opt/venv
-        # Activate venv
-        ENV PATH="/opt/venv/bin:$PATH"
+                COPY requirements.txt requirements.txt
 
-        WORKDIR /opt/resource/
-        COPY {resource_file} ./{resource_file}
-        RUN {cli_command}
+                RUN \\
+                    --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
+                    --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
+                    python3 -m pip install --upgrade pip && \\
+                    pip install -r requirements.txt --no-deps
 
-        ENTRYPOINT ["python3"]
-        """).lstrip()
+                WORKDIR /opt/resource/
+                COPY {resource_file} ./{resource_file}
+                RUN {cli_command}
+
+                ENTRYPOINT ["python3"]
+                """).lstrip()
+            else:
+                contents = textwrap.dedent(f"""
+                FROM {image}
+
+                RUN python3 -m venv /opt/venv
+                # Activate venv
+                ENV PATH="/opt/venv/bin:$PATH"
+
+                COPY requirements.txt requirements.txt
+
+                RUN \\
+                    --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
+                    --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
+                    python3 -m pip install --upgrade pip && \\
+                    pip install -r requirements.txt --no-deps
+
+                WORKDIR /opt/resource/
+                COPY {resource_file} ./{resource_file}
+                RUN {cli_command}
+
+                ENTRYPOINT ["python3"]
+                """).lstrip()
     else:
-        contents = textwrap.dedent(f"""
-        FROM python:{DEFAULT_PYTHON_VERSION}-alpine
+        if dev:
+            if no_venv:
+                raise ValueError("Can only specify --no-venv in production mode")
+            contents = textwrap.dedent(f"""
+            FROM {image}
 
-        COPY requirements.txt requirements.txt
+            RUN python3 -m venv /opt/venv
+            # Activate venv
+            ENV PATH="/opt/venv/bin:$PATH"
 
-        {pip_install_command}
+            COPY requirements.txt requirements.txt
 
-        WORKDIR /opt/resource/
-        COPY {resource_file} ./{resource_file}
-        RUN {cli_command}
+            COPY concoursetools concoursetools
 
-        ENTRYPOINT ["python3"]
-        """).lstrip()
+            RUN \\
+                python3 -m pip install --upgrade pip && \\
+                pip install ./concoursetools && \\
+                pip install -r requirements.txt --no-deps
+
+            WORKDIR /opt/resource/
+            COPY {resource_file} ./{resource_file}
+            RUN {cli_command}
+
+            ENTRYPOINT ["python3"]
+            """).lstrip()
+        else:
+            if no_venv:
+                contents = textwrap.dedent(f"""
+                FROM {image}
+
+                COPY requirements.txt requirements.txt
+
+                RUN \\
+                    python3 -m pip install --upgrade pip && \\
+                    pip install -r requirements.txt --no-deps
+
+                WORKDIR /opt/resource/
+                COPY {resource_file} ./{resource_file}
+                RUN {cli_command}
+
+                ENTRYPOINT ["python3"]
+                """).lstrip()
+            else:
+                contents = textwrap.dedent(f"""
+                FROM {image}
+
+                RUN python3 -m venv /opt/venv
+                # Activate venv
+                ENV PATH="/opt/venv/bin:$PATH"
+
+                COPY requirements.txt requirements.txt
+
+                RUN \\
+                    python3 -m pip install --upgrade pip && \\
+                    pip install -r requirements.txt --no-deps
+
+                WORKDIR /opt/resource/
+                COPY {resource_file} ./{resource_file}
+                RUN {cli_command}
+
+                ENTRYPOINT ["python3"]
+                """).lstrip()
 
     file_path.write_text(contents, encoding=encoding)
 
@@ -158,6 +238,6 @@ def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
     This CLI will be removed in version 0.10.0, or in version 1.0.0, whichever is sooner.
     """), colour=Colour.RED)
     if docker:
-        return dockerfile(path, executable=executable, resource_file=resource_file, class_name=class_name,
-                          include_rsa=include_rsa)
+        return dockerfile(path, suffix="alpine", executable=executable, resource_file=resource_file, class_name=class_name,
+                          include_rsa=include_rsa, no_venv=True)
     assets(path, executable=executable, resource_file=resource_file, class_name=class_name)
