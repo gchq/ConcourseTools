@@ -258,10 +258,3 @@ Finally, we specify an ``ENTRYPOINT`` for the container. This has little bearing
 will specify the scripts it wishes to invoke via the shebang in the scripts. It isn't even used when hijacking the
 container (the default is bash). However, it is best practice to set something, and this should make it easiest to
 debug locally.
-
-
-Dockertools Reference
----------------------
-
-.. automodule:: concoursetools.dockertools
-    :members:

@@ -8,9 +8,9 @@ from pathlib import Path
 import sys
 import textwrap
 
+from concoursetools import dockertools
 from concoursetools.cli.parser import CLI
 from concoursetools.colour import Colour, colour_print
-from concoursetools.dockertools import MethodName, ScriptName, create_script_file
 from concoursetools.importing import import_single_class_from_module
 from concoursetools.resource import ConcourseResource
 
@@ -36,14 +36,14 @@ def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
     assets_folder = Path(path)
     assets_folder.mkdir(parents=True, exist_ok=True)
 
-    file_name_to_method_name: dict[ScriptName, MethodName] = {
+    file_name_to_method_name: dict[dockertools.ScriptName, dockertools.MethodName] = {
         "check": "check_main",
         "in": "in_main",
         "out": "out_main",
     }
     for file_name, method_name in file_name_to_method_name.items():
         file_path = assets_folder / file_name
-        create_script_file(file_path, resource_class, method_name, executable)
+        dockertools.create_script_file(file_path, resource_class, method_name, executable)
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
@@ -79,144 +79,77 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
 
     cli_command = " ".join(cli_split_command)
     if suffix is None:
-        image = f"python:{DEFAULT_PYTHON_VERSION}"
+        tag = DEFAULT_PYTHON_VERSION
     else:
-        image = f"python:{DEFAULT_PYTHON_VERSION}-{suffix}"
+        tag = f"{DEFAULT_PYTHON_VERSION}-{suffix}"
+
+    final_dockerfile = dockertools.Dockerfile()
+
+    final_dockerfile.new_instruction_group(
+        dockertools.FromInstruction(image="python", tag=tag),
+    )
+
+    if no_venv:
+        if dev:
+            raise ValueError("Can only specify --no-venv in production mode")
+    else:
+        final_dockerfile.new_instruction_group(
+            dockertools.RunInstruction(["python3 -m venv /opt/venv"]),
+            dockertools.Comment("Activate venv"),
+            dockertools.EnvInstruction({"PATH": "/opt/venv/bin:$PATH"}),
+        )
+
+    final_dockerfile.new_instruction_group(
+        dockertools.CopyInstruction("requirements.txt"),
+    )
 
     if include_rsa:
-        if dev:
-            if no_venv:
-                raise ValueError("Can only specify --no-venv in production mode")
-            contents = textwrap.dedent(f"""
-            FROM {image}
-
-            RUN python3 -m venv /opt/venv
-            # Activate venv
-            ENV PATH="/opt/venv/bin:$PATH"
-
-            COPY requirements.txt requirements.txt
-
-            COPY concoursetools concoursetools
-
-            RUN \\
-                --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
-                --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
-                python3 -m pip install --upgrade pip && \\
-                pip install ./concoursetools && \\
-                pip install -r requirements.txt --no-deps
-
-            WORKDIR /opt/resource/
-            COPY {resource_file} ./{resource_file}
-            RUN {cli_command}
-
-            ENTRYPOINT ["python3"]
-            """).lstrip()
-        else:
-            if no_venv:
-                contents = textwrap.dedent(f"""
-                FROM {image}
-
-                COPY requirements.txt requirements.txt
-
-                RUN \\
-                    --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
-                    --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
-                    python3 -m pip install --upgrade pip && \\
-                    pip install -r requirements.txt --no-deps
-
-                WORKDIR /opt/resource/
-                COPY {resource_file} ./{resource_file}
-                RUN {cli_command}
-
-                ENTRYPOINT ["python3"]
-                """).lstrip()
-            else:
-                contents = textwrap.dedent(f"""
-                FROM {image}
-
-                RUN python3 -m venv /opt/venv
-                # Activate venv
-                ENV PATH="/opt/venv/bin:$PATH"
-
-                COPY requirements.txt requirements.txt
-
-                RUN \\
-                    --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
-                    --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
-                    python3 -m pip install --upgrade pip && \\
-                    pip install -r requirements.txt --no-deps
-
-                WORKDIR /opt/resource/
-                COPY {resource_file} ./{resource_file}
-                RUN {cli_command}
-
-                ENTRYPOINT ["python3"]
-                """).lstrip()
+        mounts: list[dockertools.Mount] | None = [
+            dockertools.SecretMount(
+                secret_id="private_key",
+                target="/root/.ssh/id_rsa",
+                mode=0o600,
+                required=True,
+            ),
+            dockertools.SecretMount(
+                secret_id="known_hosts",
+                target="/root/.ssh/known_hosts",
+                mode=0o644,
+            ),
+        ]
     else:
-        if dev:
-            if no_venv:
-                raise ValueError("Can only specify --no-venv in production mode")
-            contents = textwrap.dedent(f"""
-            FROM {image}
+        mounts = None
 
-            RUN python3 -m venv /opt/venv
-            # Activate venv
-            ENV PATH="/opt/venv/bin:$PATH"
+    if dev:
+        final_dockerfile.new_instruction_group(
+            dockertools.CopyInstruction("concoursetools"),
+        )
+        final_dockerfile.new_instruction_group(
+            dockertools.MultiLineRunInstruction([
+                "python3 -m pip install --upgrade pip",
+                "pip install ./concoursetools",
+                "pip install -r requirements.txt --no-deps",
+            ], mounts=mounts),
+        )
+    else:
+        final_dockerfile.new_instruction_group(
+            dockertools.MultiLineRunInstruction([
+                "python3 -m pip install --upgrade pip",
+                "pip install -r requirements.txt --no-deps",
+            ], mounts=mounts),
+        )
 
-            COPY requirements.txt requirements.txt
+    final_dockerfile.new_instruction_group(
+        dockertools.WorkDirInstruction("/opt/resource/"),
+        dockertools.CopyInstruction(resource_file, f"./{resource_file}"),
+        dockertools.RunInstruction([cli_command]),
+    )
 
-            COPY concoursetools concoursetools
+    final_dockerfile.new_instruction_group(
+        dockertools.EntryPointInstruction(["python3"]),
+    )
 
-            RUN \\
-                python3 -m pip install --upgrade pip && \\
-                pip install ./concoursetools && \\
-                pip install -r requirements.txt --no-deps
-
-            WORKDIR /opt/resource/
-            COPY {resource_file} ./{resource_file}
-            RUN {cli_command}
-
-            ENTRYPOINT ["python3"]
-            """).lstrip()
-        else:
-            if no_venv:
-                contents = textwrap.dedent(f"""
-                FROM {image}
-
-                COPY requirements.txt requirements.txt
-
-                RUN \\
-                    python3 -m pip install --upgrade pip && \\
-                    pip install -r requirements.txt --no-deps
-
-                WORKDIR /opt/resource/
-                COPY {resource_file} ./{resource_file}
-                RUN {cli_command}
-
-                ENTRYPOINT ["python3"]
-                """).lstrip()
-            else:
-                contents = textwrap.dedent(f"""
-                FROM {image}
-
-                RUN python3 -m venv /opt/venv
-                # Activate venv
-                ENV PATH="/opt/venv/bin:$PATH"
-
-                COPY requirements.txt requirements.txt
-
-                RUN \\
-                    python3 -m pip install --upgrade pip && \\
-                    pip install -r requirements.txt --no-deps
-
-                WORKDIR /opt/resource/
-                COPY {resource_file} ./{resource_file}
-                RUN {cli_command}
-
-                ENTRYPOINT ["python3"]
-                """).lstrip()
-
-    file_path.write_text(contents, encoding=encoding)
+    final_dockerfile.write_to_file(file_path, encoding=encoding)
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})

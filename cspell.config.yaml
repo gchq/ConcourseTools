@@ -26,12 +26,14 @@ words:
   - dataclasses
   - datetime
   - dateutil
+  - Dockerfiles
   - dockertools
   - docstrings
   - elif
   - furo
   - GCHQ
   - genindex
+  - HEALTHCHECK
   - INPROGRESS
   - intersphinx
   - kwargs
@@ -44,6 +46,7 @@ words:
   - maxsplit
   - modindex
   - mypy
+  - ONBUILD
   - outdir
   - pathlib
   - pyobject
@@ -55,10 +58,12 @@ words:
   - rwxr
   - seealso
   - srcset
+  - STOPSIGNAL
   - stringifying
   - termcolor
   - tgroup
   - thead
+  - tmpfs
   - toctree
   - typehints
   - undoc
