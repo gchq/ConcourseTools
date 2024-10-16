@@ -57,6 +57,54 @@ class DockerTests(TestCase):
         """).lstrip()
         self.assertEqual(dockerfile_contents, expected_contents)
 
+    def test_basic_config_custom_image_and_tag(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", image="node", tag="lts-slim")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent("""
+        FROM node:lts-slim
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_pip_args(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", pip_args="--trusted-host pypi.org")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip --trusted-host pypi.org && \\
+            pip install -r requirements.txt --no-deps --trusted-host pypi.org
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
     def test_basic_config_no_venv(self) -> None:
         cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", no_venv=True)
         dockerfile_contents = self.dockerfile_path.read_text()
@@ -120,6 +168,55 @@ class DockerTests(TestCase):
         WORKDIR /opt/resource/
         COPY resource.py ./resource.py
         RUN python3 -m concoursetools assets . -r resource.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_with_class_name_and_executable(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), class_name="MyResource", executable="/usr/bin/python3")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py -c MyResource -e /usr/bin/python3
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_netrc_config(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), include_netrc=True)
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            --mount=type=secret,id=netrc,target=/root/.netrc,mode=0600,required=true \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
 
         ENTRYPOINT ["python3"]
         """).lstrip()

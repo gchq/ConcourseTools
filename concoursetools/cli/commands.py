@@ -20,7 +20,7 @@ DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
+def assets(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
            class_name: str | None = None) -> None:
     """
     Create the assets script directory.
@@ -43,12 +43,14 @@ def assets(path: str, /, *, executable: str = "/usr/bin/env python3", resource_f
     }
     for file_name, method_name in file_name_to_method_name.items():
         file_path = assets_folder / file_name
-        dockertools.create_script_file(file_path, resource_class, method_name, executable)
+        dockertools.create_script_file(file_path, resource_class, method_name,
+                                       executable or dockertools.DEFAULT_EXECUTABLE)
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix: str | None = None,
-               resource_file: str = "concourse.py", class_name: str | None = None, include_rsa: bool = False,
+def dockerfile(path: str, /, *, executable: str | None = None, image: str = "python", tag: str | None = None,
+               suffix: str | None = None, resource_file: str = "concourse.py", class_name: str | None = None,
+               pip_args: str | None = None, include_rsa: bool = False, include_netrc: bool = False,
                encoding: str | None = None, no_venv: bool = False, dev: bool = False) -> None:
     """
     Create the Dockerfile.
@@ -56,10 +58,14 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
     :param path: The location to which to write the Dockerfile.
                  Pass '.' to write it to the current directory.
     :param executable: The python executable to place at the top of the file. Defaults to '/usr/bin/env python3'.
+    :param image: Specify the image used in the FROM instruction.
+    :param tag: The tag to combine with the image. Defaults to the major/minor version of the current Python environment.
     :param suffix: An optional suffix to combine with the tag to create the full tag.
     :param resource_file: The path to the module containing the resource class. Defaults to 'concourse.py'.
     :param class_name: The name of the resource class in the module, if there are multiple.
+    :param pip_args: An optional string to be appended to all calls to pip, e.g. '--timeout 100'.
     :param include_rsa: Enable the Dockerfile to (securely) use your RSA private key during building.
+    :param include_netrc: Enable the Dockerfile to (securely) use your netrc file during  building.
     :param encoding: The encoding of the created file. If not passed, Concourse Tools will use the user's default encoding.
     :param no_venv: Pass to explicitly not use a virtual environment within the image. This is not recommended and exists
                     to ensure legacy behaviour.
@@ -73,20 +79,28 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
     else:
         file_path = directory_path
 
+    assets_to_potentially_include = {
+        "-c": class_name,
+        "-e": executable,
+    }
+    assets_options = {key: value for key, value in assets_to_potentially_include.items() if value is not None}
+
     cli_split_command = ["python3", "-m", "concoursetools", "assets", ".", "-r", resource_file]
-    if class_name is not None:
-        cli_split_command.extend(["-c", class_name])
+    for key, value in assets_options.items():
+        if value is not None:
+            cli_split_command.extend([key, value])
 
     cli_command = " ".join(cli_split_command)
-    if suffix is None:
-        tag = DEFAULT_PYTHON_VERSION
-    else:
-        tag = f"{DEFAULT_PYTHON_VERSION}-{suffix}"
+    if tag is None:
+        if suffix is None:
+            tag = DEFAULT_PYTHON_VERSION
+        else:
+            tag = f"{DEFAULT_PYTHON_VERSION}-{suffix}"
 
     final_dockerfile = dockertools.Dockerfile()
 
     final_dockerfile.new_instruction_group(
-        dockertools.FromInstruction(image="python", tag=tag),
+        dockertools.FromInstruction(image=image, tag=tag),
     )
 
     if no_venv:
@@ -103,8 +117,10 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
         dockertools.CopyInstruction("requirements.txt"),
     )
 
+    mounts: list[dockertools.Mount] = []
+
     if include_rsa:
-        mounts: list[dockertools.Mount] | None = [
+        mounts.extend([
             dockertools.SecretMount(
                 secret_id="private_key",
                 target="/root/.ssh/id_rsa",
@@ -116,9 +132,22 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
                 target="/root/.ssh/known_hosts",
                 mode=0o644,
             ),
-        ]
+        ])
+
+    if include_netrc:
+        mounts.extend([
+            dockertools.SecretMount(
+                secret_id="netrc",
+                target="/root/.netrc",
+                mode=0o600,
+                required=True,
+            ),
+        ])
+
+    if pip_args is None:
+        pip_string_suffix = ""
     else:
-        mounts = None
+        pip_string_suffix = f" {pip_args}"
 
     if dev:
         final_dockerfile.new_instruction_group(
@@ -126,16 +155,16 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
         )
         final_dockerfile.new_instruction_group(
             dockertools.MultiLineRunInstruction([
-                "python3 -m pip install --upgrade pip",
+                "python3 -m pip install --upgrade pip" + pip_string_suffix,
                 "pip install ./concoursetools",
-                "pip install -r requirements.txt --no-deps",
+                "pip install -r requirements.txt --no-deps" + pip_string_suffix,
             ], mounts=mounts),
         )
     else:
         final_dockerfile.new_instruction_group(
             dockertools.MultiLineRunInstruction([
-                "python3 -m pip install --upgrade pip",
-                "pip install -r requirements.txt --no-deps",
+                "python3 -m pip install --upgrade pip" + pip_string_suffix,
+                "pip install -r requirements.txt --no-deps" + pip_string_suffix,
             ], mounts=mounts),
         )
 
@@ -153,7 +182,7 @@ def dockerfile(path: str, /, *, executable: str = "/usr/bin/env python3", suffix
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def legacy(path: str, /, *, executable: str = "/usr/bin/env python3", resource_file: str = "concourse.py",
+def legacy(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
            class_name: str | None = None, docker: bool = False, include_rsa: bool = False) -> None:
     """
     Invoke the legacy CLI.
