@@ -37,11 +37,108 @@ class DockerTests(TestCase):
         cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py")
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
-        FROM python:{self.current_python_string}-alpine
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
 
         COPY requirements.txt requirements.txt
 
-        RUN python3 -m pip install --upgrade pip && \\
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_custom_image_and_tag(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", image="node", tag="lts-slim")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent("""
+        FROM node:lts-slim
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_pip_args(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", pip_args="--trusted-host pypi.org")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip --trusted-host pypi.org && \\
+            pip install -r requirements.txt --no-deps --trusted-host pypi.org
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_no_venv(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", no_venv=True)
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_basic_config_with_suffix(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", suffix="slim")
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}-slim
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install -r requirements.txt --no-deps
 
         WORKDIR /opt/resource/
@@ -56,11 +153,16 @@ class DockerTests(TestCase):
         cli_commands.dockerfile(str(self.temp_dir), resource_file="resource.py")
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
-        FROM python:{self.current_python_string}-alpine
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
 
         COPY requirements.txt requirements.txt
 
-        RUN python3 -m pip install --upgrade pip && \\
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install -r requirements.txt --no-deps
 
         WORKDIR /opt/resource/
@@ -71,34 +173,72 @@ class DockerTests(TestCase):
         """).lstrip()
         self.assertEqual(dockerfile_contents, expected_contents)
 
-    def test_rsa_config(self) -> None:
-        self.maxDiff = None
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", include_rsa=True)
+    def test_basic_config_with_class_name_and_executable(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), class_name="MyResource", executable="/usr/bin/python3")
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
-        FROM python:{self.current_python_string}-alpine as builder
-
-        ARG ssh_known_hosts
-        ARG ssh_private_key
-
-        RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
-        RUN echo "$ssh_known_hosts" > /root/.ssh/known_hosts && chmod 600 /root/.ssh/known_hosts
-        RUN echo "$ssh_private_key" > /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa
-
-        COPY requirements.txt requirements.txt
+        FROM python:{self.current_python_string}
 
         RUN python3 -m venv /opt/venv
         # Activate venv
         ENV PATH="/opt/venv/bin:$PATH"
 
-        RUN python3 -m pip install --upgrade pip && \\
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install -r requirements.txt --no-deps
 
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py -c MyResource -e /usr/bin/python3
 
-        FROM python:{self.current_python_string}-alpine as runner
-        COPY --from=builder /opt/venv /opt/venv
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_netrc_config(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), include_netrc=True)
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
         # Activate venv
         ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            --mount=type=secret,id=netrc,target=/root/.netrc,mode=0600,required=true \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
+
+        WORKDIR /opt/resource/
+        COPY concourse.py ./concourse.py
+        RUN python3 -m concoursetools assets . -r concourse.py
+
+        ENTRYPOINT ["python3"]
+        """).lstrip()
+        self.assertEqual(dockerfile_contents, expected_contents)
+
+    def test_rsa_config(self) -> None:
+        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", include_rsa=True)
+        dockerfile_contents = self.dockerfile_path.read_text()
+        expected_contents = textwrap.dedent(f"""
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
+
+        COPY requirements.txt requirements.txt
+
+        RUN \\
+            --mount=type=secret,id=private_key,target=/root/.ssh/id_rsa,mode=0600,required=true \\
+            --mount=type=secret,id=known_hosts,target=/root/.ssh/known_hosts,mode=0644 \\
+            python3 -m pip install --upgrade pip && \\
+            pip install -r requirements.txt --no-deps
 
         WORKDIR /opt/resource/
         COPY concourse.py ./concourse.py
@@ -112,13 +252,18 @@ class DockerTests(TestCase):
         cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", dev=True)
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
-        FROM python:{self.current_python_string}-alpine
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
 
         COPY requirements.txt requirements.txt
 
         COPY concoursetools concoursetools
 
-        RUN python3 -m pip install --upgrade pip && \\
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install ./concoursetools && \\
             pip install -r requirements.txt --no-deps
 

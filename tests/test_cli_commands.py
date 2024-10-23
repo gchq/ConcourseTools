@@ -82,11 +82,16 @@ class DockerfileTests(unittest.TestCase):
 
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
-        FROM python:{self.current_python_string}-alpine
+        FROM python:{self.current_python_string}
+
+        RUN python3 -m venv /opt/venv
+        # Activate venv
+        ENV PATH="/opt/venv/bin:$PATH"
 
         COPY requirements.txt requirements.txt
 
-        RUN python3 -m pip install --upgrade pip && \\
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install -r requirements.txt --no-deps
 
         WORKDIR /opt/resource/
@@ -141,7 +146,8 @@ class LegacyTests(unittest.TestCase):
 
         COPY requirements.txt requirements.txt
 
-        RUN python3 -m pip install --upgrade pip && \\
+        RUN \\
+            python3 -m pip install --upgrade pip && \\
             pip install -r requirements.txt --no-deps
 
         WORKDIR /opt/resource/
