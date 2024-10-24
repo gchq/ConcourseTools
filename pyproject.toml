@@ -1,3 +1,52 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "concoursetools"
+dynamic = ["version"]
+description = "Easily create Concourse resource types in Python."
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = [
+    "concourse",
+    "ci",
+    "cd",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+]
+authors = [
+    {name = "GCHQ", email = "oss@gchq.gov.uk"},
+]
+license = {text = "Apache License 2.0"}
+
+[project.urls]
+"Homepage" = "https://github.com/gchq/ConcourseTools/"
+"Documentation" = "https://concoursetools.readthedocs.io/en/stable/"
+"Repository" = "https://github.com/gchq/ConcourseTools/"
+"Bug Tracker" = "https://github.com/gchq/ConcourseTools/issues"
+
+[tool.setuptools]
+packages = [
+    "concoursetools",
+    "concoursetools.cli",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "concoursetools.__version__"}
+
+
 [tool.coverage.run]
 command_line = "-m unittest discover"
 source = ["concoursetools"]
