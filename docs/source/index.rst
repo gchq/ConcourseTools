@@ -49,6 +49,7 @@ Contents
     testing
     deployment
     internals
+    whats_new
 
 .. toctree::
     :caption: Examples

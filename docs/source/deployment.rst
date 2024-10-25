@@ -173,7 +173,7 @@ If these were two separate commands then Docker would cache the first one and ``
 Including Certs in your Docker Build
 ____________________________________
 
-.. versionadded:: 0.8
+.. versionchanged:: 0.8
     In previous versions the advice was to use multi-stage builds for this. Although that practice is equally
     secure, it makes sense to use `Docker secrets <https://docs.docker.com/build/building/secrets/>`_ instead.
 
@@ -204,14 +204,6 @@ The secrets must then be passed at build time:
 
 The files are then mounted securely using the `correct permissions
 <https://superuser.com/questions/215504/permissions-on-private-key-in-ssh-folder>`_.
-
-.. tip::
-
-    You can easily generate this skeleton with the :ref:`cli.dockerfile` CLI command:
-
-    .. code:: shell
-
-        $ python3 -m concoursetools docker . --include-rsa
 
 
 Creating Asset Files

@@ -32,6 +32,7 @@ words:
   - elif
   - furo
   - GCHQ
+  - gchqdev
   - genindex
   - HEALTHCHECK
   - INPROGRESS
@@ -46,6 +47,7 @@ words:
   - maxsplit
   - modindex
   - mypy
+  - ncsc
   - ONBUILD
   - outdir
   - pathlib
@@ -71,6 +73,7 @@ words:
   - urllib
   - vars
   - versionadded
+  - versionchanged
   - viewcode
   - WORKDIR
   - xkcd

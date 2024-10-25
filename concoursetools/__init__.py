@@ -8,4 +8,4 @@ from concoursetools.version import TypedVersion, Version
 
 __all__ = ("BuildMetadata", "ConcourseResource", "Version", "TypedVersion")
 __author__ = "GCHQ"
-__version__ = "0.7.1"
+__version__ = "0.8.0rc1"
