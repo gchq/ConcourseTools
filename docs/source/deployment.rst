@@ -173,7 +173,7 @@ If these were two separate commands then Docker would cache the first one and ``
 Including Certs in your Docker Build
 ____________________________________
 
-.. versionadded:: 0.8
+.. versionchanged:: 0.8
     In previous versions the advice was to use multi-stage builds for this. Although that practice is equally
     secure, it makes sense to use `Docker secrets <https://docs.docker.com/build/building/secrets/>`_ instead.
 

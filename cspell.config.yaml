@@ -73,6 +73,7 @@ words:
   - urllib
   - vars
   - versionadded
+  - versionchanged
   - viewcode
   - WORKDIR
   - xkcd

@@ -177,6 +177,8 @@ class BuildMetadata:  # pylint: disable=invalid-name
             By passing additional values you are allowing an arbitrary user to view these with the correct choice
             of variable. You should take **great care** not to pass any sensitive values.
 
+        .. versionadded:: 0.8.0
+
         :param string: The string to be interpolated.
         :param additional_values: Additional values which can be used for interpolation.
                                   The keys of the mapping should not include the ``$`` character.

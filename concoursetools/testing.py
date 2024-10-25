@@ -660,6 +660,8 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         This is best to use if you want to be sure that your Docker image has been built properly,
         or to test resource types which have **not** been built with Concourse Tools.
 
+    .. versionadded:: 0.8.0
+
     :param inner_resource_config: The JSON configuration for the resource.
     :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
@@ -773,6 +775,8 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
     .. tip::
         This is best to use if you want easier testing, but are concerned about the Dockerfile.
 
+    .. versionadded:: 0.8.0
+
     :param inner_resource_type: The :class:`~concoursetools.resource.ConcourseResource` subclass corresponding to the resource.
     :param inner_resource_config: The JSON configuration for the resource.
     :param image: The Docker image to use, which must exist in the local cache. Passed verbatim to ``docker run``.
@@ -857,6 +861,8 @@ def run_docker_container(image: str, command: str, additional_args: list[str] | 
     .. caution::
         Parameters of this function are meant to refer to the command within the Docker container,
         and **not** the external command used to run the image.
+
+    .. versionadded:: 0.8.0
 
     :param image: The Docker image to use for the container, which must exist in the local cache.
                   Passed verbatim to ``docker run``.
