@@ -205,14 +205,6 @@ The secrets must then be passed at build time:
 The files are then mounted securely using the `correct permissions
 <https://superuser.com/questions/215504/permissions-on-private-key-in-ssh-folder>`_.
 
-.. tip::
-
-    You can easily generate this skeleton with the :ref:`cli.dockerfile` CLI command:
-
-    .. code:: shell
-
-        $ python3 -m concoursetools docker . --include-rsa
-
 
 Creating Asset Files
 ____________________

@@ -36,6 +36,7 @@ license = {text = "Apache License 2.0"}
 "Documentation" = "https://concoursetools.readthedocs.io/en/stable/"
 "Repository" = "https://github.com/gchq/ConcourseTools/"
 "Bug Tracker" = "https://github.com/gchq/ConcourseTools/issues"
+"Changelog" = "https://concoursetools.readthedocs.io/en/latest/whats_new.html"
 
 [tool.setuptools]
 packages = [

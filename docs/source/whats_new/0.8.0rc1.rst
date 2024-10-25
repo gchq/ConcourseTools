@@ -1,0 +1,396 @@
+v0.8.0rc1
+=========
+
+New Features in v0.8.0rc1
+-------------------------
+
+Added Python 3.13 support
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #17 <https://github.com/gchq/ConcourseTools/pull/17>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added official support for Python 3.13 in Concourse Tools.
+
+.. note::
+    Python 3.13 is **not yet** the development version for Concourse Tools.
+
+
+Added Python 3.12 support
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #13 <https://github.com/gchq/ConcourseTools/pull/13>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added official support for Python 3.12 in Concourse Tools. 3.12 is also the new development version for Concourse Tools,
+and so documentation builds and pre-commit checks are expected to be run on this version.
+
+
+Added New CLI
+~~~~~~~~~~~~~
+
+    Contributed in `PR #15 <https://github.com/gchq/ConcourseTools/pull/15>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+    Improved in `PR #16 <https://github.com/gchq/ConcourseTools/pull/16>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Concourse Tools now has a new and improved CLI. This has been made possible with a new
+:class:`concoursetools.cli.parser.CLI` class designed to behave in a similar way to
+`Click <https://click.palletsprojects.com/en/stable/>`_, albeit with less features. It also enables more automated
+:ref:`documentation of the CLI <CLI Reference>`.
+
+There are also more options for the :ref:`cli.dockerfile` CLI command, including specifying the parent image.
+
+.. warning::
+
+    This means that previous CLI behaviour has been deprecated.
+    Please see :ref:`Deprecated legacy CLI` for more information.
+
+
+Build Metadata string formatting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #7 <https://github.com/gchq/ConcourseTools/pull/7>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+    Improved in `PR #11 <https://github.com/gchq/ConcourseTools/pull/11>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Both :meth:`~concoursetools.resource.ConcourseResource.download_version` and
+:meth:`~concoursetools.resource.ConcourseResource.publish_new_version` methods are passed an instance of
+:class:`~concoursetools.metadata.BuildMetadata` to interface with the
+:concourse:`implementing-resource-types.resource-metadata`. This allows developers to easily interface with this
+metadata from within the resource code.
+
+However, many resources want to make this metadata available to the end user in their pipelines, by allowing them to
+reference the variables in commit messages, slack notifications and emails. Previously, resources would need to use
+:meth:`str.format` tricks to do this:
+
+.. code:: python
+
+    def publish_new_version(sources_dir, build_metadata, message):
+        ...
+        metadata_vars = vars(build_metadata)
+        metadata_vars["BUILD_URL"] = build_metadata.build_url()
+        try:
+            metadata_vars["BUILD_CREATED_BY"] = build_metadata.BUILD_CREATED_BY
+        except PermissionError:
+            pass
+        formatted_message = message.format(metadata_vars)
+
+
+Users would then be expected to pass in their messages with the correct formatting:
+
+.. code:: yaml
+
+    - put: resource
+      params:
+        message: |
+                 This commit was tested in {BUILD_NAME}.
+
+
+However, this was pretty clunky, and required a lot of boilerplate code. Some users might also try to "simplify" by
+referencing :data:`os.environ` directly and calling :meth:`str.format_map`:
+
+.. code:: python
+
+    def publish_new_version(sources_dir, build_metadata, message):
+        ...
+        formatted_message = message.format_map(os.environ)
+
+
+However, this is a **giant** risk as all sorts of sensitive information could be contained in the environment, and a
+malicious user can pull it out easily:
+
+.. code:: yaml
+
+    - put: resource
+      params:
+        message: |
+                 Possible PAT token: {PAT_TOKEN}.
+
+
+The fix is the new :meth:`~concoursetools.metadata.BuildMetadata.format_string` method, which safely interpolates
+a string with the available build metadata:
+
+.. code:: python
+
+    def publish_new_version(sources_dir, build_metadata, message):
+        ...
+        formatted_message = build_metadata.format_string(message)
+
+
+The variable can now be referenced by the user with the more friendly bash ``$`` notation:
+
+.. code:: yaml
+
+    - put: resource
+      params:
+        message: |
+                 This commit was tested in $BUILD_NAME.
+
+
+Improved Dockerfile structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #16 <https://github.com/gchq/ConcourseTools/pull/16>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Previously, auto-generated Dockerfiles were either single or multi-stage builds depending on whether or not an RSA
+key was present. There were inconsistencies with virtual environments and parent images and various other parts.
+The auto-generated Dockerfiles are now consistent across both scenarios, and use
+:ref:`Docker secrets <Including Certs in your Docker Build>` instead. A full explanation of the Dockerfile structure
+can now be found in the :ref:`deployment guide <Deploying the Resource Type>`.
+
+Internally, the :mod:`concoursetools.dockertools` module now includes a :class:`~concoursetools.dockertools.Dockerfile`
+class and a number of :class:`~concoursetools.dockertools.Instruction` subclasses used to dynamically create the
+Dockerfile.
+
+
+New test wrappers for Docker images
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #10 <https://github.com/gchq/ConcourseTools/pull/10>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added new :ref:`test wrappers <Using Test Wrappers>` for testing Docker images directly.
+
+For the :class:`~concoursetools.testing.DockerTestResourceWrapper`, users can pass JSON config to the methods to execute
+a Docker container directly. This can also be used for testing out external Concourse resource images that may not be
+written in Python. Consider the `Concourse Mock Resource <https://github.com/concourse/mock-resource>`_ as an example:
+
+.. code:: python
+
+    config = {
+        "initial_version": "0",
+        "log": "Debug message",
+        "metadata": [{"name": "key", "value": "value"}],
+    }
+    wrapper = DockerTestResourceWrapper(config, "concourse/mock-resource")
+    wrapper.fetch_new_versions({"version": "1", "privileged": "true"})
+
+
+For the :class:`~concoursetools.testing.DockerConversionTestResourceWrapper`, developers can test their Concourse Tools
+resources via their resulting Docker images, without needing to pass explicit JSON.
+
+.. note::
+
+    To function, these wrappers need ``docker`` to be installed locally.
+
+
+
+Utilised new changes to typing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #14 <https://github.com/gchq/ConcourseTools/pull/14>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Replaced almost all imports from the :mod:`typing` module with native type hints.
+A new `Mypy <https://mypy.readthedocs.io/en/stable/>`_ pre-commit hook has been added to the repository to ensure that
+the new types are correct.
+
+.. note::
+    Because of this, some functionality was not backwards-compatible to Python 3.8.
+    See :ref:`Removed Python 3.8 support`.
+
+
+Added new quickstart example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #18 <https://github.com/gchq/ConcourseTools/pull/18>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+The :ref:`quickstart example <Quickstart>` is now more in-depth than the previous set of steps. The same example has also been duplicated
+to the repo README to make it easier for new users visiting the repo or the PyPI page.
+
+
+Replaced ``setup.cfg`` with ``pyproject.toml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #18 <https://github.com/gchq/ConcourseTools/pull/18>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+The ``setup.cfg`` file has been migrated to the existing ``pyproject.toml`` file to reflect
+`current best practices <https://packaging.python.org/en/latest/tutorials/packaging-projects/>`_.
+
+
+Fixed in v0.8.0rc1
+------------------
+
+Added dynamic light/dark logo in README
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #1 <https://github.com/gchq/ConcourseTools/pull/1>`_ by `phil-ncsc <https://github.com/phil-ncsc>`_
+
+
+Although the Sphinx documentation for Concourse Tools has always supported dark mode, this was not reflected in the
+README to take effect for users of GitHub and PyPI. The logo in the README has changed from this:
+
+.. code:: markdown
+
+    ![logo](https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png)
+
+
+to some explicit HTML:
+
+.. code:: html
+
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png">
+      <img alt="ConcourseTools logo" src="https://raw.githubusercontent.com/gchq/ConcourseTools/main/docs/source/_static/logo.png">
+    </picture>
+
+
+Allowed ``source`` to be empty in resource configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #6 <https://github.com/gchq/ConcourseTools/pull/6>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Recall that the parameters of the ``__init__`` method of your :class:`~concoursetools.resource.ConcourseResource`
+subclass are taken from the :concourse:`resource-types.schema.resource_type.source` block of the pipeline YAML.
+This means that a resource which looks like this:
+
+.. code:: python
+
+    class MyResource(ConcourseResource):
+
+        def __init__(self, project_key, repo, file_path, host="https://github.com/"):
+            super().__init__(MyVersion)
+            self.project_key = project_key
+            self.repo = repo
+            self.file_path = file_path
+            self.host = host.rstrip("/")
+
+
+can be referenced with the following code block:
+
+.. code:: yaml
+
+    resources:
+      - name: my-resource
+        type: my-resource-type
+        source:
+          project_key: concourse
+          repo: concourse
+          file_path: README.md
+
+Sometimes, a resource might have a very simple ``__init__`` method because it requires very little configuration.
+Consider the :ref:`xkcd example <xkcd Comics>`:
+
+.. code:: python
+
+    class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
+
+        def __init__(self, url: str = "https://xkcd.com"):
+            super().__init__(ComicVersion)
+            self.url = url
+
+
+If the user didn't want to specify a different URL, then they needed to explicitly pass an empty source mapping:
+
+.. code:: yaml
+
+    resources:
+      - name: xkcd
+        type: xkcd-resource-type
+        source: {}
+
+To most users, this should be equivalent to not passing any source *at all*, and in fact Concourse will allow the
+source to be missing. However, this broke Concourse Tools.  With this fix, the above becomes equivalent to:
+
+.. code:: yaml
+
+    resources:
+      - name: xkcd
+        type: xkcd-resource-type
+
+
+Base image of Dockerfile now depends on Python version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #10 <https://github.com/gchq/ConcourseTools/pull/10>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+In the previous version, the Dockerfile generated by the :ref:`cli <CLI Reference>` would inherit from ``python:3.8``
+or ``python:3.8-alpine`` regardless of version:
+
+.. code:: Dockerfile
+
+    FROM python:3.8-alpine
+
+
+If you are using (and testing on) a newer version of Python (perhaps using some newer features) then the final resource
+image may have some serious bugs that will go unnoticed until the resource is used. To rectify this, the major/minor
+version of the Python interpreter which called the CLI is now used for the Dockerfile:
+
+.. code:: Dockerfile
+
+    FROM python:3.12-alpine
+
+
+Removed in v0.8.0rc1
+--------------------
+
+Removed Python 3.8 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #14 <https://github.com/gchq/ConcourseTools/pull/14>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Removed all Python 3.8 support. This is in line with the official
+`end-of-life <https://devguide.python.org/versions/#unsupported-versions>`_ for Python 3.8.
+
+
+Removed Dockertools functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #15 <https://github.com/gchq/ConcourseTools/pull/15>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+A number of functions have been removed from the :mod:`concoursetools.dockertools` module. Although they were mainly
+for internal use, they do technically form part of the public Concourse Tools API. If you depend on them, consider
+migrating:
+
+* ``concoursetools.dockertools.create_dockerfile`` has been replaced with ``concoursetools.cli.commands.dockerfile``
+* ``concoursetools.dockertools.create_asset_scripts`` has been replaced with ``concoursetools.cli.commands.assets``
+* ``concoursetools.dockertools.file_path_to_import_path`` has been replaced with ``concoursetools.importing.file_path_to_import_path``
+* ``concoursetools.dockertools.import_resource_class_from_module`` has been replaced with ``concoursetools.importing.file_path_to_import_path``
+* ``concoursetools.dockertools.import_resource_classes_from_module`` has been replaced with ``concoursetools.importing.import_classes_from_module``
+  (note that this no longer defaults to subclasses of :class:`~concoursetools.resource.ConcourseResource`)
+* ``concoursetools.dockertools.Namespace`` has been removed
+
+
+Deprecated in v0.8.0rc1
+-----------------------
+
+Deprecated legacy CLI
+~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #15 <https://github.com/gchq/ConcourseTools/pull/15>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Previously, the CLI was not properly split into multiple commands, leading to a confusing interface. These commands
+should still run using the new CLI, but they will emit a deprecation warning.
+
+When **creating asset files**, make the following replacement:
+
+.. code:: shell
+
+    $ python3 -m concoursetools assets         # old
+    $ python3 -m concoursetools assets assets  # new
+
+
+When **creating your Dockerfile**, make the following replacement:
+
+.. code:: shell
+
+    $ python3 -m concoursetools --docker .    # old
+    $ python3 -m concoursetools dockerfile .  # new
+
+
+If you really *need* to use the previous CLI, then consider invoking the :ref:`cli.legacy` command explicitly:
+
+.. code:: shell
+
+    $ python3 -m concoursetools legacy --docker .
