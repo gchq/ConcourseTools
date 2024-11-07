@@ -1,7 +1,7 @@
-v0.8.0rc1
+v0.8.0
 =========
 
-New Features in v0.8.0rc1
+New Features in v0.8.0
 -------------------------
 
 Added Python 3.13 support
@@ -213,7 +213,7 @@ The ``setup.cfg`` file has been migrated to the existing ``pyproject.toml`` file
 `current best practices <https://packaging.python.org/en/latest/tutorials/packaging-projects/>`_.
 
 
-Fixed in v0.8.0rc1
+Fixed in v0.8.0
 ------------------
 
 Added dynamic light/dark logo in README
@@ -329,7 +329,7 @@ version of the Python interpreter which called the CLI is now used for the Docke
     FROM python:3.12-alpine
 
 
-Removed in v0.8.0rc1
+Removed in v0.8.0
 --------------------
 
 Removed Python 3.8 support
@@ -361,7 +361,7 @@ migrating:
 * ``concoursetools.dockertools.Namespace`` has been removed
 
 
-Deprecated in v0.8.0rc1
+Deprecated in v0.8.0
 -----------------------
 
 Deprecated legacy CLI
