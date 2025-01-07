@@ -17,10 +17,12 @@ try:
     from moto import mock_aws
     from moto.sagemaker.models import FakePipelineExecution
     from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
+    import requests  # noqa: F401
 except ImportError:
     allowed_to_skip = ("CI" not in os.environ)
     if allowed_to_skip:
         raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements-tests.txt'")
+    raise
 
 from concoursetools.mocking import TestBuildMetadata
 from concoursetools.testing import SimpleTestResourceWrapper
