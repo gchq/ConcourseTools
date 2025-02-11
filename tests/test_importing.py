@@ -2,6 +2,7 @@
 """
 Tests for the dockertools module.
 """
+
 from collections.abc import Generator
 from contextlib import contextmanager
 import inspect
@@ -14,8 +15,13 @@ import textwrap
 from unittest import TestCase
 
 from concoursetools import ConcourseResource, additional
-from concoursetools.importing import (edit_sys_path, file_path_to_import_path, import_classes_from_module, import_py_file,
-                                      import_single_class_from_module)
+from concoursetools.importing import (
+    edit_sys_path,
+    file_path_to_import_path,
+    import_classes_from_module,
+    import_py_file,
+    import_single_class_from_module,
+)
 from tests import resource as test_resource
 
 
@@ -23,6 +29,7 @@ class BasicTests(TestCase):
     """
     Tests for the utility functions.
     """
+
     def test_import_path_creation(self) -> None:
         file_path = Path("path/to/python.py")
         import_path = file_path_to_import_path(file_path)
@@ -147,7 +154,9 @@ class BasicTests(TestCase):
                 self.assertNotIn(temp_dir_1, sys.path)
                 self.assertNotIn(temp_dir_2, sys.path)
 
-                with edit_sys_path(prepend=[Path(temp_dir_1)], append=[Path(temp_dir_2)]):
+                with edit_sys_path(
+                    prepend=[Path(temp_dir_1)], append=[Path(temp_dir_2)]
+                ):
                     self.assertEqual(sys.path[0], temp_dir_1)
                     self.assertEqual(sys.path[-1], temp_dir_2)
                     self.assertListEqual(sys.path[1:-1], original_sys_path)
@@ -157,7 +166,9 @@ class BasicTests(TestCase):
 
     def test_importing_classes(self) -> None:
         file_path = Path(additional.__file__).relative_to(Path.cwd())
-        resource_classes = import_classes_from_module(file_path, parent_class=ConcourseResource)  # type: ignore[type-abstract]
+        resource_classes = import_classes_from_module(
+            file_path, parent_class=ConcourseResource
+        )  # type: ignore[type-abstract]
         expected = {
             "InOnlyConcourseResource": additional.InOnlyConcourseResource,
             "OutOnlyConcourseResource": additional.OutOnlyConcourseResource,
@@ -177,8 +188,11 @@ class BasicTests(TestCase):
 
     def test_importing_class_with_name(self) -> None:
         file_path = Path(test_resource.__file__).relative_to(Path.cwd())
-        resource_class = import_single_class_from_module(file_path, parent_class=ConcourseResource,  # type: ignore[type-abstract]
-                                                         class_name=test_resource.TestResource.__name__)
+        resource_class = import_single_class_from_module(
+            file_path,
+            parent_class=ConcourseResource,  # type: ignore[type-abstract]
+            class_name=test_resource.TestResource.__name__,
+        )
         self.assertClassEqual(resource_class, test_resource.TestResource)
 
     def test_importing_class_multiple_options(self) -> None:
@@ -189,8 +203,11 @@ class BasicTests(TestCase):
     def test_importing_class_multiple_options_specify_name(self) -> None:
         file_path = Path(additional.__file__).relative_to(Path.cwd())
         parent_class = additional.InOnlyConcourseResource
-        resource_class = import_single_class_from_module(file_path, parent_class=ConcourseResource,  # type: ignore[type-abstract]
-                                                         class_name=parent_class.__name__)
+        resource_class = import_single_class_from_module(
+            file_path,
+            parent_class=ConcourseResource,  # type: ignore[type-abstract]
+            class_name=parent_class.__name__,
+        )
         self.assertClassEqual(resource_class, parent_class)
 
     def assertClassEqual(self, class_1: type[object], class_2: type[object]) -> None:

@@ -12,6 +12,7 @@ In addition:
 
 Set ``xkcd_endpoint`` in ``conf.py`` to change the URL used.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -34,6 +35,7 @@ class XkcdDirective(SphinxDirective):
     """
     Directive for xkcd comics.
     """
+
     required_arguments = 1  # The comic number
     option_spec = {
         "height": directives.length_or_unitless,
@@ -52,14 +54,20 @@ class XkcdDirective(SphinxDirective):
         """
         Process the content of the shield directive.
         """
-        comic_number, = self.arguments
-        comic_info = self.get_comic_info(int(comic_number), self.config["xkcd_endpoint"])
+        (comic_number,) = self.arguments
+        comic_info = self.get_comic_info(
+            int(comic_number), self.config["xkcd_endpoint"]
+        )
 
         caption = self.options.pop("caption", "Relevant xkcd")
 
         set_classes(self.options)
-        image_node = nodes.image(self.block_text, uri=directives.uri(comic_info["img"]),
-                                 alt=comic_info["alt"], **self.options)
+        image_node = nodes.image(
+            self.block_text,
+            uri=directives.uri(comic_info["img"]),
+            alt=comic_info["alt"],
+            **self.options,
+        )
         self.add_name(image_node)
 
         reference_node = nodes.reference("", "", refuri=comic_info["link"])
@@ -72,7 +80,9 @@ class XkcdDirective(SphinxDirective):
         figure_node += caption_node
         return [figure_node]
 
-    def get_comic_info(self, comic_number: int, endpoint: str = DEFAULT_XKCD) -> dict[str, Any]:
+    def get_comic_info(
+        self, comic_number: int, endpoint: str = DEFAULT_XKCD
+    ) -> dict[str, Any]:
         comic_link = f"{endpoint}/{comic_number}/"
         try:
             response = requests.get(f"{endpoint}/{comic_number}/info.0.json")
@@ -89,7 +99,9 @@ class XkcdDirective(SphinxDirective):
             latest_json: dict[str, Any] = latest_response.json()
             most_recent_comic: int = latest_json["num"]
             if most_recent_comic < comic_number:
-                raise ValueError(f"You asked for xkcd #{comic_number}, but the most recent available comic is #{most_recent_comic}")
+                raise ValueError(
+                    f"You asked for xkcd #{comic_number}, but the most recent available comic is #{most_recent_comic}"
+                )
             else:
                 raise
         else:
@@ -98,8 +110,15 @@ class XkcdDirective(SphinxDirective):
         return response_json
 
 
-def make_xkcd_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner,
-                   options: dict[str, object] = {}, content: list[str] = []) -> tuple[list[nodes.reference], list[nodes.system_message]]:
+def make_xkcd_link(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, object] = {},
+    content: list[str] = [],
+) -> tuple[list[nodes.reference], list[nodes.system_message]]:
     """
     Add a link to a page on the xkcd website.
 

@@ -14,6 +14,7 @@ Find out more about resources in the :concourse:`Concourse resource documentatio
 To learn more about how Concourse resource types are actually implemented under the hood,
 check out :concourse:`implementing-resource-types` in Concourse.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -82,6 +83,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
             The parameters need not be set as attributes if they can all be combined
             into a single class, such as an API wrapper or other construct.
     """
+
     def __init__(self, version_class: type[VersionT]):
         self.version_class = version_class
 
@@ -99,7 +101,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return Path("/etc/ssl/certs")
 
     @abstractmethod
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -125,7 +129,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         """
 
     @abstractmethod
-    def download_version(self, version: VersionT, destination_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionT, Metadata]:
+    def download_version(
+        self, version: VersionT, destination_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -177,7 +183,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         """
 
     @abstractmethod
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionT, Metadata]:
+    def publish_new_version(
+        self, sources_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[VersionT, Metadata]:
         """
         Update a resource by publishing a new version.
 
@@ -237,7 +245,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         resource, previous_version = cls._parse_check_input()
         with contextlib.redirect_stdout(sys.stderr):
             new_versions = resource.fetch_new_versions(previous_version)
-        output = parsing.format_check_output([version.to_flat_dict() for version in new_versions])
+        output = parsing.format_check_output(
+            [version.to_flat_dict() for version in new_versions]
+        )
         _output(output)
 
     @classmethod
@@ -253,7 +263,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         resource, version, destination_dir, params = cls._parse_in_input()
         build_metadata = BuildMetadata.from_env()
         with contextlib.redirect_stdout(sys.stderr):
-            version, metadata = resource.download_version(version, destination_dir, build_metadata, **params)
+            version, metadata = resource.download_version(
+                version, destination_dir, build_metadata, **params
+            )
         output = parsing.format_in_out_output(version.to_flat_dict(), metadata)
         _output(output)
 
@@ -270,36 +282,48 @@ class ConcourseResource(ABC, Generic[VersionT]):
         resource, sources_dir, params = cls._parse_out_input()
         build_metadata = BuildMetadata.from_env()
         with contextlib.redirect_stdout(sys.stderr):
-            version, metadata = resource.publish_new_version(sources_dir, build_metadata, **params)
+            version, metadata = resource.publish_new_version(
+                sources_dir, build_metadata, **params
+            )
         output = parsing.format_in_out_output(version.to_flat_dict(), metadata)
         _output(output)
 
     @classmethod
-    def _parse_check_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT | None]:
+    def _parse_check_input(
+        cls,
+    ) -> tuple["ConcourseResource[VersionT]", VersionT | None]:
         """Parse input from the command line."""
         check_payload = sys.stdin.read()
 
-        resource_config, previous_version_config = parsing.parse_check_payload(check_payload)
+        resource_config, previous_version_config = parsing.parse_check_payload(
+            check_payload
+        )
 
         resource = cls._from_resource_config(resource_config)
 
         if previous_version_config is None:
             previous_version = None
         else:
-            previous_version = resource.version_class.from_flat_dict(previous_version_config)
+            previous_version = resource.version_class.from_flat_dict(
+                previous_version_config
+            )
 
         return resource, previous_version
 
     @classmethod
-    def _parse_in_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT, Path, Params]:
+    def _parse_in_input(
+        cls,
+    ) -> tuple["ConcourseResource[VersionT]", VersionT, Path, Params]:
         """Parse input from the command line."""
         in_payload = sys.stdin.read()
 
         try:
             destination_dir = Path(sys.argv[1])
         except IndexError as error:
-            raise ValueError("Path to the destination directory for the resource "
-                             "must be passed to the command line") from error
+            raise ValueError(
+                "Path to the destination directory for the resource "
+                "must be passed to the command line"
+            ) from error
 
         resource_config, version_config, params = parsing.parse_in_payload(in_payload)
 
@@ -316,8 +340,10 @@ class ConcourseResource(ABC, Generic[VersionT]):
         try:
             sources_dir = Path(sys.argv[1])
         except IndexError as error:
-            raise ValueError("Path to the directory containing the build's full set of sources "
-                             "must be passed to the command line") from error
+            raise ValueError(
+                "Path to the directory containing the build's full set of sources "
+                "must be passed to the command line"
+            ) from error
 
         resource_config, params = parsing.parse_out_payload(out_payload)
 
@@ -326,7 +352,9 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, sources_dir, params
 
     @classmethod
-    def _from_resource_config(cls, resource_config: ResourceConfig) -> "ConcourseResource[VersionT]":
+    def _from_resource_config(
+        cls, resource_config: ResourceConfig
+    ) -> "ConcourseResource[VersionT]":
         return cls(**resource_config)
 
 

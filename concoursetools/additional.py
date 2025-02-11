@@ -2,6 +2,7 @@
 """
 Concourse Tools comes with some additional resource type "patterns" to cover some common requirements.
 """
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -13,7 +14,13 @@ from typing import Generic
 
 from concoursetools import ConcourseResource
 from concoursetools.metadata import BuildMetadata
-from concoursetools.typing import Metadata, ResourceConfig, SortableVersionT, VersionConfig, VersionT
+from concoursetools.typing import (
+    Metadata,
+    ResourceConfig,
+    SortableVersionT,
+    VersionConfig,
+    VersionT,
+)
 from concoursetools.version import TypedVersion, Version
 
 
@@ -28,10 +35,15 @@ class OutOnlyConcourseResource(ConcourseResource[VersionT]):
 
     :param version_class: The resource parses all inputs with this version class.
     """
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         return []
 
-    def download_version(self, version: VersionT, destination_dir: Path, build_metadata: BuildMetadata) -> tuple[VersionT, Metadata]:
+    def download_version(
+        self, version: VersionT, destination_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[VersionT, Metadata]:
         metadata: dict[str, str] = {}
         return version, metadata
 
@@ -41,6 +53,7 @@ class DatetimeVersion(TypedVersion):
     """
     A placeholder version containing only the time at which it was created.
     """
+
     execution_date: datetime
 
     @classmethod
@@ -77,23 +90,35 @@ class InOnlyConcourseResource(ConcourseResource[DatetimeVersion]):
         This resource used a pre-defined version consisting of a single
         :class:`~datetime.datetime` object to ensure unique, non-empty versions.
     """
+
     def __init__(self) -> None:
         super().__init__(DatetimeVersion)
 
-    def fetch_new_versions(self, previous_version: DatetimeVersion | None = None) -> list[DatetimeVersion]:
+    def fetch_new_versions(
+        self, previous_version: DatetimeVersion | None = None
+    ) -> list[DatetimeVersion]:
         return []
 
-    def download_version(self, version: DatetimeVersion, destination_dir: Path, build_metadata: BuildMetadata,
-                         **kwargs: object) -> tuple[DatetimeVersion, Metadata]:
+    def download_version(
+        self,
+        version: DatetimeVersion,
+        destination_dir: Path,
+        build_metadata: BuildMetadata,
+        **kwargs: object,
+    ) -> tuple[DatetimeVersion, Metadata]:
         metadata = self.download_data(destination_dir, build_metadata, **kwargs)
         return version, metadata
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[DatetimeVersion, Metadata]:
+    def publish_new_version(
+        self, sources_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[DatetimeVersion, Metadata]:
         version = DatetimeVersion.now()
         return version, {}
 
     @abstractmethod
-    def download_data(self, destination_dir: Path, build_metadata: BuildMetadata) -> Metadata:
+    def download_data(
+        self, destination_dir: Path, build_metadata: BuildMetadata
+    ) -> Metadata:
         """
         Download resource data and place files within the resource directory in your pipeline.
 
@@ -160,7 +185,10 @@ class TriggerOnChangeConcourseResource(ConcourseResource[VersionT]):
 
     :param version_class: The resource parses all inputs with this version class.
     """
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         latest_version = self.fetch_latest_version()
 
         if previous_version is None:
@@ -193,6 +221,7 @@ class MultiVersion(Version, Generic[SortableVersionT]):
     .. tip::
         Two multi-versions are equal if their respective set of subversions are also equal.
     """
+
     _key: str = "versions"
     _sub_version_class: type[SortableVersionT] = Version  # type: ignore[assignment]
 
@@ -236,7 +265,9 @@ class MultiVersion(Version, Generic[SortableVersionT]):
         }
 
     @classmethod
-    def from_flat_dict(cls: "type[MultiVersion[SortableVersionT]]", version_dict: VersionConfig) -> "MultiVersion[SortableVersionT]":
+    def from_flat_dict(
+        cls: "type[MultiVersion[SortableVersionT]]", version_dict: VersionConfig
+    ) -> "MultiVersion[SortableVersionT]":
         """
         Load an instance from a dictionary representing the version.
 
@@ -248,12 +279,18 @@ class MultiVersion(Version, Generic[SortableVersionT]):
         """
         data = version_dict[cls._key]
         sub_version_dicts: list[VersionConfig] = json.loads(data)
-        versions = {cls._sub_version_class.from_flat_dict(sub_version_dict) for sub_version_dict in sub_version_dicts}
+        versions = {
+            cls._sub_version_class.from_flat_dict(sub_version_dict)
+            for sub_version_dict in sub_version_dicts
+        }
         return cls(versions)
 
 
-def _create_multi_version_class(key: str, sub_version_class: type[SortableVersionT]) -> type[MultiVersion[SortableVersionT]]:
+def _create_multi_version_class(
+    key: str, sub_version_class: type[SortableVersionT]
+) -> type[MultiVersion[SortableVersionT]]:
     """Create a new version subclass containing multiple sub-versions."""
+
     class NewMultiVersion(MultiVersion[SortableVersionT]):
         _key = key
         _sub_version_class = sub_version_class
@@ -261,7 +298,9 @@ def _create_multi_version_class(key: str, sub_version_class: type[SortableVersio
     return NewMultiVersion
 
 
-class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersion[SortableVersionT]]):
+class MultiVersionConcourseResource(
+    TriggerOnChangeConcourseResource[MultiVersion[SortableVersionT]]
+):
     """
     A Concourse resource type designed to trigger to a change in available versions.
 
@@ -288,6 +327,7 @@ class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersio
         This resource class is best suited to resources used in conjunction
         with the :concourse:`set-pipeline-step`.
     """
+
     def __init__(self, key: str, sub_version_class: type[SortableVersionT]):
         self.key = key
         multi_version_class = _create_multi_version_class(key, sub_version_class)
@@ -306,8 +346,14 @@ class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersio
         :returns: A set of the latest subversions from the resource.
         """
 
-    def download_version(self, version: MultiVersion[SortableVersionT], destination_dir: Path, build_metadata: BuildMetadata,
-                         file_name: str | None = None, indent: int | None = None) -> tuple[MultiVersion[SortableVersionT], Metadata]:
+    def download_version(
+        self,
+        version: MultiVersion[SortableVersionT],
+        destination_dir: Path,
+        build_metadata: BuildMetadata,
+        file_name: str | None = None,
+        indent: int | None = None,
+    ) -> tuple[MultiVersion[SortableVersionT], Metadata]:
         """
         Download a JSON file containing the sub-version data.
 
@@ -322,7 +368,9 @@ class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersio
         file_path.write_text(json.dumps(version.sub_version_data, indent=indent))
         return version, {}
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[MultiVersion[SortableVersionT], Metadata]:
+    def publish_new_version(
+        self, sources_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[MultiVersion[SortableVersionT], Metadata]:
         raise TypeError("Publishing new versions of this resource is not permitted.")
 
 
@@ -348,7 +396,10 @@ class SelfOrganisingConcourseResource(ConcourseResource[SortableVersionT]):
 
     :param version_class: The resource parses all inputs with this version class.
     """
-    def fetch_new_versions(self, previous_version: SortableVersionT | None = None) -> list[SortableVersionT]:
+
+    def fetch_new_versions(
+        self, previous_version: SortableVersionT | None = None
+    ) -> list[SortableVersionT]:
         all_versions = self.fetch_all_versions()
         try:
             newest_version = max(all_versions)
@@ -360,7 +411,9 @@ class SelfOrganisingConcourseResource(ConcourseResource[SortableVersionT]):
         if previous_version is None:
             return [newest_version]
 
-        versions = sorted(version for version in all_versions if previous_version < version)
+        versions = sorted(
+            version for version in all_versions if previous_version < version
+        )
         if not versions:
             versions = [previous_version]
 
@@ -381,13 +434,13 @@ class SelfOrganisingConcourseResource(ConcourseResource[SortableVersionT]):
 
 
 class _PseudoConcourseResource(ConcourseResource[VersionT]):
-
     def __new__(cls) -> "_PseudoConcourseResource[VersionT]":
         raise TypeError(f"Cannot instantiate a {cls.__name__} type")
 
 
-def combine_resource_types(resources: dict[str, type[ConcourseResource[VersionT]]],
-                           param_key: str = "resource") -> type[_PseudoConcourseResource[VersionT]]:
+def combine_resource_types(
+    resources: dict[str, type[ConcourseResource[VersionT]]], param_key: str = "resource"
+) -> type[_PseudoConcourseResource[VersionT]]:
     """
     Return a pseudo-resource which will delegate to other resources depending on a flag.
 
@@ -420,12 +473,16 @@ def combine_resource_types(resources: dict[str, type[ConcourseResource[VersionT]
                   resource: A
                   ...
     """
+
     class MultiResourceConcourseResource(_PseudoConcourseResource[VersionT]):
         """
         A special Resource class which delegates to multiple other resource classes.
         """
+
         @classmethod
-        def _from_resource_config(cls, resource_config: ResourceConfig) -> "ConcourseResource[VersionT]":
+        def _from_resource_config(
+            cls, resource_config: ResourceConfig
+        ) -> "ConcourseResource[VersionT]":
             try:
                 resource_key = resource_config.pop(param_key)
             except KeyError as error:
@@ -435,8 +492,10 @@ def combine_resource_types(resources: dict[str, type[ConcourseResource[VersionT]
                 resource_class = resources[resource_key]
             except KeyError as error:
                 possible = set(resources)
-                raise KeyError(f"Couldn't find resource matching {resource_key!r}: "
-                               f"possible options: {possible}") from error
+                raise KeyError(
+                    f"Couldn't find resource matching {resource_key!r}: "
+                    f"possible options: {possible}"
+                ) from error
 
             return resource_class(**resource_config)
 

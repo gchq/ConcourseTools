@@ -3,12 +3,19 @@
 Concourse Tools contains a number of simple functions for mapping
 between Python and the Concourse resource type paradigm.
 """
+
 from __future__ import annotations
 
 import json
 from typing import Any, cast
 
-from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig
+from concoursetools.typing import (
+    Metadata,
+    MetadataPair,
+    Params,
+    ResourceConfig,
+    VersionConfig,
+)
 
 
 def parse_check_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig | None]:
@@ -114,7 +121,9 @@ def parse_metadata(metadata_pairs: list[MetadataPair]) -> Metadata:
     return {pair["name"]: pair["value"] for pair in metadata_pairs}
 
 
-def format_check_output(version_configs: list[VersionConfig], **json_kwargs: Any) -> str:
+def format_check_output(
+    version_configs: list[VersionConfig], **json_kwargs: Any
+) -> str:
     """
     Format :concourse:`check output <implementing-resource-types.resource-check>` as a JSON string.
 
@@ -130,11 +139,16 @@ def format_check_output(version_configs: list[VersionConfig], **json_kwargs: Any
             { "ref": "7154fe" }
         ]
     """
-    safe_version_configs = [{str(key): str(value) for key, value in version_config.items()} for version_config in version_configs]
+    safe_version_configs = [
+        {str(key): str(value) for key, value in version_config.items()}
+        for version_config in version_configs
+    ]
     return json.dumps(safe_version_configs, **json_kwargs)
 
 
-def format_in_out_output(version_config: VersionConfig, metadata: Metadata, **json_kwargs: Any) -> str:
+def format_in_out_output(
+    version_config: VersionConfig, metadata: Metadata, **json_kwargs: Any
+) -> str:
     """
     Format :concourse:`in output <implementing-resource-types.resource-in>` or
     :concourse:`out output <implementing-resource-types.resource-out>` as a JSON string.
@@ -154,7 +168,9 @@ def format_in_out_output(version_config: VersionConfig, metadata: Metadata, **js
             ]
         }
     """
-    safe_version_config = {str(key): str(value) for key, value in version_config.items()}
+    safe_version_config = {
+        str(key): str(value) for key, value in version_config.items()
+    }
     safe_metadata = format_metadata(metadata)
     output = {
         "version": safe_version_config,
@@ -170,10 +186,16 @@ def format_metadata(metadata: Metadata) -> list[MetadataPair]:
     :param metadata: A key-value mapping representing metadata. Keys and values should both be strings.
     :returns: A list of key-value pairs for processing in Concourse.
     """
-    return [{"name": str(name), "value": str(value)} for name, value in metadata.items()]
+    return [
+        {"name": str(name), "value": str(value)} for name, value in metadata.items()
+    ]
 
 
-def format_check_input(resource_config: ResourceConfig, version_config: VersionConfig | None = None, **json_kwargs: Any) -> str:
+def format_check_input(
+    resource_config: ResourceConfig,
+    version_config: VersionConfig | None = None,
+    **json_kwargs: Any,
+) -> str:
     """
     Format :concourse:`check input <implementing-resource-types.resource-check>` as a JSON string.
 
@@ -199,7 +221,12 @@ def format_check_input(resource_config: ResourceConfig, version_config: VersionC
     return json.dumps(payload, **json_kwargs)
 
 
-def format_in_input(resource_config: ResourceConfig, version_config: VersionConfig, params: Params | None = None, **json_kwargs: Any) -> str:
+def format_in_input(
+    resource_config: ResourceConfig,
+    version_config: VersionConfig,
+    params: Params | None = None,
+    **json_kwargs: Any,
+) -> str:
     """
     Format :concourse:`in input <implementing-resource-types.resource-in>` as a JSON string.
 
@@ -230,7 +257,9 @@ def format_in_input(resource_config: ResourceConfig, version_config: VersionConf
     return json.dumps(payload, **json_kwargs)
 
 
-def format_out_input(resource_config: ResourceConfig, params: Params | None = None, **json_kwargs: Any) -> str:
+def format_out_input(
+    resource_config: ResourceConfig, params: Params | None = None, **json_kwargs: Any
+) -> str:
     """
     Format :concourse:`out input <implementing-resource-types.resource-out>` as a JSON string.
 
@@ -258,7 +287,9 @@ def format_out_input(resource_config: ResourceConfig, params: Params | None = No
     return json.dumps(payload, **json_kwargs)
 
 
-def _extract_source_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
+def _extract_source_config_from_payload(
+    payload: dict[str, dict[str, Any] | None],
+) -> dict[str, Any]:
     try:
         unsafe_source_config = payload["source"]
     except KeyError as error:
@@ -275,14 +306,20 @@ def _extract_source_config_from_payload(payload: dict[str, dict[str, Any] | None
     return source_config
 
 
-def _extract_version_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
+def _extract_version_config_from_payload(
+    payload: dict[str, dict[str, Any] | None],
+) -> dict[str, Any]:
     unsafe_version_config = payload["version"]
     unsafe_version_config = cast(dict[str, Any], unsafe_version_config)
-    version_config = {str(key): str(value) for key, value in unsafe_version_config.items()}
+    version_config = {
+        str(key): str(value) for key, value in unsafe_version_config.items()
+    }
     return version_config
 
 
-def _extract_param_config_from_payload(payload: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
+def _extract_param_config_from_payload(
+    payload: dict[str, dict[str, Any] | None],
+) -> dict[str, Any]:
     unsafe_params_config = payload.get("params", {})
     unsafe_params_config = cast(dict[str, Any], unsafe_params_config)
     params_config = {str(key): value for key, value in unsafe_params_config.items()}

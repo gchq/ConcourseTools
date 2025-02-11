@@ -2,6 +2,7 @@
 """
 Concourse Tools uses a custom CLI tool for easier management of command line functions.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable, Generator
@@ -27,6 +28,7 @@ class Docstring:
     :param description: The remaining description before any parameters.
     :param parameters: A mapping of parameter name to description, with newlines replaced with whitespace.
     """
+
     first_line: str
     description: str
     parameters: dict[str, str]
@@ -51,7 +53,9 @@ class Docstring:
         try:
             first_line, remaining_lines = raw_docstring.split("\n\n", maxsplit=1)
         except ValueError:
-            if RE_PARAM.match(raw_docstring.strip()):  # all we have are params with no description
+            if RE_PARAM.match(
+                raw_docstring.strip()
+            ):  # all we have are params with no description
                 first_line = ""
                 remaining_lines = raw_docstring.strip()
             else:
@@ -59,7 +63,10 @@ class Docstring:
                 return cls(first_line, "", {})
 
         description, *remaining_params = RE_PARAM.split(remaining_lines.lstrip())
-        parameters = {param: " ".join(info.split()).strip() for param, info in _pair_up(remaining_params)}
+        parameters = {
+            param: " ".join(info.split()).strip()
+            for param, info in _pair_up(remaining_params)
+        }
         return cls(first_line, description.strip(), parameters)
 
 
@@ -76,6 +83,6 @@ def _pair_up(data: list[str]) -> Generator[tuple[str, str], None, None]:
     """
     for i in range(0, len(data), 2):
         try:
-            yield data[i], data[i+1]
+            yield data[i], data[i + 1]
         except IndexError:
             raise ValueError(f"Needed an even number of values, got {len(data)}")

@@ -2,6 +2,7 @@
 """
 Concourse Tools uses a custom CLI tool for easier management of command line functions.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -21,6 +22,7 @@ _CURRENT_PYTHON_VERSION = (sys.version_info.major, sys.version_info.minor)
 
 if _CURRENT_PYTHON_VERSION >= (3, 10):
     from types import UnionType
+
     _ANNOTATIONS_TO_TYPES: dict[type[Any] | UnionType | str, type] = {}
 else:
     _ANNOTATIONS_TO_TYPES: dict[type[Any] | Any | str, type] = {}  # type: ignore[no-redef]
@@ -32,17 +34,18 @@ T = TypeVar("T")
 _AVAILABLE_TYPES = (str, bool, int, float)
 
 for type_ in _AVAILABLE_TYPES:
-    _ANNOTATIONS_TO_TYPES.update({
-        type_: type_,
-        type_.__name__: type_,
-        f"{type_.__name__} | None": type_,
-    })
+    _ANNOTATIONS_TO_TYPES.update(
+        {
+            type_: type_,
+            type_.__name__: type_,
+            f"{type_.__name__} | None": type_,
+        }
+    )
     if _CURRENT_PYTHON_VERSION >= (3, 10):
         _ANNOTATIONS_TO_TYPES[type_ | None] = type_
 
 
 class _CLIParser(ABC):
-
     @abstractmethod
     def invoke(self, args: list[str]) -> None:
         """
@@ -52,21 +55,36 @@ class _CLIParser(ABC):
         """
         ...
 
-    def print_help_page(self, usage_string: str, help_sections: dict[str, dict[str, str | None]], spacing: int = 2,
-                        separation: int = 1) -> None:
+    def print_help_page(
+        self,
+        usage_string: str,
+        help_sections: dict[str, dict[str, str | None]],
+        spacing: int = 2,
+        separation: int = 1,
+    ) -> None:
         max_key_width = max(self._max_key_length(d) for _, d in help_sections.items())
 
-        self.print_help_section("Usage", {usage_string: None}, key_width=max_key_width, spacing=spacing)
+        self.print_help_section(
+            "Usage", {usage_string: None}, key_width=max_key_width, spacing=spacing
+        )
 
         separator = "\n" * separation
         print(separator, end="")
 
         for title, options in help_sections.items():
-            self.print_help_section(title, options, key_width=max_key_width, spacing=spacing)
+            self.print_help_section(
+                title, options, key_width=max_key_width, spacing=spacing
+            )
             print(separator, end="")
 
-    def print_help_section(self, title: str, options: dict[str, str | None], spacing: int = 2,
-                           key_width: int | None = None, sort_keys: bool = False) -> None:
+    def print_help_section(
+        self,
+        title: str,
+        options: dict[str, str | None],
+        spacing: int = 2,
+        key_width: int | None = None,
+        sort_keys: bool = False,
+    ) -> None:
         """
         Print a section in the help page.
 
@@ -86,12 +104,16 @@ class _CLIParser(ABC):
         else:
             items = list(options.items())
 
-        total_indent_length = (spacing + key_width + spacing)
+        total_indent_length = spacing + key_width + spacing
         max_width, _ = shutil.get_terminal_size()
-        wrapper = textwrap.TextWrapper(width=max_width, subsequent_indent=" " * total_indent_length)
+        wrapper = textwrap.TextWrapper(
+            width=max_width, subsequent_indent=" " * total_indent_length
+        )
 
         usage_suffix = " \\"
-        usage_wrapper = textwrap.TextWrapper(width=max_width - len(usage_suffix), subsequent_indent=" " * (spacing + 2))
+        usage_wrapper = textwrap.TextWrapper(
+            width=max_width - len(usage_suffix), subsequent_indent=" " * (spacing + 2)
+        )
 
         for key, value in items:
             if value is None:  # this is for the usage string
@@ -114,6 +136,7 @@ class CLI(_CLIParser):
     """
     Represents a command line interface.
     """
+
     def __init__(self) -> None:
         self.commands: dict[str, CLICommand] = {}
 
@@ -139,7 +162,9 @@ class CLI(_CLIParser):
             return self.invoke(["legacy"] + args)
         command.invoke(remaining_args)
 
-    def register(self, allow_short: set[str] | None = None) -> Callable[[CLIFunctionT], CLIFunctionT]:
+    def register(
+        self, allow_short: set[str] | None = None
+    ) -> Callable[[CLIFunctionT], CLIFunctionT]:
         """
         Decorate a function.
 
@@ -150,12 +175,16 @@ class CLI(_CLIParser):
                             the parameter ``my_parameter`` becomes ``--my-parameter``, but by including
                             ``my_parameter`` in this set, ``-m`` will also be valid on the command line.
         """
+
         def decorator(func: CLIFunctionT) -> CLIFunctionT:
             self.register_function(func, allow_short=allow_short)
             return func
+
         return decorator
 
-    def register_function(self, func: CLIFunction, allow_short: set[str] | None = None) -> None:
+    def register_function(
+        self, func: CLIFunction, allow_short: set[str] | None = None
+    ) -> None:
         """
         Manually register a function.
 
@@ -188,11 +217,15 @@ class CLI(_CLIParser):
 
         major_sections = {
             "Global Options": global_options,
-            "Available Commands": {command_name: self.commands[command_name].description
-                                   for command_name in sorted(self.commands)}
+            "Available Commands": {
+                command_name: self.commands[command_name].description
+                for command_name in sorted(self.commands)
+            },
         }
 
-        self.print_help_page(usage_string, major_sections, spacing=spacing, separation=separation)
+        self.print_help_page(
+            usage_string, major_sections, spacing=spacing, separation=separation
+        )
 
     def print_version(self) -> None:
         """Print the version of Concourse Tools."""
@@ -210,8 +243,16 @@ class CLICommand(_CLIParser):
     :param positional_arguments: A list of positional arguments.
     :param options: A list of options.
     """
-    def __init__(self, name: str, description: str | None, inner_function: CLIFunction, inner_parser: ArgumentParser,
-                 positional_arguments: list[PositionalArgument[Any]], options: list[Option[Any]]) -> None:
+
+    def __init__(
+        self,
+        name: str,
+        description: str | None,
+        inner_function: CLIFunction,
+        inner_parser: ArgumentParser,
+        positional_arguments: list[PositionalArgument[Any]],
+        options: list[Option[Any]],
+    ) -> None:
         self.name = name
         self.description = description
         self.inner_function = inner_function
@@ -241,7 +282,9 @@ class CLICommand(_CLIParser):
         parsed_args_namespace = self.inner_parser.parse_args(args)
         kwargs = dict(parsed_args_namespace._get_kwargs())
         args = []
-        for param_name, parameter in inspect.signature(self.inner_function).parameters.items():
+        for param_name, parameter in inspect.signature(
+            self.inner_function
+        ).parameters.items():
             if parameter.kind is inspect._ParameterKind.POSITIONAL_ONLY:
                 value = kwargs.pop(param_name)
                 args.append(value)
@@ -259,8 +302,14 @@ class CLICommand(_CLIParser):
             "-h, --help": "Show this help message",
         }
 
-        command_arguments: dict[str, str | None] = {parameter.name: parameter.description or "" for parameter in self.positional_arguments}
-        command_options: dict[str, str | None] = {", ".join(parameter.aliases): parameter.description for parameter in self.options}
+        command_arguments: dict[str, str | None] = {
+            parameter.name: parameter.description or ""
+            for parameter in self.positional_arguments
+        }
+        command_options: dict[str, str | None] = {
+            ", ".join(parameter.aliases): parameter.description
+            for parameter in self.options
+        }
 
         major_sections = {
             "Global Options": global_options,
@@ -270,9 +319,12 @@ class CLICommand(_CLIParser):
 
         self.print_help_page(major_sections, spacing=spacing, separation=separation)
 
-    def print_help_page(self, help_sections: dict[str, dict[str, str | None]], spacing: int = 2,
-                        separation: int = 1) -> None:
-
+    def print_help_page(
+        self,
+        help_sections: dict[str, dict[str, str | None]],
+        spacing: int = 2,
+        separation: int = 1,
+    ) -> None:
         self.print_help_section("Usage", {self.usage_string(): None}, spacing=spacing)
 
         separator = "\n" * separation
@@ -281,7 +333,9 @@ class CLICommand(_CLIParser):
         max_key_width = max(self._max_key_length(d) for _, d in help_sections.items())
 
         for title, options in help_sections.items():
-            self.print_help_section(title, options, key_width=max_key_width, spacing=spacing)
+            self.print_help_section(
+                title, options, key_width=max_key_width, spacing=spacing
+            )
             print(separator, end="")
 
     def usage_string(self) -> str:
@@ -294,7 +348,9 @@ class CLICommand(_CLIParser):
         return " ".join(usage_components)
 
     @classmethod
-    def from_function(cls, func: CLIFunction, allow_short: set[str] | None = None) -> CLICommand:
+    def from_function(
+        cls, func: CLIFunction, allow_short: set[str] | None = None
+    ) -> CLICommand:
         """
         Create a new parser from a function.
 
@@ -309,7 +365,10 @@ class CLICommand(_CLIParser):
 
         docstring = Docstring.from_object(func)
 
-        parser = ArgumentParser(f"python3 -m concoursetools {func.__name__}", description=docstring.first_line)
+        parser = ArgumentParser(
+            f"python3 -m concoursetools {func.__name__}",
+            description=docstring.first_line,
+        )
         positional_arguments: list[PositionalArgument[Any]] = []
         options: list[Option[Any]] = []
 
@@ -322,7 +381,14 @@ class CLICommand(_CLIParser):
             else:
                 raise TypeError
 
-        return cls(func.__name__, docstring.first_line, func, parser, positional_arguments, options)
+        return cls(
+            func.__name__,
+            docstring.first_line,
+            func,
+            parser,
+            positional_arguments,
+            options,
+        )
 
 
 @dataclass
@@ -334,6 +400,7 @@ class Parameter(ABC, Generic[T]):
     :param param_type: The Python type of the parameter.
     :param description: An optional description of the parameter.
     """
+
     name: str
     param_type: type[T]
     description: str | None = None
@@ -377,7 +444,9 @@ class Parameter(ABC, Generic[T]):
         ...
 
     @classmethod
-    def yield_from_function(cls, func: CLIFunction, allow_short: set[str]) -> Generator[Parameter[Any], None, None]:
+    def yield_from_function(
+        cls, func: CLIFunction, allow_short: set[str]
+    ) -> Generator[Parameter[Any], None, None]:
         """
         Yield parameters from a function.
 
@@ -401,8 +470,13 @@ class Parameter(ABC, Generic[T]):
                 if issubclass(parameter_type, bool):
                     yield FlagOption(parameter_name, parameter_help, parameter.default)
                 else:
-                    yield Option(parameter_name, parameter_type, parameter_help, parameter.default,
-                                 allow_short=(parameter_name in allow_short))
+                    yield Option(
+                        parameter_name,
+                        parameter_type,
+                        parameter_help,
+                        parameter.default,
+                        allow_short=(parameter_name in allow_short),
+                    )
             else:
                 raise ValueError("Parameters must be positional or keyword only.")
 
@@ -416,6 +490,7 @@ class PositionalArgument(Parameter[T]):
     :param param_type: The Python type of the argument.
     :param description: An optional description of the argument.
     """
+
     @property
     def aliases(self) -> tuple[str, ...]:
         """The aliases for the option."""
@@ -436,6 +511,7 @@ class Option(Parameter[T]):
     :param default: The option default, if set.
     :param allow_short: Set to :data:`True` to allow a short option, i.e. ``-o`` as well as ``--option``.
     """
+
     default: T | None = None
     allow_short: bool = False
 
@@ -446,7 +522,12 @@ class Option(Parameter[T]):
         return (self.long_alias,)
 
     def add_to_parser(self, parser: ArgumentParser) -> None:
-        parser.add_argument(*self.aliases, type=self.param_type, default=self.default, help=self.description)
+        parser.add_argument(
+            *self.aliases,
+            type=self.param_type,
+            default=self.default,
+            help=self.description,
+        )
 
 
 class FlagOption(Option[bool]):
@@ -457,6 +538,7 @@ class FlagOption(Option[bool]):
     :param description: An optional description of the flag.
     :param default: The option default, if set. Should be either :data:`True` or :data:`False`.
     """
+
     def __init__(self, name: str, description: str | None, default: bool):
         super().__init__(name, bool, description, default, allow_short=False)
 

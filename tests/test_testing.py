@@ -37,7 +37,9 @@ class FolderDictReadTests(TestCase):
         cls.temp_dir.cleanup()
 
     def test_folder_dict_depth_1(self) -> None:
-        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(self.root, max_depth=1)
+        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(
+            self.root, max_depth=1
+        )
         expected = {
             "folder_1": ...,
             "folder_2": ...,
@@ -46,7 +48,9 @@ class FolderDictReadTests(TestCase):
         self.assertDictEqual(folder_dict, expected)
 
     def test_folder_dict_depth_2(self) -> None:
-        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(self.root, max_depth=2)
+        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(
+            self.root, max_depth=2
+        )
         expected = {
             "folder_1": {},
             "folder_2": {
@@ -58,7 +62,9 @@ class FolderDictReadTests(TestCase):
         self.assertDictEqual(folder_dict, expected)
 
     def test_folder_dict_depth_3(self) -> None:
-        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(self.root, max_depth=3)
+        folder_dict = TemporaryDirectoryState()._get_folder_as_dict(
+            self.root, max_depth=3
+        )
         expected = {
             "folder_1": {},
             "folder_2": {
@@ -97,5 +103,7 @@ class FolderDictWriteTests(TestCase):
             "file_1": "Testing 1\n",
         }
         TemporaryDirectoryState()._set_folder_from_dict(self.root, original)
-        final_dict = TemporaryDirectoryState()._get_folder_as_dict(self.root, max_depth=3)
+        final_dict = TemporaryDirectoryState()._get_folder_as_dict(
+            self.root, max_depth=3
+        )
         self.assertDictEqual(final_dict, original)

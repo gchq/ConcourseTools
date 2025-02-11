@@ -9,14 +9,25 @@ from unittest import SkipTest, TestCase
 import concoursetools
 from concoursetools.cli import commands as cli_commands
 from concoursetools.colour import colourise
-from concoursetools.testing import (ConversionTestResourceWrapper, DockerConversionTestResourceWrapper, DockerTestResourceWrapper,
-                                    FileConversionTestResourceWrapper, FileTestResourceWrapper, JSONTestResourceWrapper, SimpleTestResourceWrapper,
-                                    run_command)
-from tests.resource import ConcourseMockResource, ConcourseMockVersion, TestResource, TestVersion
+from concoursetools.testing import (
+    ConversionTestResourceWrapper,
+    DockerConversionTestResourceWrapper,
+    DockerTestResourceWrapper,
+    FileConversionTestResourceWrapper,
+    FileTestResourceWrapper,
+    JSONTestResourceWrapper,
+    SimpleTestResourceWrapper,
+    run_command,
+)
+from tests.resource import (
+    ConcourseMockResource,
+    ConcourseMockVersion,
+    TestResource,
+    TestVersion,
+)
 
 
 class SimpleWrapperTests(TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         self.resource = TestResource("git://some-uri", "develop", "...")
@@ -50,7 +61,10 @@ class SimpleWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_versions, [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")])
+        self.assertListEqual(
+            new_versions,
+            [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -65,7 +79,10 @@ class SimpleWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata = self.wrapper.download_version(version)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -73,8 +90,13 @@ class SimpleWrapperTests(TestCase):
         version = TestVersion("61cbef")
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata = self.wrapper.download_version(version, file_name="README.md")
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+                _, metadata = self.wrapper.download_version(
+                    version, file_name="README.md"
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -104,7 +126,6 @@ class SimpleWrapperTests(TestCase):
 
 
 class JSONWrapperTests(TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         config = {
@@ -142,7 +163,10 @@ class JSONWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(
+            new_version_configs,
+            [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -150,7 +174,9 @@ class JSONWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_no_params(self) -> None:
@@ -158,8 +184,13 @@ class JSONWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_params(self) -> None:
@@ -167,9 +198,16 @@ class JSONWrapperTests(TestCase):
         params = {"file_name": "README.md"}
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata_pairs = self.wrapper.download_version(version_config, params=params)
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+                _, metadata_pairs = self.wrapper.download_version(
+                    version_config, params=params
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_incorrect_params(self) -> None:
@@ -189,7 +227,9 @@ class JSONWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state(directory):
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"ref": "61cbef"})
         self.assertListEqual(metadata_pairs, [])
@@ -201,7 +241,6 @@ class JSONWrapperTests(TestCase):
 
 
 class ConversionWrapperTests(TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         config = {
@@ -239,7 +278,10 @@ class ConversionWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_versions, [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")])
+        self.assertListEqual(
+            new_versions,
+            [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -254,7 +296,10 @@ class ConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata = self.wrapper.download_version(version)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -262,8 +307,13 @@ class ConversionWrapperTests(TestCase):
         version = TestVersion("61cbef")
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata = self.wrapper.download_version(version, file_name="README.md")
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+                _, metadata = self.wrapper.download_version(
+                    version, file_name="README.md"
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -293,19 +343,24 @@ class ConversionWrapperTests(TestCase):
 
 
 class FileWrapperTests(TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         self.temp_dir = TemporaryDirectory()
-        cli_commands.assets(self.temp_dir.name, resource_file="tests/resource.py",
-                            class_name=TestResource.__name__, executable="/usr/bin/env python3")
+        cli_commands.assets(
+            self.temp_dir.name,
+            resource_file="tests/resource.py",
+            class_name=TestResource.__name__,
+            executable="/usr/bin/env python3",
+        )
 
         config = {
             "uri": "git://some-uri",
             "branch": "develop",
             "private_key": "...",
         }
-        self.wrapper = FileTestResourceWrapper.from_assets_dir(config, Path(self.temp_dir.name))
+        self.wrapper = FileTestResourceWrapper.from_assets_dir(
+            config, Path(self.temp_dir.name)
+        )
 
     def tearDown(self) -> None:
         """Code to run after each test."""
@@ -339,7 +394,10 @@ class FileWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(
+            new_version_configs,
+            [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -347,7 +405,9 @@ class FileWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_no_params(self) -> None:
@@ -355,8 +415,13 @@ class FileWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_params(self) -> None:
@@ -364,9 +429,16 @@ class FileWrapperTests(TestCase):
         params = {"file_name": "README.md"}
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata_pairs = self.wrapper.download_version(version_config, params=params)
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+                _, metadata_pairs = self.wrapper.download_version(
+                    version_config, params=params
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_incorrect_params(self) -> None:
@@ -386,7 +458,9 @@ class FileWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state(directory):
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"ref": "61cbef"})
         self.assertListEqual(metadata_pairs, [])
@@ -398,7 +472,6 @@ class FileWrapperTests(TestCase):
 
 
 class FileConversionWrapperTests(TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         config = {
@@ -406,7 +479,9 @@ class FileConversionWrapperTests(TestCase):
             "branch": "develop",
             "private_key": "...",
         }
-        self.wrapper = FileConversionTestResourceWrapper(TestResource, config, executable="/usr/bin/env python3")
+        self.wrapper = FileConversionTestResourceWrapper(
+            TestResource, config, executable="/usr/bin/env python3"
+        )
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version = TestVersion("61cbef")
@@ -436,7 +511,10 @@ class FileConversionWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_versions, [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")])
+        self.assertListEqual(
+            new_versions,
+            [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -451,7 +529,10 @@ class FileConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata = self.wrapper.download_version(version)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -459,8 +540,13 @@ class FileConversionWrapperTests(TestCase):
         version = TestVersion("61cbef")
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata = self.wrapper.download_version(version, file_name="README.md")
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+                _, metadata = self.wrapper.download_version(
+                    version, file_name="README.md"
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -538,7 +624,10 @@ class DockerWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(
+            new_version_configs,
+            [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -546,7 +635,9 @@ class DockerWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_no_params(self) -> None:
@@ -554,8 +645,13 @@ class DockerWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_params(self) -> None:
@@ -563,9 +659,16 @@ class DockerWrapperTests(TestCase):
         params = {"file_name": "README.md"}
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata_pairs = self.wrapper.download_version(version_config, params=params)
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
-        self.assertListEqual(metadata_pairs, [{"name": "team_name", "value": "my-team"}])
+                _, metadata_pairs = self.wrapper.download_version(
+                    version_config, params=params
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
+        self.assertListEqual(
+            metadata_pairs, [{"name": "team_name", "value": "my-team"}]
+        )
         self.assertEqual(debugging, "Downloading.\n")
 
     def test_in_step_with_incorrect_params(self) -> None:
@@ -585,7 +688,9 @@ class DockerWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state(directory):
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"ref": "61cbef"})
         self.assertListEqual(metadata_pairs, [])
@@ -621,7 +726,9 @@ class DockerConversionWrapperTests(TestCase):
             "branch": "develop",
             "private_key": "...",
         }
-        self.wrapper = DockerConversionTestResourceWrapper(TestResource, config, self.image)
+        self.wrapper = DockerConversionTestResourceWrapper(
+            TestResource, config, self.image
+        )
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version = TestVersion("61cbef")
@@ -651,7 +758,10 @@ class DockerConversionWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_versions, [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")])
+        self.assertListEqual(
+            new_versions,
+            [TestVersion("61cbef"), TestVersion("d74e01"), TestVersion("7154fe")],
+        )
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -666,7 +776,10 @@ class DockerConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata = self.wrapper.download_version(version)
-        self.assertDictEqual(directory_state.final_state, {"README.txt": "Downloaded README for ref 61cbef.\n"})
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.txt": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -674,8 +787,13 @@ class DockerConversionWrapperTests(TestCase):
         version = TestVersion("61cbef")
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata = self.wrapper.download_version(version, file_name="README.md")
-        self.assertDictEqual(directory_state.final_state, {"README.md": "Downloaded README for ref 61cbef.\n"})
+                _, metadata = self.wrapper.download_version(
+                    version, file_name="README.md"
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"README.md": "Downloaded README for ref 61cbef.\n"},
+        )
         self.assertDictEqual(metadata, {"team_name": "my-team"})
         self.assertEqual(debugging, "Downloading.\n")
 
@@ -724,11 +842,18 @@ def _build_test_resource_docker_image() -> str:
 
         for setup_file in ("setup.py", "setup.cfg", "pyproject.toml"):
             try:
-                shutil.copyfile(concoursetools_path.parent / setup_file, temp_repo_path / setup_file)
+                shutil.copyfile(
+                    concoursetools_path.parent / setup_file, temp_repo_path / setup_file
+                )
             except FileNotFoundError:
                 pass
 
-        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__, dev=True)
+        cli_commands.dockerfile(
+            str(temp_dir),
+            resource_file="concourse.py",
+            class_name=TestResource.__name__,
+            dev=True,
+        )
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
@@ -755,13 +880,17 @@ class ExternalDockerWrapperTests(TestCase):
     def test_check_step_with_version_no_debugging(self) -> None:
         version_config = {"version": "1", "privileged": "true"}
         new_version_configs = self.wrapper.fetch_new_versions(version_config)
-        self.assertListEqual(new_version_configs, [{"version": "1", "privileged": "true"}])
+        self.assertListEqual(
+            new_version_configs, [{"version": "1", "privileged": "true"}]
+        )
 
     def test_check_step_with_version(self) -> None:
         version_config = {"version": "1", "privileged": "true"}
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions(version_config)
-        self.assertListEqual(new_version_configs, [{"version": "1", "privileged": "true"}])
+        self.assertListEqual(
+            new_version_configs, [{"version": "1", "privileged": "true"}]
+        )
         self.assertEqual(debugging, self._format_debugging_message("Debug message"))
 
     def test_check_step_with_version_twice(self) -> None:
@@ -780,7 +909,9 @@ class ExternalDockerWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"version": "0", "privileged": "true"}])
+        self.assertListEqual(
+            new_version_configs, [{"version": "0", "privileged": "true"}]
+        )
         self.assertEqual(debugging, self._format_debugging_message("Debug message"))
 
     def test_in_step_no_metadata(self) -> None:
@@ -789,11 +920,13 @@ class ExternalDockerWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             _, metadata_pairs = self.wrapper.download_version(version_config)
         self.assertListEqual(metadata_pairs, [])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_no_directory_state(self) -> None:
@@ -801,11 +934,13 @@ class ExternalDockerWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             _, metadata_pairs = self.wrapper.download_version(version_config)
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_no_params(self) -> None:
@@ -813,13 +948,17 @@ class ExternalDockerWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata_pairs = self.wrapper.download_version(version_config)
-        self.assertDictEqual(directory_state.final_state, {"privileged": "true\n", "version": "1\n"})
+        self.assertDictEqual(
+            directory_state.final_state, {"privileged": "true\n", "version": "1\n"}
+        )
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_with_params(self) -> None:
@@ -827,15 +966,21 @@ class ExternalDockerWrapperTests(TestCase):
         params = {"create_files_via_params": {"file.txt": "contents"}}
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata_pairs = self.wrapper.download_version(version_config, params=params)
-        self.assertDictEqual(directory_state.final_state, {"privileged": "true\n", "version": "1\n",
-                                                           "file.txt": "contents"})
+                _, metadata_pairs = self.wrapper.download_version(
+                    version_config, params=params
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"privileged": "true\n", "version": "1\n", "file.txt": "contents"},
+        )
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_with_incorrect_params(self) -> None:
@@ -849,15 +994,19 @@ class ExternalDockerWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state():
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"version": "2", "privileged": "true"})
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("pushing in a privileged container"),
-            self._format_debugging_message("pushing version: 2"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("pushing in a privileged container"),
+                self._format_debugging_message("pushing version: 2"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_out_step_with_params(self) -> None:
@@ -871,15 +1020,19 @@ class ExternalDockerWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state(directory):
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"version": "2", "privileged": "true"})
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("pushing in a privileged container"),
-            self._format_debugging_message("pushing version: 2"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("pushing in a privileged container"),
+                self._format_debugging_message("pushing version: 2"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_out_step_missing_params(self) -> None:
@@ -891,7 +1044,9 @@ class ExternalDockerWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state():
-                version_config, metadata_pairs = self.wrapper.publish_new_version(params=params)
+                version_config, metadata_pairs = self.wrapper.publish_new_version(
+                    params=params
+                )
 
         self.assertDictEqual(version_config, {"version": "2", "privileged": "true"})
         self.assertListEqual(metadata_pairs, [{"name": "key", "value": "value"}])
@@ -899,20 +1054,27 @@ class ExternalDockerWrapperTests(TestCase):
         debugging_lines = debugging.value.splitlines(keepends=True)
         original_lines, env_lines = debugging_lines[:3], debugging_lines[3:]
 
-        self.assertListEqual(original_lines, [
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("pushing in a privileged container"),
-            self._format_debugging_message("pushing version: 2"),
-        ])
+        self.assertListEqual(
+            original_lines,
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("pushing in a privileged container"),
+                self._format_debugging_message("pushing version: 2"),
+            ],
+        )
 
         expected_env_lines = {
-            self._format_debugging_message("env: PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "),
+            self._format_debugging_message(
+                "env: PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "
+            ),
             self._format_debugging_message("env: HOSTNAME=resource"),
             self._format_debugging_message("env: HOME=/root"),
         }
 
         for env_var, value in self.wrapper.mocked_environ.items():
-            expected_env_lines.add(self._format_debugging_message(f"env: {env_var}={value} "))
+            expected_env_lines.add(
+                self._format_debugging_message(f"env: {env_var}={value} ")
+            )
 
         self.assertSetEqual(set(env_lines), expected_env_lines)
 
@@ -937,18 +1099,24 @@ class ExternalDockerConversionWrapperTests(TestCase):
             "log": "Debug message",
             "metadata": [{"name": "key", "value": "value"}],
         }
-        self.wrapper = DockerConversionTestResourceWrapper(ConcourseMockResource, config, self.image)
+        self.wrapper = DockerConversionTestResourceWrapper(
+            ConcourseMockResource, config, self.image
+        )
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version = ConcourseMockVersion(version=1, privileged=True)
         new_versions = self.wrapper.fetch_new_versions(version)
-        self.assertListEqual(new_versions, [ConcourseMockVersion(version=1, privileged=True)])
+        self.assertListEqual(
+            new_versions, [ConcourseMockVersion(version=1, privileged=True)]
+        )
 
     def test_check_step_with_version(self) -> None:
         version = ConcourseMockVersion(version=1, privileged=True)
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions(version)
-        self.assertListEqual(new_versions, [ConcourseMockVersion(version=1, privileged=True)])
+        self.assertListEqual(
+            new_versions, [ConcourseMockVersion(version=1, privileged=True)]
+        )
         self.assertEqual(debugging, self._format_debugging_message("Debug message"))
 
     def test_check_step_with_version_twice(self) -> None:
@@ -967,7 +1135,9 @@ class ExternalDockerConversionWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_versions = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_versions, [ConcourseMockVersion(version=0, privileged=True)])
+        self.assertListEqual(
+            new_versions, [ConcourseMockVersion(version=0, privileged=True)]
+        )
         self.assertEqual(debugging, self._format_debugging_message("Debug message"))
 
     def test_in_step_no_metadata(self) -> None:
@@ -976,11 +1146,13 @@ class ExternalDockerConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             _, metadata = self.wrapper.download_version(version)
         self.assertDictEqual(metadata, {})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_no_directory_state(self) -> None:
@@ -988,11 +1160,13 @@ class ExternalDockerConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             _, metadata = self.wrapper.download_version(version)
         self.assertDictEqual(metadata, {"key": "value"})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_no_params(self) -> None:
@@ -1000,28 +1174,38 @@ class ExternalDockerConversionWrapperTests(TestCase):
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
                 _, metadata = self.wrapper.download_version(version)
-        self.assertDictEqual(directory_state.final_state, {"privileged": "true\n", "version": "1\n"})
+        self.assertDictEqual(
+            directory_state.final_state, {"privileged": "true\n", "version": "1\n"}
+        )
         self.assertDictEqual(metadata, {"key": "value"})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_with_params(self) -> None:
         version = ConcourseMockVersion(version=1, privileged=True)
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state() as directory_state:
-                _, metadata = self.wrapper.download_version(version, create_files_via_params={"file.txt": "contents"})
-        self.assertDictEqual(directory_state.final_state, {"privileged": "true\n", "version": "1\n",
-                                                           "file.txt": "contents"})
+                _, metadata = self.wrapper.download_version(
+                    version, create_files_via_params={"file.txt": "contents"}
+                )
+        self.assertDictEqual(
+            directory_state.final_state,
+            {"privileged": "true\n", "version": "1\n", "file.txt": "contents"},
+        )
         self.assertDictEqual(metadata, {"key": "value"})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("fetching in a privileged container"),
-            self._format_debugging_message("fetching version: 1"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("fetching in a privileged container"),
+                self._format_debugging_message("fetching version: 1"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_in_step_with_incorrect_params(self) -> None:
@@ -1036,11 +1220,13 @@ class ExternalDockerConversionWrapperTests(TestCase):
 
         self.assertEqual(version, ConcourseMockVersion(version=2, privileged=True))
         self.assertDictEqual(metadata, {"key": "value"})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("pushing in a privileged container"),
-            self._format_debugging_message("pushing version: 2"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("pushing in a privileged container"),
+                self._format_debugging_message("pushing version: 2"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_out_step_with_params(self) -> None:
@@ -1052,15 +1238,19 @@ class ExternalDockerConversionWrapperTests(TestCase):
 
         with self.wrapper.capture_debugging() as debugging:
             with self.wrapper.capture_directory_state(directory):
-                version, metadata = self.wrapper.publish_new_version(file="folder/version.txt")
+                version, metadata = self.wrapper.publish_new_version(
+                    file="folder/version.txt"
+                )
 
         self.assertEqual(version, ConcourseMockVersion(version=2, privileged=True))
         self.assertDictEqual(metadata, {"key": "value"})
-        expected_debugging = "".join([
-            self._format_debugging_message("Debug message"),
-            self._format_debugging_message("pushing in a privileged container"),
-            self._format_debugging_message("pushing version: 2"),
-        ])
+        expected_debugging = "".join(
+            [
+                self._format_debugging_message("Debug message"),
+                self._format_debugging_message("pushing in a privileged container"),
+                self._format_debugging_message("pushing version: 2"),
+            ]
+        )
         self.assertEqual(debugging, expected_debugging)
 
     def test_out_step_missing_params(self) -> None:

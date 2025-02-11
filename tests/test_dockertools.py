@@ -2,6 +2,7 @@
 """
 Tests for the dockertools module.
 """
+
 from pathlib import Path
 import shutil
 import sys
@@ -16,6 +17,7 @@ class DockerTests(TestCase):
     """
     Tests for the creation of the Dockerfile.
     """
+
     def setUp(self) -> None:
         """Code to run before each test."""
         self._temp_dir = TemporaryDirectory()
@@ -27,7 +29,9 @@ class DockerTests(TestCase):
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 
-        self.current_python_string = f"{sys.version_info.major}.{sys.version_info.minor}"
+        self.current_python_string = (
+            f"{sys.version_info.major}.{sys.version_info.minor}"
+        )
 
     def tearDown(self) -> None:
         """Code to run after each test."""
@@ -58,7 +62,12 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_custom_image_and_tag(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", image="node", tag="lts-slim")
+        cli_commands.dockerfile(
+            str(self.temp_dir),
+            resource_file="concourse.py",
+            image="node",
+            tag="lts-slim",
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent("""
         FROM node:lts-slim
@@ -82,7 +91,11 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_pip_args(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", pip_args="--trusted-host pypi.org")
+        cli_commands.dockerfile(
+            str(self.temp_dir),
+            resource_file="concourse.py",
+            pip_args="--trusted-host pypi.org",
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}
@@ -106,7 +119,9 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_no_venv(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", no_venv=True)
+        cli_commands.dockerfile(
+            str(self.temp_dir), resource_file="concourse.py", no_venv=True
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}
@@ -126,7 +141,9 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_with_suffix(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", suffix="slim")
+        cli_commands.dockerfile(
+            str(self.temp_dir), resource_file="concourse.py", suffix="slim"
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}-slim
@@ -174,7 +191,9 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_basic_config_with_class_name_and_executable(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), class_name="MyResource", executable="/usr/bin/python3")
+        cli_commands.dockerfile(
+            str(self.temp_dir), class_name="MyResource", executable="/usr/bin/python3"
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}
@@ -223,7 +242,9 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_rsa_config(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", include_rsa=True)
+        cli_commands.dockerfile(
+            str(self.temp_dir), resource_file="concourse.py", include_rsa=True
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}
@@ -249,7 +270,9 @@ class DockerTests(TestCase):
         self.assertEqual(dockerfile_contents, expected_contents)
 
     def test_dev_config(self) -> None:
-        cli_commands.dockerfile(str(self.temp_dir), resource_file="concourse.py", dev=True)
+        cli_commands.dockerfile(
+            str(self.temp_dir), resource_file="concourse.py", dev=True
+        )
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
         FROM python:{self.current_python_string}

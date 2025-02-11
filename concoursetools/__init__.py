@@ -2,6 +2,7 @@
 """
 A Python package for easily implementing Concourse resource types.
 """
+
 from concoursetools.metadata import BuildMetadata
 from concoursetools.resource import ConcourseResource
 from concoursetools.version import TypedVersion, Version

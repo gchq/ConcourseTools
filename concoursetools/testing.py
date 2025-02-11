@@ -8,6 +8,7 @@ the functions with specific inputs to check that they are turning the
 correct outputs. However, this does limit your ability to mock the
 script environment when your code relies on external factors.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -23,9 +24,28 @@ from typing import Any, Generic, TypeVar
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
 from concoursetools.dockertools import MethodName, ScriptName, create_script_file
-from concoursetools.mocking import StringIOWrapper, TemporaryDirectoryState, create_env_vars, mock_argv, mock_environ, mock_stdin
-from concoursetools.parsing import format_check_input, format_in_input, format_out_input, parse_metadata
-from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig, VersionT
+from concoursetools.mocking import (
+    StringIOWrapper,
+    TemporaryDirectoryState,
+    create_env_vars,
+    mock_argv,
+    mock_environ,
+    mock_stdin,
+)
+from concoursetools.parsing import (
+    format_check_input,
+    format_in_input,
+    format_out_input,
+    parse_metadata,
+)
+from concoursetools.typing import (
+    Metadata,
+    MetadataPair,
+    Params,
+    ResourceConfig,
+    VersionConfig,
+    VersionT,
+)
 
 T = TypeVar("T")
 ContextManager = Generator[T, None, None]
@@ -67,8 +87,14 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         ...     assert metadata == {"team_name": "my-team"}
         ...     assert debugging == "Downloading.\n"
     """
-    def __init__(self, directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
+
+    def __init__(
+        self,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
         self.mocked_environ = create_env_vars(one_off_build, instance_vars, **env_vars)
         self.directory_dict = directory_dict
 
@@ -105,7 +131,9 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         yield self._debugging_output
 
     @contextmanager
-    def capture_directory_state(self, starting_state: FolderDict | None = None) -> ContextManager["TemporaryDirectoryState"]:
+    def capture_directory_state(
+        self, starting_state: FolderDict | None = None
+    ) -> ContextManager["TemporaryDirectoryState"]:
         """
         Open a context manager to expose the internal state of the resource.
 
@@ -130,8 +158,12 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
     def _forbid_methods(self, *methods: Callable[..., object]) -> ContextManager[None]:
         try:
             for method in methods:
+
                 def new_method(*args: object, **kwargs: object) -> object:
-                    raise RuntimeError(f"Cannot call {method.__name__} from within this context manager.")
+                    raise RuntimeError(
+                        f"Cannot call {method.__name__} from within this context manager."
+                    )
+
                 setattr(self, method.__name__, new_method)
             yield
         finally:
@@ -152,16 +184,28 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
     :param inner_resource: The resource to be wrapped.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`
     :param one_off_build: Set to :data:`True` if you are testing a one-off build.
+    :param capture_output: Set to :data:`False` if you do not want to capture the output, i.e. for debugging. Default is :data:`True`.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, inner_resource: ConcourseResource[VersionT], directory_dict: FolderDict | None = None,
-                 one_off_build: bool = False, instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
+
+    def __init__(
+        self,
+        inner_resource: ConcourseResource[VersionT],
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        capture_output: bool = True,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
         super().__init__(directory_dict, one_off_build, instance_vars, **env_vars)
+        self.capture_output = capture_output
         self.inner_resource = inner_resource
         self.mocked_build_metadata = BuildMetadata(**self.mocked_environ)
 
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -171,10 +215,17 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
-        with self._debugging_output.capture_stdout_and_stderr():
-            return self.inner_resource.fetch_new_versions(previous_version=previous_version)
+        if self.capture_output:
+            with self._debugging_output.capture_stdout_and_stderr():
+                return self.inner_resource.fetch_new_versions(
+                    previous_version=previous_version
+                )
 
-    def download_version(self, version: VersionT, **params: object) -> tuple[VersionT, Metadata]:
+        return self.inner_resource.fetch_new_versions(previous_version=previous_version)
+
+    def download_version(
+        self, version: VersionT, **params: object
+    ) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -185,9 +236,22 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
         :param params: Additional keyword parameters passed to the inner resource.
         :returns: The version (most likely unchanged), and a dictionary of metadata.
         """
-        with self._debugging_output.capture_stdout_and_stderr():
-            with self._directory_state:
-                return self.inner_resource.download_version(version, self._directory_state.path, self.mocked_build_metadata, **params)
+        if self.capture_output:
+            with self._debugging_output.capture_stdout_and_stderr():
+                with self._directory_state:
+                    return self.inner_resource.download_version(
+                        version,
+                        self._directory_state.path,
+                        self.mocked_build_metadata,
+                        **params,
+                    )
+        with self._directory_state:
+            return self.inner_resource.download_version(
+                version,
+                self._directory_state.path,
+                self.mocked_build_metadata,
+                **params,
+            )
 
     def publish_new_version(self, **params: object) -> tuple[VersionT, Metadata]:
         """
@@ -199,9 +263,17 @@ class SimpleTestResourceWrapper(TestResourceWrapper[VersionT]):
         :param params: Additional keyword parameters passed to the inner resource.
         :returns: The new version, and a dictionary of metadata.
         """
-        with self._debugging_output.capture_stdout_and_stderr():
-            with self._directory_state:
-                return self.inner_resource.publish_new_version(self._directory_state.path, self.mocked_build_metadata, **params)
+        if self.capture_output:
+            with self._debugging_output.capture_stdout_and_stderr():
+                with self._directory_state:
+                    return self.inner_resource.publish_new_version(
+                        self._directory_state.path, self.mocked_build_metadata, **params
+                    )
+
+        with self._directory_state:
+            return self.inner_resource.publish_new_version(
+                self._directory_state.path, self.mocked_build_metadata, **params
+            )
 
 
 class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
@@ -218,14 +290,23 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, inner_resource_type: type[ConcourseResource[VersionT]], inner_resource_config: ResourceConfig,
-                 directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
+
+    def __init__(
+        self,
+        inner_resource_type: type[ConcourseResource[VersionT]],
+        inner_resource_config: ResourceConfig,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
         super().__init__(directory_dict, one_off_build, instance_vars, **env_vars)
         self.inner_resource_type = inner_resource_type
         self.inner_resource_config = inner_resource_config
 
-    def fetch_new_versions(self, previous_version_config: VersionConfig | None = None) -> list[VersionConfig]:
+    def fetch_new_versions(
+        self, previous_version_config: VersionConfig | None = None
+    ) -> list[VersionConfig]:
         """
         Fetch new versions of the resource.
 
@@ -254,7 +335,9 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         return version_configs
 
-    def download_version(self, version_config: VersionConfig, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def download_version(
+        self, version_config: VersionConfig, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -270,7 +353,9 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
             with self._debugging_output.capture_stderr():
                 with self._directory_state:
                     with mock_stdin(stdin):
-                        with mock_argv("/opt/resource/in", str(self._directory_state.path)):
+                        with mock_argv(
+                            "/opt/resource/in", str(self._directory_state.path)
+                        ):
                             with mock_environ(self.mocked_environ):
                                 self.inner_resource_type.in_main()
                 stdout = stdout_buffer.getvalue()
@@ -283,7 +368,9 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
         metadata_pairs: list[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
-    def publish_new_version(self, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def publish_new_version(
+        self, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Update a resource by publishing a new version.
 
@@ -298,7 +385,9 @@ class JSONTestResourceWrapper(TestResourceWrapper[VersionT]):
             with self._debugging_output.capture_stderr():
                 with self._directory_state:
                     with mock_stdin(stdin):
-                        with mock_argv("/opt/resource/out", str(self._directory_state.path)):
+                        with mock_argv(
+                            "/opt/resource/out", str(self._directory_state.path)
+                        ):
                             with mock_environ(self.mocked_environ):
                                 self.inner_resource_type.out_main()
                 stdout = stdout_buffer.getvalue()
@@ -329,15 +418,31 @@ class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, inner_resource_type: type[ConcourseResource[VersionT]], inner_resource_config: ResourceConfig,
-                 directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
-        super().__init__(inner_resource_type, inner_resource_config, directory_dict, one_off_build, instance_vars, **env_vars)
+
+    def __init__(
+        self,
+        inner_resource_type: type[ConcourseResource[VersionT]],
+        inner_resource_config: ResourceConfig,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
+        super().__init__(
+            inner_resource_type,
+            inner_resource_config,
+            directory_dict,
+            one_off_build,
+            instance_vars,
+            **env_vars,
+        )
         self.mocked_build_metadata = BuildMetadata(**self.mocked_environ)
         inner_resource = inner_resource_type(**inner_resource_config)
         self.inner_version_class = inner_resource.version_class
 
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -348,11 +453,18 @@ class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
-        previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
+        previous_version_config = (
+            None if previous_version is None else previous_version.to_flat_dict()
+        )
         version_configs = super().fetch_new_versions(previous_version_config)
-        return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
+        return [
+            self.inner_version_class.from_flat_dict(version_config)
+            for version_config in version_configs
+        ]
 
-    def download_version(self, version: VersionT, **params: object) -> tuple[VersionT, Metadata]:
+    def download_version(
+        self, version: VersionT, **params: object
+    ) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -366,7 +478,9 @@ class ConversionTestResourceWrapper(JSONTestResourceWrapper[VersionT]):
         :returns: The version (most likely unchanged), and a dictionary of metadata.
         """
         version_config = version.to_flat_dict()
-        new_version_config, metadata_pairs = super().download_version(version_config, params or {})
+        new_version_config, metadata_pairs = super().download_version(
+            version_config, params or {}
+        )
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
@@ -414,15 +528,29 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
     .. caution::
         If any of the paths for the scripts do not resolve, the corresponding methods will raise :class:`NotImplementedError`.
     """
-    def __init__(self, inner_resource_config: ResourceConfig, check_script: Path | None = None,
-                 in_script: Path | None = None, out_script: Path | None = None,
-                 directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
+
+    def __init__(
+        self,
+        inner_resource_config: ResourceConfig,
+        check_script: Path | None = None,
+        in_script: Path | None = None,
+        out_script: Path | None = None,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
         super().__init__(directory_dict, one_off_build, instance_vars, **env_vars)
         self.inner_resource_config = inner_resource_config
-        self.check_script, self.in_script, self.out_script = check_script, in_script, out_script
+        self.check_script, self.in_script, self.out_script = (
+            check_script,
+            in_script,
+            out_script,
+        )
 
-    def fetch_new_versions(self, previous_version_config: VersionConfig | None = None) -> list[VersionConfig]:
+    def fetch_new_versions(
+        self, previous_version_config: VersionConfig | None = None
+    ) -> list[VersionConfig]:
         """
         Fetch new versions of the resource.
 
@@ -442,7 +570,9 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         env["PYTHONPATH"] = f"{Path.cwd()}:$PYTHONPATH"
 
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
-        stdout, stderr = run_script(self.check_script, additional_args=[], env=env, stdin=stdin)
+        stdout, stderr = run_script(
+            self.check_script, additional_args=[], env=env, stdin=stdin
+        )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -452,7 +582,9 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         return version_configs
 
-    def download_version(self, version_config: VersionConfig, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def download_version(
+        self, version_config: VersionConfig, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -470,8 +602,12 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
 
         stdin = format_in_input(self.inner_resource_config, version_config, params)
         with self._directory_state:
-            stdout, stderr = run_script(self.in_script, additional_args=[str(self._directory_state.path)],
-                                        env=env, stdin=stdin)
+            stdout, stderr = run_script(
+                self.in_script,
+                additional_args=[str(self._directory_state.path)],
+                env=env,
+                stdin=stdin,
+            )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -483,7 +619,9 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         metadata_pairs: list[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
-    def publish_new_version(self, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def publish_new_version(
+        self, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Update a resource by publishing a new version.
 
@@ -500,8 +638,12 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
 
         stdin = format_out_input(self.inner_resource_config, params)
         with self._directory_state:
-            stdout, stderr = run_script(self.out_script, additional_args=[str(self._directory_state.path)],
-                                        env=env, stdin=stdin)
+            stdout, stderr = run_script(
+                self.out_script,
+                additional_args=[str(self._directory_state.path)],
+                env=env,
+                stdin=stdin,
+            )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -514,9 +656,15 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         return new_version_config, metadata_pairs
 
     @classmethod
-    def from_assets_dir(cls: type["FileTestResourceWrapper"], inner_resource_config: ResourceConfig, assets_dir: Path,
-                        directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                        instance_vars: dict[str, str] | None = None, **env_vars: str) -> "FileTestResourceWrapper":
+    def from_assets_dir(
+        cls: type["FileTestResourceWrapper"],
+        inner_resource_config: ResourceConfig,
+        assets_dir: Path,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> "FileTestResourceWrapper":
         """
         Create an instance from a single folder of asset files.
 
@@ -530,9 +678,16 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
         :param env_vars: Pass additional environment variables, or overload the default ones.
         """
-        return cls(inner_resource_config, check_script=assets_dir / "check", in_script=assets_dir / "in",
-                   out_script=assets_dir / "out", directory_dict=directory_dict, one_off_build=one_off_build,
-                   instance_vars=instance_vars, **env_vars)
+        return cls(
+            inner_resource_config,
+            check_script=assets_dir / "check",
+            in_script=assets_dir / "in",
+            out_script=assets_dir / "out",
+            directory_dict=directory_dict,
+            one_off_build=one_off_build,
+            instance_vars=instance_vars,
+            **env_vars,
+        )
 
 
 class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[VersionT]):
@@ -561,12 +716,29 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, inner_resource_type: type[ConcourseResource[VersionT]], inner_resource_config: ResourceConfig,
-                 executable: str, permissions: int = 0o755, encoding: str | None = None,
-                 directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
-        super().__init__(inner_resource_config, check_script=None, in_script=None, out_script=None,
-                         directory_dict=directory_dict, one_off_build=one_off_build, instance_vars=instance_vars, **env_vars)
+
+    def __init__(
+        self,
+        inner_resource_type: type[ConcourseResource[VersionT]],
+        inner_resource_config: ResourceConfig,
+        executable: str,
+        permissions: int = 0o755,
+        encoding: str | None = None,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
+        super().__init__(
+            inner_resource_config,
+            check_script=None,
+            in_script=None,
+            out_script=None,
+            directory_dict=directory_dict,
+            one_off_build=one_off_build,
+            instance_vars=instance_vars,
+            **env_vars,
+        )
         self.executable = executable
         self.permissions = permissions
         self.encoding = encoding
@@ -574,7 +746,9 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         inner_resource = inner_resource_type(**inner_resource_config)
         self.inner_version_class = inner_resource.version_class
 
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -589,12 +763,19 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
-        previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
+        previous_version_config = (
+            None if previous_version is None else previous_version.to_flat_dict()
+        )
         with self._temporarily_create_script_file("check", "check_main"):
             version_configs = super().fetch_new_versions(previous_version_config)
-        return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
+        return [
+            self.inner_version_class.from_flat_dict(version_config)
+            for version_config in version_configs
+        ]
 
-    def download_version(self, version: VersionT, **params: object) -> tuple[VersionT, Metadata]:
+    def download_version(
+        self, version: VersionT, **params: object
+    ) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -612,7 +793,9 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         """
         version_config = version.to_flat_dict()
         with self._temporarily_create_script_file("in", "in_main"):
-            new_version_config, metadata_pairs = super().download_version(version_config, params or {})
+            new_version_config, metadata_pairs = super().download_version(
+                version_config, params or {}
+            )
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
@@ -632,18 +815,29 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         :returns: The new version, and a dictionary of metadata.
         """
         with self._temporarily_create_script_file("out", "out_main"):
-            new_version_config, metadata_pairs = super().publish_new_version(params or {})
+            new_version_config, metadata_pairs = super().publish_new_version(
+                params or {}
+            )
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
 
     @contextmanager
-    def _temporarily_create_script_file(self, script_name: ScriptName, method_name: MethodName) -> ContextManager[None]:
+    def _temporarily_create_script_file(
+        self, script_name: ScriptName, method_name: MethodName
+    ) -> ContextManager[None]:
         attribute_name = f"{script_name}_script"
         try:
             with TemporaryDirectory() as temp_dir:
                 script_path = Path(temp_dir) / script_name
-                create_script_file(script_path, self.inner_resource_type, method_name, self.executable, self.permissions, self.encoding)
+                create_script_file(
+                    script_path,
+                    self.inner_resource_type,
+                    method_name,
+                    self.executable,
+                    self.permissions,
+                    self.encoding,
+                )
                 setattr(self, attribute_name, script_path)
                 yield
         finally:
@@ -676,14 +870,23 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         The working directory is explicitly set to ``/`` within the container to ensure that
         the resource is properly accounting for the paths it is passed.
     """
-    def __init__(self, inner_resource_config: ResourceConfig, image: str,
-                 directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
+
+    def __init__(
+        self,
+        inner_resource_config: ResourceConfig,
+        image: str,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
         super().__init__(directory_dict, one_off_build, instance_vars, **env_vars)
         self.inner_resource_config = inner_resource_config
         self.image = image
 
-    def fetch_new_versions(self, previous_version_config: VersionConfig | None = None) -> list[VersionConfig]:
+    def fetch_new_versions(
+        self, previous_version_config: VersionConfig | None = None
+    ) -> list[VersionConfig]:
         """
         Fetch new versions of the resource.
 
@@ -698,8 +901,15 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         """
         stdin = format_check_input(self.inner_resource_config, previous_version_config)
         with self._directory_state:
-            stdout, stderr = run_docker_container(self.image, "/opt/resource/check", additional_args=[], env={},
-                                                  cwd=Path("/"), stdin=stdin, hostname="resource")
+            stdout, stderr = run_docker_container(
+                self.image,
+                "/opt/resource/check",
+                additional_args=[],
+                env={},
+                cwd=Path("/"),
+                stdin=stdin,
+                hostname="resource",
+            )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -709,7 +919,9 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
             raise ValueError(f"Unexpected output: {stdout.strip()}") from error
         return version_configs
 
-    def download_version(self, version_config: VersionConfig, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def download_version(
+        self, version_config: VersionConfig, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -722,10 +934,16 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         stdin = format_in_input(self.inner_resource_config, version_config, params)
         inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
         with self._directory_state:
-            stdout, stderr = run_docker_container(self.image, "/opt/resource/in", additional_args=[inner_temp_dir],
-                                                  env=self.mocked_environ.copy(), cwd=Path("/"), stdin=stdin,
-                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
-                                                  hostname="resource")
+            stdout, stderr = run_docker_container(
+                self.image,
+                "/opt/resource/in",
+                additional_args=[inner_temp_dir],
+                env=self.mocked_environ.copy(),
+                cwd=Path("/"),
+                stdin=stdin,
+                dir_mapping={self._directory_state.path: inner_temp_dir},
+                hostname="resource",
+            )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -737,7 +955,9 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         metadata_pairs: list[MetadataPair] = output["metadata"] or []
         return new_version_config, metadata_pairs
 
-    def publish_new_version(self, params: Params | None = None) -> tuple[VersionConfig, list[MetadataPair]]:
+    def publish_new_version(
+        self, params: Params | None = None
+    ) -> tuple[VersionConfig, list[MetadataPair]]:
         """
         Update a resource by publishing a new version.
 
@@ -749,10 +969,16 @@ class DockerTestResourceWrapper(TestResourceWrapper[Version]):
         stdin = format_out_input(self.inner_resource_config, params)
         inner_temp_dir = f"/tmp/{secrets.token_hex(4)}"
         with self._directory_state:
-            stdout, stderr = run_docker_container(self.image, "/opt/resource/out", additional_args=[inner_temp_dir],
-                                                  env=self.mocked_environ.copy(), cwd=Path("/"), stdin=stdin,
-                                                  dir_mapping={self._directory_state.path: inner_temp_dir},
-                                                  hostname="resource")
+            stdout, stderr = run_docker_container(
+                self.image,
+                "/opt/resource/out",
+                additional_args=[inner_temp_dir],
+                env=self.mocked_environ.copy(),
+                cwd=Path("/"),
+                stdin=stdin,
+                dir_mapping={self._directory_state.path: inner_temp_dir},
+                hostname="resource",
+            )
 
         self._debugging_output.inner_io.write(stderr)
 
@@ -785,16 +1011,32 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, inner_resource_type: type[ConcourseResource[VersionT]], inner_resource_config: ResourceConfig,
-                 image: str, directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                 instance_vars: dict[str, str] | None = None, **env_vars: str) -> None:
-        super().__init__(inner_resource_config, image, directory_dict=directory_dict, one_off_build=one_off_build,
-                         instance_vars=instance_vars, **env_vars)
+
+    def __init__(
+        self,
+        inner_resource_type: type[ConcourseResource[VersionT]],
+        inner_resource_config: ResourceConfig,
+        image: str,
+        directory_dict: FolderDict | None = None,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ) -> None:
+        super().__init__(
+            inner_resource_config,
+            image,
+            directory_dict=directory_dict,
+            one_off_build=one_off_build,
+            instance_vars=instance_vars,
+            **env_vars,
+        )
         self.inner_resource_type = inner_resource_type
         inner_resource = inner_resource_type(**inner_resource_config)
         self.inner_version_class = inner_resource.version_class
 
-    def fetch_new_versions(self, previous_version: VersionT | None = None) -> list[VersionT]:
+    def fetch_new_versions(
+        self, previous_version: VersionT | None = None
+    ) -> list[VersionT]:
         """
         Fetch new versions of the resource.
 
@@ -805,11 +1047,18 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
                                  if the resource has never been run before.
         :returns: A list of new versions.
         """
-        previous_version_config = None if previous_version is None else previous_version.to_flat_dict()
+        previous_version_config = (
+            None if previous_version is None else previous_version.to_flat_dict()
+        )
         version_configs = super().fetch_new_versions(previous_version_config)
-        return [self.inner_version_class.from_flat_dict(version_config) for version_config in version_configs]
+        return [
+            self.inner_version_class.from_flat_dict(version_config)
+            for version_config in version_configs
+        ]
 
-    def download_version(self, version: VersionT, **params: object) -> tuple[VersionT, Metadata]:
+    def download_version(
+        self, version: VersionT, **params: object
+    ) -> tuple[VersionT, Metadata]:
         """
         Download a version and place its files within the resource directory in your pipeline.
 
@@ -822,7 +1071,9 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
         :returns: The version (most likely unchanged), and a dictionary of metadata.
         """
         version_config = version.to_flat_dict()
-        new_version_config, metadata_pairs = super().download_version(version_config, params or {})
+        new_version_config, metadata_pairs = super().download_version(
+            version_config, params or {}
+        )
         new_version = self.inner_version_class.from_flat_dict(new_version_config)
         metadata = parse_metadata(metadata_pairs)
         return new_version, metadata
@@ -844,11 +1095,19 @@ class DockerConversionTestResourceWrapper(DockerTestResourceWrapper, Generic[Ver
         return new_version, metadata
 
 
-def run_docker_container(image: str, command: str, additional_args: list[str] | None = None,
-                         env: dict[str, str] | None = None, cwd: Path | None = None,
-                         stdin: str | None = None, rm: bool = True, interactive: bool = True,
-                         dir_mapping: dict[Path, Path | str] | None = None,
-                         hostname: str | None = None, local_only: bool = True) -> tuple[str, str]:
+def run_docker_container(
+    image: str,
+    command: str,
+    additional_args: list[str] | None = None,
+    env: dict[str, str] | None = None,
+    cwd: Path | None = None,
+    stdin: str | None = None,
+    rm: bool = True,
+    interactive: bool = True,
+    dir_mapping: dict[Path, Path | str] | None = None,
+    hostname: str | None = None,
+    local_only: bool = True,
+) -> tuple[str, str]:
     """
     Run a command within the Docker container.
 
@@ -916,8 +1175,13 @@ def run_docker_container(image: str, command: str, additional_args: list[str] | 
     return run_command("docker", docker_args, stdin=stdin)
 
 
-def run_script(script_path: Path, additional_args: list[str] | None = None, env: dict[str, str] | None = None,
-               cwd: Path | None = None, stdin: str | None = None) -> tuple[str, str]:
+def run_script(
+    script_path: Path,
+    additional_args: list[str] | None = None,
+    env: dict[str, str] | None = None,
+    cwd: Path | None = None,
+    stdin: str | None = None,
+) -> tuple[str, str]:
     """
     Run an external script.
 
@@ -937,8 +1201,13 @@ def run_script(script_path: Path, additional_args: list[str] | None = None, env:
     return run_command(str(script_path), additional_args, env=env, cwd=cwd, stdin=stdin)
 
 
-def run_command(command: str, additional_args: list[str] | None = None, env: dict[str, str] | None = None,
-                cwd: Path | None = None, stdin: str | None = None) -> tuple[str, str]:
+def run_command(
+    command: str,
+    additional_args: list[str] | None = None,
+    env: dict[str, str] | None = None,
+    cwd: Path | None = None,
+    stdin: str | None = None,
+) -> tuple[str, str]:
     """
     Run an external command.
 

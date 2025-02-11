@@ -15,6 +15,7 @@ class S3SignedURLConcourseResource(InOnlyConcourseResource):
     """
     A Concourse resource type for generating pre-signed URLs for items in S3 buckets.
     """
+
     def __init__(self, bucket_name: str, region_name: str) -> None:
         """
         Initialise self.
@@ -24,26 +25,32 @@ class S3SignedURLConcourseResource(InOnlyConcourseResource):
         """
         super().__init__()
         self.bucket_name = bucket_name
-        self.client = boto3.client("s3", region_name=region_name,
-                                   config=Config(signature_version="s3v4"))
+        self.client = boto3.client(
+            "s3", region_name=region_name, config=Config(signature_version="s3v4")
+        )
 
-    def download_data(self, destination_dir: Path, build_metadata: BuildMetadata,
-                      file_path: str, expires_in: dict[str, float],
-                      file_name: str | None = None,
-                      url_file: str = "url") -> dict[str, str]:
+    def download_data(
+        self,
+        destination_dir: Path,
+        build_metadata: BuildMetadata,
+        file_path: str,
+        expires_in: dict[str, float],
+        file_name: str | None = None,
+        url_file: str = "url",
+    ) -> dict[str, str]:
         params = {
             "Bucket": self.bucket_name,
             "Key": file_path,
         }
         if file_name is not None:
             # https://stackoverflow.com/a/2612795
-            content_disposition = f"attachment; filename=\"{file_name}\""
+            content_disposition = f'attachment; filename="{file_name}"'
             params["ResponseContentDisposition"] = content_disposition
 
         expiry_seconds = int(timedelta(**expires_in).total_seconds())
-        url = self.client.generate_presigned_url(ClientMethod="get_object",
-                                                 Params=params,
-                                                 ExpiresIn=expiry_seconds)
+        url = self.client.generate_presigned_url(
+            ClientMethod="get_object", Params=params, ExpiresIn=expiry_seconds
+        )
 
         url_file_path = destination_dir / url_file
         url_file_path.write_text(url)

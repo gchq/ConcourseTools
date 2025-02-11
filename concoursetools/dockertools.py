@@ -2,6 +2,7 @@
 """
 Functions for creating the Dockerfile or asset files.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -23,9 +24,14 @@ DEFAULT_EXECUTABLE = "/usr/bin/env python3"
 DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-def create_script_file(path: Path, resource_class: type[ConcourseResource[Any]], method_name: MethodName,
-                       executable: str = DEFAULT_EXECUTABLE, permissions: int = 0o755,
-                       encoding: str | None = None) -> None:
+def create_script_file(
+    path: Path,
+    resource_class: type[ConcourseResource[Any]],
+    method_name: MethodName,
+    executable: str = DEFAULT_EXECUTABLE,
+    permissions: int = 0o755,
+    encoding: str | None = None,
+) -> None:
     """
     Create a script file at a given path.
 
@@ -61,6 +67,7 @@ class Instruction(ABC):
     """
     Represents an instruction in a Dockerfile.
     """
+
     def __str__(self) -> str:
         return self.to_string()
 
@@ -80,6 +87,7 @@ class Comment(Instruction):
         >>> print(Comment("This is a comment"))
         # This is a comment
     """
+
     def __init__(self, comment: str) -> None:
         self.comment = comment
 
@@ -101,6 +109,7 @@ class CopyInstruction(Instruction):
         >>> print(CopyInstruction("folder/file.txt", "folder/new_file.txt"))
         COPY folder/file.txt folder/new_file.txt
     """
+
     def __init__(self, source: str, dest: str | None = None) -> None:
         if dest is None:
             *_, dest = source.split(os.sep)
@@ -125,11 +134,12 @@ class EntryPointInstruction(Instruction):
         >>> print(EntryPointInstruction(["python3", "-m", "http.server"]))
         ENTRYPOINT ["python3", "-m", "http.server"]
     """
+
     def __init__(self, commands: list[str]) -> None:
         self.commands = commands
 
     def to_string(self) -> str:
-        command_string = ", ".join(f"\"{command}\"" for command in self.commands)
+        command_string = ", ".join(f'"{command}"' for command in self.commands)
         return f"ENTRYPOINT [{command_string}]"
 
 
@@ -145,11 +155,14 @@ class EnvInstruction(Instruction):
         >>> print(EnvInstruction({"MY_NAME": "John Doe", "MY_AGE": "42"}))
         ENV MY_NAME="John Doe" MY_AGE="42"
     """
+
     def __init__(self, variables: dict[str, str]) -> None:
         self.variables = variables
 
     def to_string(self) -> str:
-        variable_string = " ".join(f"{key}=\"{value}\"" for key, value in self.variables.items())
+        variable_string = " ".join(
+            f'{key}="{value}"' for key, value in self.variables.items()
+        )
         return f"ENV {variable_string}"
 
 
@@ -172,8 +185,14 @@ class FromInstruction(Instruction):
         >>> print(FromInstruction("python", tag="3.11-slim", platform="linux/386"))
         FROM --platform=linux/386 python:3.11-slim
     """
-    def __init__(self, image: str, tag: str | None = None, digest: str | None = None,
-                 platform: str | None = None) -> None:
+
+    def __init__(
+        self,
+        image: str,
+        tag: str | None = None,
+        digest: str | None = None,
+        platform: str | None = None,
+    ) -> None:
         if tag and digest:
             raise ValueError("Cannot pass BOTH tag and digest.")
         self.image = image
@@ -210,6 +229,7 @@ class RunInstruction(Instruction):
         >>> print(RunInstruction(["pip install --upgrade pip", "pip install -r requirements.txt"]))
         RUN pip install --upgrade pip && pip install -r requirements.txt
     """
+
     def __init__(self, commands: list[str]) -> None:
         self.commands = commands
 
@@ -224,6 +244,7 @@ class WorkDirInstruction(Instruction):
 
     :param work_dir: The directory to set as the working directory on the image.
     """
+
     def __init__(self, work_dir: str) -> None:
         self.work_dir = work_dir
 
@@ -235,12 +256,15 @@ class Mount(ABC):
     """
     Represents a mount for the run command.
     """
+
     def __str__(self) -> str:
         return self.to_string()
 
     def to_string(self) -> str:
         """Return a string representation of the mount."""
-        info_string = ",".join(f"{key}={value}" for key, value in self.to_dict().items())
+        info_string = ",".join(
+            f"{key}={value}" for key, value in self.to_dict().items()
+        )
         return f"--mount={info_string}"
 
     @abstractmethod
@@ -264,8 +288,16 @@ class SecretMount(Mount):
         >>> print(SecretMount(secret_id="aws", target="/root/.aws/credentials"))
         --mount=type=secret,id=aws,target=/root/.aws/credentials
     """
-    def __init__(self, secret_id: str | None = None, target: str | None = None, required: bool | None = None,
-                 mode: int | None = None, user_id: int | None = None, group_id: int | None = None) -> None:
+
+    def __init__(
+        self,
+        secret_id: str | None = None,
+        target: str | None = None,
+        required: bool | None = None,
+        mode: int | None = None,
+        user_id: int | None = None,
+        group_id: int | None = None,
+    ) -> None:
         if not (secret_id or target):
             raise ValueError("Either a secret ID or target must be passed.")
 
@@ -323,6 +355,7 @@ class MultiLineRunInstruction(Instruction):
             pip install --upgrade pip && \
             pip install -r requirements.txt
     """
+
     def __init__(self, commands: list[str], mounts: list[Mount] | None = None) -> None:
         self.commands = commands
         self.mounts = mounts or []
@@ -344,7 +377,10 @@ class Dockerfile:
     :param instruction_groups: A list of lists of instructions or comments. Separation between groups is larger than
                                between instructions within the group to imply sections to the Dockerfile.
     """
-    def __init__(self, instruction_groups: list[list[Instruction | Comment]] | None = None) -> None:
+
+    def __init__(
+        self, instruction_groups: list[list[Instruction | Comment]] | None = None
+    ) -> None:
         self.instruction_groups = instruction_groups or []
 
     def new_instruction_group(self, *instructions: Instruction | Comment) -> None:

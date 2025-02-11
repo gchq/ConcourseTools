@@ -59,13 +59,17 @@ always_document_param_types = True
 autodoc_member_order = "bysource"
 
 autodoc_custom_types = {
-    concoursetools.cli.parser.CLIFunctionT: format_annotation(Callable[..., None], sphinx.config.Config()),
+    concoursetools.cli.parser.CLIFunctionT: format_annotation(
+        Callable[..., None], sphinx.config.Config()
+    ),
     concoursetools.importing.T: ":class:`object`",
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
 }
 
-suppress_warnings = ["config.cache"]  # https://github.com/sphinx-doc/sphinx/issues/12300#issuecomment-2062238457
+suppress_warnings = [
+    "config.cache"
+]  # https://github.com/sphinx-doc/sphinx/issues/12300#issuecomment-2062238457
 
 
 def typehints_formatter(annotation: Any, config: sphinx.config.Config) -> str | None:
@@ -79,7 +83,9 @@ nitpick_ignore = [
     ("py:class", "concoursetools.typing.SortableVersionT"),
 ]
 
-linkcheck_report_timeouts_as_broken = False  # silences a warning: https://github.com/sphinx-doc/sphinx/issues/11868
+linkcheck_report_timeouts_as_broken = (
+    False  # silences a warning: https://github.com/sphinx-doc/sphinx/issues/11868
+)
 linkcheck_anchors_ignore_for_url = [
     "https://github.com/.*",
 ]
@@ -118,6 +124,6 @@ html_theme_options = {
             "name": "PyPI",
             "url": "https://pypi.org/project/concoursetools/",
             "class": "fa-brands fa-python fa-2x",
-        }
+        },
     ],
 }

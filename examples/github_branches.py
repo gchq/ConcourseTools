@@ -16,8 +16,13 @@ class BranchVersion(TypedVersion):
 
 
 class Resource(MultiVersionConcourseResource[BranchVersion]):  # type: ignore[type-var]
-    def __init__(self, owner: str, repo: str, regex: str = ".*",
-                 endpoint: str = "https://api.github.com") -> None:
+    def __init__(
+        self,
+        owner: str,
+        repo: str,
+        regex: str = ".*",
+        endpoint: str = "https://api.github.com",
+    ) -> None:
         """
         Initialise self.
 
@@ -42,5 +47,8 @@ class Resource(MultiVersionConcourseResource[BranchVersion]):  # type: ignore[ty
             message = branches_info["message"]
             raise RuntimeError(message) from error
 
-        return {BranchVersion(branch_name) for branch_name in branch_names
-                if self.regex.fullmatch(branch_name)}
+        return {
+            BranchVersion(branch_name)
+            for branch_name in branch_names
+            if self.regex.fullmatch(branch_name)
+        }

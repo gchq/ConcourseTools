@@ -2,6 +2,7 @@
 """
 Sphinx extension for documenting the custom CLI.
 """
+
 from __future__ import annotations
 
 from typing import Literal
@@ -23,6 +24,7 @@ class CLIDirective(SphinxDirective):
     """
     Directive for listing CLI commands in a table.
     """
+
     required_arguments = 1  # The import path of the CLI
     option_spec = {
         "align": _align_directive,
@@ -34,18 +36,35 @@ class CLIDirective(SphinxDirective):
         """
         align: Literal["left", "center", "right"] | None = self.options.get("align")
 
-        headers = [nodes.entry("", nodes.paragraph("", header)) for header in ["Command", "Description"]]
+        headers = [
+            nodes.entry("", nodes.paragraph("", header))
+            for header in ["Command", "Description"]
+        ]
 
-        import_string, = self.arguments
+        (import_string,) = self.arguments
         cli = self.import_cli(import_string)
 
         rows: list[list[nodes.entry]] = []
 
         for command_name, command in cli.commands.items():
-            rows.append([
-                nodes.entry("", nodes.paragraph("", "", nodes.reference("", "", nodes.literal("", command_name), refid=f"cli.{command_name}"))),
-                nodes.entry("", nodes.paragraph("", command.description or "")),
-            ])
+            rows.append(
+                [
+                    nodes.entry(
+                        "",
+                        nodes.paragraph(
+                            "",
+                            "",
+                            nodes.reference(
+                                "",
+                                "",
+                                nodes.literal("", command_name),
+                                refid=f"cli.{command_name}",
+                            ),
+                        ),
+                    ),
+                    nodes.entry("", nodes.paragraph("", command.description or "")),
+                ]
+            )
 
         table = self.create_table(headers, rows, align=align)
 
@@ -53,7 +72,9 @@ class CLIDirective(SphinxDirective):
 
         for command_name, command in cli.commands.items():
             command_section = nodes.section(ids=[f"cli.{command_name}"])
-            title = nodes.title(f"cli.{command_name}", "", nodes.literal("", command_name))
+            title = nodes.title(
+                f"cli.{command_name}", "", nodes.literal("", command_name)
+            )
             command_section.append(title)
 
             if command.description is not None:
@@ -63,8 +84,12 @@ class CLIDirective(SphinxDirective):
             command_section.append(usage_block)
 
             for positional in command.positional_arguments:
-                alias_paragraph = nodes.paragraph("", "", nodes.literal("", positional.name))
-                description_paragraph = nodes.paragraph("", positional.description or "")
+                alias_paragraph = nodes.paragraph(
+                    "", "", nodes.literal("", positional.name)
+                )
+                description_paragraph = nodes.paragraph(
+                    "", positional.description or ""
+                )
                 description_paragraph.set_class("cli-option-description")
                 command_section.extend([alias_paragraph, description_paragraph])
 
@@ -82,8 +107,12 @@ class CLIDirective(SphinxDirective):
 
         return nodes_to_return
 
-    def create_table(self, headers: list[nodes.entry], rows: list[list[nodes.entry]],
-                     align: Literal["left", "center", "right"] | None = None) -> nodes.table:
+    def create_table(
+        self,
+        headers: list[nodes.entry],
+        rows: list[list[nodes.entry]],
+        align: Literal["left", "center", "right"] | None = None,
+    ) -> nodes.table:
         table = nodes.table()
         if align is not None:
             table["align"] = align

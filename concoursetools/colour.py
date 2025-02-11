@@ -11,6 +11,7 @@ and so a handful of rudimentary functions for formatting with colour are include
     Concourse Tools specifically has no external dependencies, and so these
     must be actively installed and managed by a user.
 """
+
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -23,7 +24,6 @@ UNDERLINE = "\033[4m"
 
 
 class _NoPrint(str):
-
     def __str__(self) -> str:
         raise TypeError("Can't print!")
 
@@ -52,8 +52,13 @@ def colourise(string: str, colour: str) -> str:
     return f"{colour}{string}{END_COLOUR}"
 
 
-def colour_print(*values: object, colour: str = MISSING_COLOUR, bold: bool = False, underline: bool = False,
-                 **print_kwargs: Any) -> None:
+def colour_print(
+    *values: object,
+    colour: str = MISSING_COLOUR,
+    bold: bool = False,
+    underline: bool = False,
+    **print_kwargs: Any,
+) -> None:
     """
     Print something in colour.
 
@@ -72,12 +77,16 @@ def colour_print(*values: object, colour: str = MISSING_COLOUR, bold: bool = Fal
             print(*values, **print_kwargs)
     except TypeError as error:
         if colour is MISSING_COLOUR:
-            raise ValueError("You forgot to pass the colour as a keyword argument") from error
+            raise ValueError(
+                "You forgot to pass the colour as a keyword argument"
+            ) from error
         raise
 
 
 @contextmanager
-def print_in_colour(colour: str, bold: bool = False, underline: bool = False) -> Generator[None, None, None]:
+def print_in_colour(
+    colour: str, bold: bool = False, underline: bool = False
+) -> Generator[None, None, None]:
     """
     Print anything in colour within a :ref:`context manager <context-managers>`.
 
@@ -108,6 +117,7 @@ class Colour:
     """
     A few common ANSI colours.
     """
+
     BLUE = "\033[94m"
     CYAN = "\033[96m"
     GREEN = "\033[92m"

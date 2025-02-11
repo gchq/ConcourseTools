@@ -18,6 +18,7 @@ class AssetTests(unittest.TestCase):
     """
     Tests for creation of the asset files.
     """
+
     def setUp(self) -> None:
         """Code to run before each test."""
         self._temp_dir = TemporaryDirectory()
@@ -45,13 +46,16 @@ class AssetTests(unittest.TestCase):
         self.assertEqual(new_stdout.getvalue(), "")
 
         self.assertTrue(asset_dir.exists())
-        self.assertSetEqual({path.name for path in asset_dir.iterdir()}, {"check", "in", "out"})
+        self.assertSetEqual(
+            {path.name for path in asset_dir.iterdir()}, {"check", "in", "out"}
+        )
 
 
 class DockerfileTests(unittest.TestCase):
     """
     Tests for creating the Dockerfile.
     """
+
     def setUp(self) -> None:
         """Code to run before each test."""
         self._temp_dir = TemporaryDirectory()
@@ -64,7 +68,9 @@ class DockerfileTests(unittest.TestCase):
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 
-        self.current_python_string = f"{sys.version_info.major}.{sys.version_info.minor}"
+        self.current_python_string = (
+            f"{sys.version_info.major}.{sys.version_info.minor}"
+        )
 
         os.chdir(self.temp_dir)
 
@@ -107,6 +113,7 @@ class LegacyTests(unittest.TestCase):
     """
     Tests for the legacy CLI.
     """
+
     def setUp(self) -> None:
         """Code to run before each test."""
         self._temp_dir = TemporaryDirectory()
@@ -119,7 +126,9 @@ class LegacyTests(unittest.TestCase):
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 
-        self.current_python_string = f"{sys.version_info.major}.{sys.version_info.minor}"
+        self.current_python_string = (
+            f"{sys.version_info.major}.{sys.version_info.minor}"
+        )
 
         os.chdir(self.temp_dir)
 
@@ -133,12 +142,18 @@ class LegacyTests(unittest.TestCase):
         with redirect_stdout(new_stdout):
             cli.invoke(["legacy", ".", "--docker"])
 
-        self.assertEqual(new_stdout.getvalue(), colourise(textwrap.dedent("""
+        self.assertEqual(
+            new_stdout.getvalue(),
+            colourise(
+                textwrap.dedent("""
         The legacy CLI has been deprecated.
         Please refer to the documentation or help pages for the up to date CLI.
         This CLI will be removed in version 0.10.0, or in version 1.0.0, whichever is sooner.
 
-        """), colour=Colour.RED))
+        """),
+                colour=Colour.RED,
+            ),
+        )
 
         dockerfile_contents = self.dockerfile_path.read_text()
         expected_contents = textwrap.dedent(f"""
@@ -166,12 +181,20 @@ class LegacyTests(unittest.TestCase):
         with redirect_stdout(new_stdout):
             cli.invoke(["legacy", "assets", "-c", "TestResource"])
 
-        self.assertEqual(new_stdout.getvalue(), colourise(textwrap.dedent("""
+        self.assertEqual(
+            new_stdout.getvalue(),
+            colourise(
+                textwrap.dedent("""
         The legacy CLI has been deprecated.
         Please refer to the documentation or help pages for the up to date CLI.
         This CLI will be removed in version 0.10.0, or in version 1.0.0, whichever is sooner.
 
-        """), colour=Colour.RED))
+        """),
+                colour=Colour.RED,
+            ),
+        )
 
         self.assertTrue(asset_dir.exists())
-        self.assertSetEqual({path.name for path in asset_dir.iterdir()}, {"check", "in", "out"})
+        self.assertSetEqual(
+            {path.name for path in asset_dir.iterdir()}, {"check", "in", "out"}
+        )
