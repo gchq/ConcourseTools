@@ -10,6 +10,7 @@ Minor Sphinx extension for creating Concourse documentation links, based on http
 
 Set ``concourse_base_url`` in ``conf.py`` to change the URL used. It must contain "{target}" to be populated.
 """
+
 from __future__ import annotations
 
 from urllib.parse import quote
@@ -25,8 +26,15 @@ __all__ = ("make_concourse_link", "setup")
 DEFAULT_BASE_URL = "https://concourse-ci.org/{target}"
 
 
-def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
-                        content: list[str] = []) -> tuple[list[nodes.reference], list[system_message]]:
+def make_concourse_link(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, object] = {},
+    content: list[str] = [],
+) -> tuple[list[nodes.reference], list[system_message]]:
     """
     Add a link to the given article on Concourse CI.
 

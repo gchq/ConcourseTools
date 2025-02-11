@@ -2,6 +2,7 @@
 """
 Concourse Tools contains a number of utility functions for mocking various parts of the process for testing purposes.
 """
+
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -23,7 +24,11 @@ ContextManager = Generator[T, None, None]
 FolderDict = dict[str, Any]
 
 
-def create_env_vars(one_off_build: bool = False, instance_vars: dict[str, str] | None = None, **env_vars: str) -> dict[str, str]:
+def create_env_vars(
+    one_off_build: bool = False,
+    instance_vars: dict[str, str] | None = None,
+    **env_vars: str,
+) -> dict[str, str]:
     """
     Create fake environment variables for a Concourse stage.
 
@@ -56,10 +61,12 @@ def create_env_vars(one_off_build: bool = False, instance_vars: dict[str, str] |
     if one_off_build:
         return env
 
-    env.update({
-        "BUILD_JOB_NAME": "my-job",
-        "BUILD_PIPELINE_NAME": "my-pipeline",
-    })
+    env.update(
+        {
+            "BUILD_JOB_NAME": "my-job",
+            "BUILD_PIPELINE_NAME": "my-pipeline",
+        }
+    )
 
     if instance_vars is not None:
         env["BUILD_PIPELINE_INSTANCE_VARS"] = json.dumps(instance_vars)
@@ -83,7 +90,13 @@ class TestBuildMetadata(BuildMetadata):
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, one_off_build: bool = False, instance_vars: dict[str, str] | None = None, **env_vars: str):
+
+    def __init__(
+        self,
+        one_off_build: bool = False,
+        instance_vars: dict[str, str] | None = None,
+        **env_vars: str,
+    ):
         test_env_vars = create_env_vars(one_off_build, instance_vars, **env_vars)
         super().__init__(**test_env_vars)
 
@@ -124,7 +137,14 @@ class TemporaryDirectoryState:
         ...
         FileNotFoundError: [Errno 2] No such file or directory: '.../folder_2/file_2'
     """
-    def __init__(self, starting_state: FolderDict | None = None, max_depth: int = 2, encoding: str | None = None, **kwargs: Any):
+
+    def __init__(
+        self,
+        starting_state: FolderDict | None = None,
+        max_depth: int = 2,
+        encoding: str | None = None,
+        **kwargs: Any,
+    ):
         self.starting_state = starting_state or {}
         self.max_depth = max_depth
         self.encoding = encoding
@@ -153,22 +173,38 @@ class TemporaryDirectoryState:
         :raises RuntimeError: If the temporary directory is currently open.
         """
         if self._final_state is None:
-            raise RuntimeError("Final state is not set whilst temporary directory is still open.")
+            raise RuntimeError(
+                "Final state is not set whilst temporary directory is still open."
+            )
         return self._final_state
 
     def __enter__(self) -> "TemporaryDirectoryState":
         self._temp_dir = TemporaryDirectory(**self.temporary_directory_kwargs)
-        self._set_folder_from_dict(self.path, self.starting_state, encoding=self.encoding)
+        self._set_folder_from_dict(
+            self.path, self.starting_state, encoding=self.encoding
+        )
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         if self._temp_dir is None:
             raise RuntimeError("Temporary directory missing from instance.")
-        self._final_state = self._get_folder_as_dict(self.path, self.max_depth, self.encoding)
+        self._final_state = self._get_folder_as_dict(
+            self.path, self.max_depth, self.encoding
+        )
         self._temp_dir.__exit__(exc_type, exc_val, exc_tb)
 
-    def _get_folder_as_dict(self, folder_path: Path, max_depth: int = 2, encoding: str | None = None,
-                            byte_limit: int = 16) -> FolderDict | Any:
+    def _get_folder_as_dict(
+        self,
+        folder_path: Path,
+        max_depth: int = 2,
+        encoding: str | None = None,
+        byte_limit: int = 16,
+    ) -> FolderDict | Any:
         """
         Return the recursive contents of a folder as a nested dictionary.
 
@@ -202,10 +238,14 @@ class TemporaryDirectoryState:
                         first_chunk = rf.read(byte_limit)
                     folder_dict[item.name] = first_chunk
             elif item.is_dir():
-                folder_dict[item.name] = self._get_folder_as_dict(item, max_depth=max_depth-1, encoding=encoding)
+                folder_dict[item.name] = self._get_folder_as_dict(
+                    item, max_depth=max_depth - 1, encoding=encoding
+                )
         return folder_dict
 
-    def _set_folder_from_dict(self, folder_path: Path, folder_dict: FolderDict, encoding: str | None = None) -> None:
+    def _set_folder_from_dict(
+        self, folder_path: Path, folder_dict: FolderDict, encoding: str | None = None
+    ) -> None:
         """
         Set the contents of a folder using a recursive dictionary.
 
@@ -255,6 +295,7 @@ class StringIOWrapper:
         >>> output == "abc\ndef\n"
         True
     """
+
     def __init__(self) -> None:
         self.inner_io = StringIO()
 

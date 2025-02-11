@@ -2,6 +2,7 @@
 """
 Functions for dynamically importing from Python modules.
 """
+
 from __future__ import annotations
 
 from collections.abc import Generator, Sequence
@@ -16,7 +17,9 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-def import_single_class_from_module(file_path: Path, parent_class: type[T], class_name: str | None = None) -> type[T]:
+def import_single_class_from_module(
+    file_path: Path, parent_class: type[T], class_name: str | None = None
+) -> type[T]:
     """
     Import the resource class from the module.
 
@@ -29,23 +32,31 @@ def import_single_class_from_module(file_path: Path, parent_class: type[T], clas
     :returns: The extracted class.
     :raises RuntimeError: If too many or too few classes are available in the module, unless the class name is specified.
     """
-    possible_resource_classes = import_classes_from_module(file_path, parent_class=parent_class)
+    possible_resource_classes = import_classes_from_module(
+        file_path, parent_class=parent_class
+    )
 
     if class_name is None:
         if len(possible_resource_classes) == 1:
             _, resource_class = possible_resource_classes.popitem()
         else:
             if len(possible_resource_classes) == 0:
-                raise RuntimeError(f"No subclasses of {parent_class.__name__!r} found in {file_path}")
-            raise RuntimeError(f"Multiple subclasses of {parent_class.__name__!r} found in {file_path}:"
-                               f" {set(possible_resource_classes)}")
+                raise RuntimeError(
+                    f"No subclasses of {parent_class.__name__!r} found in {file_path}"
+                )
+            raise RuntimeError(
+                f"Multiple subclasses of {parent_class.__name__!r} found in {file_path}:"
+                f" {set(possible_resource_classes)}"
+            )
     else:
         resource_class = possible_resource_classes[class_name]
 
     return resource_class
 
 
-def import_classes_from_module(file_path: Path, parent_class: type[T]) -> dict[str, type[T]]:
+def import_classes_from_module(
+    file_path: Path, parent_class: type[T]
+) -> dict[str, type[T]]:
     """
     Import all available resource classes from the module.
 
@@ -64,10 +75,14 @@ def import_classes_from_module(file_path: Path, parent_class: type[T]) -> dict[s
         except TypeError:
             class_is_subclass_of_parent = False
 
-        class_is_defined_in_this_module = (cls.__module__ == import_path)
-        class_is_not_private = (not cls.__name__.startswith("_"))
+        class_is_defined_in_this_module = cls.__module__ == import_path
+        class_is_not_private = not cls.__name__.startswith("_")
 
-        if class_is_subclass_of_parent and class_is_defined_in_this_module and class_is_not_private:
+        if (
+            class_is_subclass_of_parent
+            and class_is_defined_in_this_module
+            and class_is_not_private
+        ):
             possible_resource_classes[cls.__name__] = cls
 
     return possible_resource_classes
@@ -127,7 +142,9 @@ def import_py_file(import_path: str, file_path: Path) -> ModuleType:
 
 
 @contextmanager
-def edit_sys_path(prepend: Sequence[Path] = (), append: Sequence[Path] = ()) -> Generator[None, None, None]:
+def edit_sys_path(
+    prepend: Sequence[Path] = (), append: Sequence[Path] = ()
+) -> Generator[None, None, None]:
     """
     Temporarily add to :data:`sys.path` within a context manager.
 
@@ -137,7 +154,9 @@ def edit_sys_path(prepend: Sequence[Path] = (), append: Sequence[Path] = ()) -> 
     """
     original_sys_path = sys.path.copy()  # otherwise we just reference the original
     try:
-        sys.path = [str(path) for path in prepend] + sys.path + [str(path) for path in append]
+        sys.path = (
+            [str(path) for path in prepend] + sys.path + [str(path) for path in append]
+        )
         yield
     finally:
         sys.path = original_sys_path

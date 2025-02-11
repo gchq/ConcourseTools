@@ -5,6 +5,7 @@ defining what a version *actually is*, and this is defined with Concourse Tools 
 
 More information on versions can be found in the :concourse:`Concourse documentation <resource-versions>`.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -55,8 +56,11 @@ class Version(ABC):
         To change this behaviour, overload the :meth:`to_flat_dict` and :meth:`from_flat_dict`
         methods in the class.
     """
+
     def __repr__(self) -> str:
-        attr_string = ", ".join(f"{attr}={value!r}" for attr, value in vars(self).items())
+        attr_string = ", ".join(
+            f"{attr}={value!r}" for attr, value in vars(self).items()
+        )
         return f"{type(self).__name__}({attr_string})"
 
     def __eq__(self, other: object) -> bool:
@@ -108,7 +112,11 @@ class Version(ABC):
                             "timestamp": str(int(self.date.timestamp())),
                         }
         """
-        return {str(key): str(value) for key, value in vars(self).items() if not key.startswith("_")}
+        return {
+            str(key): str(value)
+            for key, value in vars(self).items()
+            if not key.startswith("_")
+        }
 
     @classmethod
     def from_flat_dict(cls: type[VersionT], version_dict: VersionConfig) -> VersionT:
@@ -177,6 +185,7 @@ class SortableVersionMixin(ABC):
         ...         except AttributeError:
         ...             return NotImplemented
     """
+
     @abstractmethod
     def __lt__(self, other: object) -> bool:
         pass
@@ -213,6 +222,7 @@ class _TypeKeyDict(UserDict):  # type: ignore[type-arg]
         In almost all circumstances, this is the same type (in user-defined classes, for example),
         but avoids an issue in which a type from the typing module is set instead of the class it represents.
     """
+
     def __getitem__(self, key: type[object]) -> object:
         for parent_class in key.mro():
             try:
@@ -222,7 +232,9 @@ class _TypeKeyDict(UserDict):  # type: ignore[type-arg]
         raise KeyError(f"{key} not found in mapping")
 
     def __setitem__(self, key: type[object], item: object) -> None:
-        proper_key = key.mro()[0]  # almost always the same, except for objects in typing
+        proper_key = key.mro()[
+            0
+        ]  # almost always the same, except for objects in typing
         return super().__setitem__(proper_key, item)
 
 
@@ -257,8 +269,13 @@ class TypedVersion(Version):
         The full MRO of each object is looked up when calling the flatten and un-flatten functions, so any type which
         is a *subclass* of a registered type will still call the same functions, unless explicitly overwritten.
     """
-    _flatten_functions: ClassVar[MutableMapping[type[Any], Callable[[Any], str]]] = _TypeKeyDict()
-    _un_flatten_functions: ClassVar[MutableMapping[type[Any], Callable[[type[Any], str], Any]]] = _TypeKeyDict()
+
+    _flatten_functions: ClassVar[MutableMapping[type[Any], Callable[[Any], str]]] = (
+        _TypeKeyDict()
+    )
+    _un_flatten_functions: ClassVar[
+        MutableMapping[type[Any], Callable[[type[Any], str], Any]]
+    ] = _TypeKeyDict()
 
     def __init_subclass__(cls) -> None:
         try:
@@ -267,14 +284,25 @@ class TypedVersion(Version):
             annotations = {}
 
         if len(annotations) == 0:
-            raise TypeError("Can't instantiate  dataclass TypedVersion without any fields")
+            raise TypeError(
+                "Can't instantiate  dataclass TypedVersion without any fields"
+            )
 
     def to_flat_dict(self) -> VersionConfig:
-        return {str(key): self._flatten_object(value) for key, value in vars(self).items() if not key.startswith("_")}
+        return {
+            str(key): self._flatten_object(value)
+            for key, value in vars(self).items()
+            if not key.startswith("_")
+        }
 
     @classmethod
-    def from_flat_dict(cls: type[TypedVersionT], version_dict: VersionConfig) -> TypedVersionT:
-        un_flattened_kwargs = {key: cls._un_flatten_object(cls._get_attribute_type(key), value) for key, value in version_dict.items()}
+    def from_flat_dict(
+        cls: type[TypedVersionT], version_dict: VersionConfig
+    ) -> TypedVersionT:
+        un_flattened_kwargs = {
+            key: cls._un_flatten_object(cls._get_attribute_type(key), value)
+            for key, value in version_dict.items()
+        }
         return super().from_flat_dict(un_flattened_kwargs)
 
     @classmethod
@@ -290,7 +318,9 @@ class TypedVersion(Version):
     def _un_flatten_object(cls, type_: type[T], flat_obj: str) -> T:
         """Un-flatten an object from a string based on a destination type."""
         try:  # for some reason `cls._un_flatten_functions.get` fails on 3.12
-            un_flatten_function: Callable[[type[T], str], T] = cls._un_flatten_functions[type_]
+            un_flatten_function: Callable[[type[T], str], T] = (
+                cls._un_flatten_functions[type_]
+            )
         except KeyError:
             un_flatten_function = cls._un_flatten_default
         return un_flatten_function(type_, flat_obj)
@@ -323,7 +353,9 @@ class TypedVersion(Version):
         return func
 
     @classmethod
-    def un_flatten(cls, func: Callable[[type[T], str], T]) -> Callable[[type[T], str], T]:
+    def un_flatten(
+        cls, func: Callable[[type[T], str], T]
+    ) -> Callable[[type[T], str], T]:
         """
         Register a function for un-flattening a string to a specific type.
 

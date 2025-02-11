@@ -19,9 +19,11 @@ try:
     from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
     import requests  # noqa: F401
 except ImportError:
-    allowed_to_skip = ("CI" not in os.environ)
+    allowed_to_skip = "CI" not in os.environ
     if allowed_to_skip:
-        raise unittest.SkipTest("Cannot proceed without example dependencies - see 'requirements-tests.txt'")
+        raise unittest.SkipTest(
+            "Cannot proceed without example dependencies - see 'requirements-tests.txt'"
+        )
     raise
 
 from concoursetools.mocking import TestBuildMetadata
@@ -39,6 +41,7 @@ class MockedTextResponse:
     """
     Represents a mocked requests.Response object containing a body.
     """
+
     def __init__(self, data: str, status_code: int = 200) -> None:
         self._data = data
         self._status_code = status_code
@@ -61,6 +64,7 @@ class MockedJSONResponse:
     """
     Represents a mocked requests.Response object containing valid JSON within the body.
     """
+
     def __init__(self, json_data: Any, status_code: int = 200) -> None:
         self._json_data = json_data
         self._status_code = status_code
@@ -73,75 +77,83 @@ class MockedJSONResponse:
 
 
 class BranchesTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
-        self.mock_response = MockedJSONResponse([
-            {
-                "name": "issue/95",
-                "commit": {
-                    "sha": "82b43a4701c7954d8564e3bb601c3ca3344dd395",
-                    "url": "https://api.github.com/repos/concourse/github-release-resource/commits/82b43a4701c7954d8564e3bb601c3ca3344dd395",
+        self.mock_response = MockedJSONResponse(
+            [
+                {
+                    "name": "issue/95",
+                    "commit": {
+                        "sha": "82b43a4701c7954d8564e3bb601c3ca3344dd395",
+                        "url": "https://api.github.com/repos/concourse/github-release-resource/commits/82b43a4701c7954d8564e3bb601c3ca3344dd395",
+                    },
+                    "protected": False,
                 },
-                "protected": False,
-            },
-            {
-                "name": "master",
-                "commit": {
-                    "sha": "daa864f0ae9df1cdd6debc86d722f07205ee5d37",
-                    "url": "https://api.github.com/repos/concourse/github-release-resource/commits/daa864f0ae9df1cdd6debc86d722f07205ee5d37",
+                {
+                    "name": "master",
+                    "commit": {
+                        "sha": "daa864f0ae9df1cdd6debc86d722f07205ee5d37",
+                        "url": "https://api.github.com/repos/concourse/github-release-resource/commits/daa864f0ae9df1cdd6debc86d722f07205ee5d37",
+                    },
+                    "protected": False,
                 },
-                "protected": False,
-            },
-            {
-                "name": "release/6.7.x",
-                "commit": {
-                    "sha": "114374e2c37a20ef8d0465b13cfe1a6e262a6f9b",
-                    "url": "https://api.github.com/repos/concourse/github-release-resource/commits/114374e2c37a20ef8d0465b13cfe1a6e262a6f9b",
+                {
+                    "name": "release/6.7.x",
+                    "commit": {
+                        "sha": "114374e2c37a20ef8d0465b13cfe1a6e262a6f9b",
+                        "url": "https://api.github.com/repos/concourse/github-release-resource/commits/114374e2c37a20ef8d0465b13cfe1a6e262a6f9b",
+                    },
+                    "protected": False,
                 },
-                "protected": False,
-            },
-            {
-                "name": "version",
-                "commit": {
-                    "sha": "2161540c7c8334eff873ce81fe085511a7225bdf",
-                    "url": "https://api.github.com/repos/concourse/github-release-resource/commits/2161540c7c8334eff873ce81fe085511a7225bdf",
+                {
+                    "name": "version",
+                    "commit": {
+                        "sha": "2161540c7c8334eff873ce81fe085511a7225bdf",
+                        "url": "https://api.github.com/repos/concourse/github-release-resource/commits/2161540c7c8334eff873ce81fe085511a7225bdf",
+                    },
+                    "protected": False,
                 },
-                "protected": False,
-            },
-            {
-                "name": "version-lts",
-                "commit": {
-                    "sha": "4f0de5025befd20fed73758b16ea2d2d6b19c82e",
-                    "url": "https://api.github.com/repos/concourse/github-release-resource/commits/4f0de5025befd20fed73758b16ea2d2d6b19c82e",
+                {
+                    "name": "version-lts",
+                    "commit": {
+                        "sha": "4f0de5025befd20fed73758b16ea2d2d6b19c82e",
+                        "url": "https://api.github.com/repos/concourse/github-release-resource/commits/4f0de5025befd20fed73758b16ea2d2d6b19c82e",
+                    },
+                    "protected": False,
                 },
-                "protected": False,
-            },
-        ])
+            ]
+        )
 
     def test_subversions(self) -> None:
         resource = BranchResource("concourse", "github-release-resource")
         with unittest.mock.patch("requests.get", self.mock_response.get):
-            branches = {version.name for version in resource.fetch_latest_sub_versions()}
-        self.assertSetEqual(branches, {"issue/95", "master", "release/6.7.x", "version", "version-lts"})
+            branches = {
+                version.name for version in resource.fetch_latest_sub_versions()
+            }
+        self.assertSetEqual(
+            branches, {"issue/95", "master", "release/6.7.x", "version", "version-lts"}
+        )
 
     def test_subversions_with_regex(self) -> None:
         resource = BranchResource("concourse", "github-release-resource", "release/.*")
         with unittest.mock.patch("requests.get", self.mock_response.get):
-            branches = {version.name for version in resource.fetch_latest_sub_versions()}
+            branches = {
+                version.name for version in resource.fetch_latest_sub_versions()
+            }
         self.assertSetEqual(branches, {"release/6.7.x"})
 
     def test_subversions_with_regex_whole_match(self) -> None:
         """Test that partial matches are not sufficient."""
         resource = BranchResource("concourse", "github-release-resource", "lts")
         with unittest.mock.patch("requests.get", self.mock_response.get):
-            branches = {version.name for version in resource.fetch_latest_sub_versions()}
+            branches = {
+                version.name for version in resource.fetch_latest_sub_versions()
+            }
         self.assertSetEqual(branches, set())
 
 
 @mock_aws
 class S3Tests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         super().setUp()
@@ -160,7 +172,12 @@ class S3Tests(unittest.TestCase):
         self.assertFalse(url_path.exists())
 
         expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
-        self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in)
+        self.resource.download_data(
+            self.destination_dir,
+            self.build_metadata,
+            "folder/file.txt",
+            expires_in=expires_in,
+        )
 
         self.assertTrue(url_path.exists())
         raw_url = url_path.read_text()
@@ -177,8 +194,13 @@ class S3Tests(unittest.TestCase):
         self.assertFalse(url_path.exists())
 
         expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
-        self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in,
-                                    url_file="url-new")
+        self.resource.download_data(
+            self.destination_dir,
+            self.build_metadata,
+            "folder/file.txt",
+            expires_in=expires_in,
+            url_file="url-new",
+        )
 
         self.assertTrue(url_path.exists())
 
@@ -187,8 +209,13 @@ class S3Tests(unittest.TestCase):
         self.assertFalse(url_path.exists())
 
         expires_in: dict[str, float] = {"minutes": 30, "seconds": 15}
-        self.resource.download_data(self.destination_dir, self.build_metadata, "folder/file.txt", expires_in=expires_in,
-                                    file_name="file.txt")
+        self.resource.download_data(
+            self.destination_dir,
+            self.build_metadata,
+            "folder/file.txt",
+            expires_in=expires_in,
+            file_name="file.txt",
+        )
 
         self.assertTrue(url_path.exists())
         raw_url = url_path.read_text()
@@ -198,11 +225,13 @@ class S3Tests(unittest.TestCase):
         self.assertEqual(url.hostname, "my-bucket.s3.amazonaws.com")
         self.assertEqual(url.path, "/folder/file.txt")
         self.assertEqual(parsed_query["X-Amz-Expires"], str(30 * 60 + 15))
-        self.assertEqual(parsed_query["response-content-disposition"], "attachment; filename=\"file.txt\"")
+        self.assertEqual(
+            parsed_query["response-content-disposition"],
+            'attachment; filename="file.txt"',
+        )
 
 
 class XKCDCheckTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         self.resource = XKCDResource()
@@ -216,7 +245,9 @@ class XKCDCheckTests(unittest.TestCase):
 
     def test_fetch_all_versions(self) -> None:
         versions = self.resource.fetch_all_versions()
-        self.assertSetEqual(versions, {ComicVersion(comic_id) for comic_id in {2809, 2810, 2811, 2812}})
+        self.assertSetEqual(
+            versions, {ComicVersion(comic_id) for comic_id in {2809, 2810, 2811, 2812}}
+        )
 
     def test_fetch_new_versions_no_previous(self) -> None:
         versions = self.resource.fetch_new_versions()
@@ -228,7 +259,6 @@ class XKCDCheckTests(unittest.TestCase):
 
 
 class XKCDInTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         self.version = ComicVersion(2812)
@@ -258,14 +288,21 @@ class XKCDInTests(unittest.TestCase):
             "URL": "https://xkcd.com/2812/",
         }
         self.assertDictEqual(metadata, expected_metadata)
-        self.assertEqual(folder_state["alt.txt"], "Getting the utility people to run transmission lines to Earth is "
-                                                  "expensive, but it will pay for itself in no time.")
+        self.assertEqual(
+            folder_state["alt.txt"],
+            "Getting the utility people to run transmission lines to Earth is "
+            "expensive, but it will pay for itself in no time.",
+        )
         self.assertEqual(folder_state["link.txt"], "https://xkcd.com/2812/")
-        self.assertDictEqual(self.expected_response, json.loads(folder_state["info.json"]))
+        self.assertDictEqual(
+            self.expected_response, json.loads(folder_state["info.json"])
+        )
 
         image_contents = folder_state["image.png"]
         hashed_image_contents = hashlib.sha1(image_contents).hexdigest()
-        self.assertEqual(hashed_image_contents, "22f545ac6b50163ce39bac49094c3f64e0858403")
+        self.assertEqual(
+            hashed_image_contents, "22f545ac6b50163ce39bac49094c3f64e0858403"
+        )
 
     def test_file_downloads_without_files(self) -> None:
         with self.wrapper.capture_directory_state() as directory_state:
@@ -278,10 +315,11 @@ class XKCDInTests(unittest.TestCase):
 
 @mock_aws
 class SecretsCheckTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
-        self.resource = SecretsResource("arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret")
+        self.resource = SecretsResource(
+            "arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret"
+        )
         client = self.resource._client
 
         self.string_secret = client.create_secret(
@@ -301,8 +339,9 @@ class SecretsCheckTests(unittest.TestCase):
         self.assertListEqual(versions, [self.initial_version])
 
     def test_fetch_secret_old_version(self) -> None:
-        response = self.resource._client.put_secret_value(SecretId=self.resource.secret,
-                                                          SecretString=json.dumps({"value": "xyz"}))
+        response = self.resource._client.put_secret_value(
+            SecretId=self.resource.secret, SecretString=json.dumps({"value": "xyz"})
+        )
         new_version = SecretVersion(response["VersionId"])
         versions = self.resource.fetch_new_versions(self.initial_version)
         self.assertListEqual(versions, [self.initial_version, new_version])
@@ -312,17 +351,20 @@ class SecretsCheckTests(unittest.TestCase):
         self.assertListEqual(versions, [self.initial_version])
 
     def test_missing_secret(self) -> None:
-        resource = SecretsResource("arn:aws:secretsmanager:eu-west-1:<account>:secret:missing")
+        resource = SecretsResource(
+            "arn:aws:secretsmanager:eu-west-1:<account>:secret:missing"
+        )
         with self.assertRaises(Exception):
             resource.fetch_new_versions()
 
 
 @mock_aws
 class SecretsInTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
-        self.resource = SecretsResource("arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret")
+        self.resource = SecretsResource(
+            "arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret"
+        )
         client = self.resource._client
 
         self.string_secret = client.create_secret(
@@ -358,26 +400,37 @@ class SecretsInTests(unittest.TestCase):
         wrapper = SimpleTestResourceWrapper(self.resource)
         with wrapper.capture_directory_state() as directory_state:
             wrapper.download_version(self.version)
-        self.assertDictEqual(directory_state.final_state, {
-            "metadata.json": json.dumps(self.expected_metadata, cls=DatetimeSafeJSONEncoder),
-        })
+        self.assertDictEqual(
+            directory_state.final_state,
+            {
+                "metadata.json": json.dumps(
+                    self.expected_metadata, cls=DatetimeSafeJSONEncoder
+                ),
+            },
+        )
 
     def test_getting_metadata_and_value(self) -> None:
         wrapper = SimpleTestResourceWrapper(self.resource)
         with wrapper.capture_directory_state() as directory_state:
             wrapper.download_version(self.version, value=True)
-        self.assertDictEqual(directory_state.final_state, {
-            "metadata.json": json.dumps(self.expected_metadata, cls=DatetimeSafeJSONEncoder),
-            "value": json.dumps({"value": "abc"}),
-        })
+        self.assertDictEqual(
+            directory_state.final_state,
+            {
+                "metadata.json": json.dumps(
+                    self.expected_metadata, cls=DatetimeSafeJSONEncoder
+                ),
+                "value": json.dumps({"value": "abc"}),
+            },
+        )
 
 
 @mock_aws
 class SecretsOutTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
-        self.resource = SecretsResource("arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret")
+        self.resource = SecretsResource(
+            "arn:aws:secretsmanager:eu-west-1:<account>:secret:my-secret"
+        )
         client = self.resource._client
 
         self.string_secret = client.create_secret(
@@ -403,7 +456,9 @@ class SecretsOutTests(unittest.TestCase):
 
     def test_updating_with_json(self) -> None:
         wrapper = SimpleTestResourceWrapper(self.resource)
-        new_version, metadata = wrapper.publish_new_version(json={"new-key": "new-value"})
+        new_version, metadata = wrapper.publish_new_version(
+            json={"new-key": "new-value"}
+        )
         latest_version = self.resource.fetch_latest_version()
         self.assertEqual(new_version, latest_version)
         self.assertNotEqual(new_version, self.version)
@@ -425,7 +480,6 @@ class SecretsOutTests(unittest.TestCase):
 
 @mock_aws
 class PipelineCheckTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         pipeline_name = "my-pipeline"
@@ -437,19 +491,23 @@ class PipelineCheckTests(unittest.TestCase):
             "Version": "2020-12-01",
             "Metadata": {},
             "Parameters": [],
-            "Steps": [{
-                "Name": "MyCondition",
-                "Type": "Condition",
-                "Arguments": {
-                    "Conditions": [{
-                        "Type": "LessThanOrEqualTo",
-                        "LeftValue": 3.0,
-                        "RightValue": 6.0,
-                    }],
-                    "IfSteps": [],
-                    "ElseSteps": []
-                },
-            }],
+            "Steps": [
+                {
+                    "Name": "MyCondition",
+                    "Type": "Condition",
+                    "Arguments": {
+                        "Conditions": [
+                            {
+                                "Type": "LessThanOrEqualTo",
+                                "LeftValue": 3.0,
+                                "RightValue": 6.0,
+                            }
+                        ],
+                        "IfSteps": [],
+                        "ElseSteps": [],
+                    },
+                }
+            ],
         }
 
         self.pipeline = client.create_pipeline(
@@ -458,37 +516,54 @@ class PipelineCheckTests(unittest.TestCase):
             PipelineDefinition=json.dumps(pipeline_definition),
         )
 
-        responses = (client.start_pipeline_execution(PipelineName=pipeline_name) for _ in range(5))
+        responses = (
+            client.start_pipeline_execution(PipelineName=pipeline_name)
+            for _ in range(5)
+        )
         execution_arns = [response["PipelineExecutionArn"] for response in responses]
 
-        self.execution_arns = execution_arns[::-1]  # reverse these to force moto to yield in descending order
+        self.execution_arns = execution_arns[
+            ::-1
+        ]  # reverse these to force moto to yield in descending order
 
     def test_fetch_secret_no_version(self) -> None:
-        version, = self.resource.fetch_new_versions()
+        (version,) = self.resource.fetch_new_versions()
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
     def test_fetch_secret_no_available_versions(self) -> None:
-        with unittest.mock.patch("moto.sagemaker.responses.SageMakerResponse.list_pipeline_executions",
-                                 _new_response_list_pipeline_executions_empty):
+        with unittest.mock.patch(
+            "moto.sagemaker.responses.SageMakerResponse.list_pipeline_executions",
+            _new_response_list_pipeline_executions_empty,
+        ):
             versions = self.resource.fetch_new_versions()
         self.assertListEqual(versions, [])
 
     def test_fetch_secret_no_version_with_pending(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        fake_pipeline_executions: list[FakePipelineExecution] = (
+            FakePipelineExecution.instances
+        )
+        execution_mapping = {
+            execution.pipeline_execution_arn: execution
+            for execution in fake_pipeline_executions
+        }
 
         for execution_arn in self.execution_arns[3:]:
             execution = execution_mapping[execution_arn]
             execution.pipeline_execution_status = "Executing"
 
-        version, = self.resource.fetch_new_versions()
+        (version,) = self.resource.fetch_new_versions()
         expected_version = ExecutionVersion(self.execution_arns[2])
         self.assertEqual(version, expected_version)
 
     def test_fetch_secret_no_version_with_pending_and_all_statuses(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        fake_pipeline_executions: list[FakePipelineExecution] = (
+            FakePipelineExecution.instances
+        )
+        execution_mapping = {
+            execution.pipeline_execution_arn: execution
+            for execution in fake_pipeline_executions
+        }
 
         for execution_arn in self.execution_arns[3:]:
             execution = execution_mapping[execution_arn]
@@ -496,13 +571,13 @@ class PipelineCheckTests(unittest.TestCase):
 
         self.resource.statuses.append("Executing")
 
-        version, = self.resource.fetch_new_versions()
+        (version,) = self.resource.fetch_new_versions()
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
     def test_fetch_secret_latest_version(self) -> None:
-        previous_version, = self.resource.fetch_new_versions()
-        version, = self.resource.fetch_new_versions(previous_version)
+        (previous_version,) = self.resource.fetch_new_versions()
+        (version,) = self.resource.fetch_new_versions(previous_version)
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
@@ -513,37 +588,44 @@ class PipelineCheckTests(unittest.TestCase):
         self.assertListEqual(versions, expected_versions)
 
     def test_missing_pipeline(self) -> None:
-        resource = PipelineResource("arn:aws:sagemaker:eu-west-1:<account>:pipeline:missing")
+        resource = PipelineResource(
+            "arn:aws:sagemaker:eu-west-1:<account>:pipeline:missing"
+        )
         with self.assertRaises(Exception):
             resource.fetch_new_versions()
 
 
 @mock_aws
 class PipelineInTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         pipeline_name = "my-pipeline"
-        resource = PipelineResource("arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            "arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         client = resource._client
 
         self.pipeline_definition = {
             "Version": "2020-12-01",
             "Metadata": {},
             "Parameters": [],
-            "Steps": [{
-                "Name": "MyCondition",
-                "Type": "Condition",
-                "Arguments": {
-                    "Conditions": [{
-                        "Type": "LessThanOrEqualTo",
-                        "LeftValue": 3.0,
-                        "RightValue": 6.0,
-                    }],
-                    "IfSteps": [],
-                    "ElseSteps": []
-                },
-            }],
+            "Steps": [
+                {
+                    "Name": "MyCondition",
+                    "Type": "Condition",
+                    "Arguments": {
+                        "Conditions": [
+                            {
+                                "Type": "LessThanOrEqualTo",
+                                "LeftValue": 3.0,
+                                "RightValue": 6.0,
+                            }
+                        ],
+                        "IfSteps": [],
+                        "ElseSteps": [],
+                    },
+                }
+            ],
         }
 
         self.pipeline = client.create_pipeline(
@@ -555,15 +637,20 @@ class PipelineInTests(unittest.TestCase):
         response = client.start_pipeline_execution(PipelineName=pipeline_name)
         minimum_execution_arn = response["PipelineExecutionArn"]
 
-        response = client.start_pipeline_execution(PipelineName=pipeline_name, PipelineExecutionDisplayName="My Pipeline",
-                                                   PipelineExecutionDescription="My important pipeline")
+        response = client.start_pipeline_execution(
+            PipelineName=pipeline_name,
+            PipelineExecutionDisplayName="My Pipeline",
+            PipelineExecutionDescription="My important pipeline",
+        )
         maximum_execution_arn = response["PipelineExecutionArn"]
 
         self.version_minimum = ExecutionVersion(minimum_execution_arn)
         self.version_maximum = ExecutionVersion(maximum_execution_arn)
 
     def test_download_minimum_info(self) -> None:
-        resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         wrapper = SimpleTestResourceWrapper(resource)
         with wrapper.capture_directory_state() as directory_state:
             _, metadata = wrapper.download_version(self.version_minimum)
@@ -581,7 +668,9 @@ class PipelineInTests(unittest.TestCase):
         self.assertDictEqual(pipeline_config, self.pipeline_definition)
 
     def test_download_maximum_info(self) -> None:
-        resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         wrapper = SimpleTestResourceWrapper(resource)
         _, metadata = wrapper.download_version(self.version_maximum)
 
@@ -595,13 +684,20 @@ class PipelineInTests(unittest.TestCase):
         self.assertDictEqual(metadata, expected_metadata)
 
     def test_download_failed_execution(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        fake_pipeline_executions: list[FakePipelineExecution] = (
+            FakePipelineExecution.instances
+        )
+        execution_mapping = {
+            execution.pipeline_execution_arn: execution
+            for execution in fake_pipeline_executions
+        }
 
         fake_execution = execution_mapping[self.version_minimum.execution_arn]
         fake_execution.pipeline_execution_status = "Failed"
 
-        resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         wrapper = SimpleTestResourceWrapper(resource)
         _, metadata = wrapper.download_version(self.version_minimum)
 
@@ -614,7 +710,9 @@ class PipelineInTests(unittest.TestCase):
         self.assertDictEqual(metadata, expected_metadata)
 
     def test_download_no_pipeline(self) -> None:
-        resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         wrapper = SimpleTestResourceWrapper(resource)
         with wrapper.capture_directory_state() as directory_state:
             wrapper.download_version(self.version_minimum, download_pipeline=False)
@@ -626,30 +724,35 @@ class PipelineInTests(unittest.TestCase):
 
 @mock_aws
 class PipelineOutTests(unittest.TestCase):
-
     def setUp(self) -> None:
         """Code to run before each test."""
         pipeline_name = "my-pipeline"
-        self.resource = PipelineResource("arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        self.resource = PipelineResource(
+            "arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         client = self.resource._client
 
         self.pipeline_definition = {
             "Version": "2020-12-01",
             "Metadata": {},
             "Parameters": [],
-            "Steps": [{
-                "Name": "MyCondition",
-                "Type": "Condition",
-                "Arguments": {
-                    "Conditions": [{
-                        "Type": "LessThanOrEqualTo",
-                        "LeftValue": 3.0,
-                        "RightValue": 6.0,
-                    }],
-                    "IfSteps": [],
-                    "ElseSteps": []
-                },
-            }],
+            "Steps": [
+                {
+                    "Name": "MyCondition",
+                    "Type": "Condition",
+                    "Arguments": {
+                        "Conditions": [
+                            {
+                                "Type": "LessThanOrEqualTo",
+                                "LeftValue": 3.0,
+                                "RightValue": 6.0,
+                            }
+                        ],
+                        "IfSteps": [],
+                        "ElseSteps": [],
+                    },
+                }
+            ],
         }
 
         self.pipeline = client.create_pipeline(
@@ -659,19 +762,31 @@ class PipelineOutTests(unittest.TestCase):
         )
 
     def test_execution_creation(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        initial_execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        fake_pipeline_executions: list[FakePipelineExecution] = (
+            FakePipelineExecution.instances
+        )
+        initial_execution_mapping = {
+            execution.pipeline_execution_arn: execution
+            for execution in fake_pipeline_executions
+        }
 
-        resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
+        resource = PipelineResource(
+            pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
+        )
         wrapper = SimpleTestResourceWrapper(resource)
         new_version, _ = wrapper.publish_new_version()
 
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        execution_mapping = {
+            execution.pipeline_execution_arn: execution
+            for execution in fake_pipeline_executions
+        }
         self.assertNotIn(new_version.execution_arn, initial_execution_mapping)
         self.assertIn(new_version.execution_arn, execution_mapping)
 
 
-def _new_response_list_pipeline_executions_empty(self: SageMakerResponse) -> TYPE_RESPONSE:
+def _new_response_list_pipeline_executions_empty(
+    self: SageMakerResponse,
+) -> TYPE_RESPONSE:
     response: dict[str, object] = {
         "PipelineExecutionSummaries": [],
     }

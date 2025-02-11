@@ -33,6 +33,7 @@ class BitbucketOAuth(AuthBase):
     """
     Adds the correct auth token for OAuth access to bitbucket.com.
     """
+
     def __init__(self, access_token: str):
         self.access_token = access_token
 
@@ -41,7 +42,9 @@ class BitbucketOAuth(AuthBase):
         return request
 
     @classmethod
-    def from_client_credentials(cls, client_id: str, client_secret: str) -> "BitbucketOAuth":
+    def from_client_credentials(
+        cls, client_id: str, client_secret: str
+    ) -> "BitbucketOAuth":
         token_auth = HTTPBasicAuth(client_id, client_secret)
 
         url = "https://bitbucket.org/site/oauth2/access_token"
@@ -59,19 +62,27 @@ class Version(TypedVersion):
 
 
 class Resource(OutOnlyConcourseResource[Version]):
-
-    def __init__(self, repository: str | None = None, endpoint: str | None = None,
-                 username: str | None = None, password: str | None = None,
-                 client_id: str | None = None, client_secret: str | None = None,
-                 verify_ssl: bool = True, driver: str = "Bitbucket Server",
-                 debug: bool = False) -> None:
+    def __init__(
+        self,
+        repository: str | None = None,
+        endpoint: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        verify_ssl: bool = True,
+        driver: str = "Bitbucket Server",
+        debug: bool = False,
+    ) -> None:
         super().__init__(Version)
         try:
             self.driver = Driver(driver)
         except ValueError:
             possible_values = {enum.value for enum in Driver._member_map_.values()}
-            raise ValueError(f"Driver must be one of the following: "
-                             f"{possible_values}, not {driver!r}")
+            raise ValueError(
+                f"Driver must be one of the following: "
+                f"{possible_values}, not {driver!r}"
+            )
 
         self.auth = create_auth(username, password, client_id, client_secret)
 
@@ -91,19 +102,28 @@ class Resource(OutOnlyConcourseResource[Version]):
             if repository is None:
                 raise ValueError("Must set repository when using Bitbucket Cloud.")
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata,
-                            repository: str, build_status: str, key: str | None = None,
-                            name: str | None = None, build_url: str | None = None,
-                            description: str | None = None,
-                            commit_hash: str | None = None) -> tuple[Version, Metadata]:
+    def publish_new_version(
+        self,
+        sources_dir: Path,
+        build_metadata: BuildMetadata,
+        repository: str,
+        build_status: str,
+        key: str | None = None,
+        name: str | None = None,
+        build_url: str | None = None,
+        description: str | None = None,
+        commit_hash: str | None = None,
+    ) -> tuple[Version, Metadata]:
         self.debug("--DEBUG MODE--")
 
         try:
             status = BuildStatus[build_status]
         except KeyError:
             possible_values = set(BuildStatus._member_names_)
-            raise ValueError(f"Build status must be one of the following: "
-                             f"{possible_values}, not {build_status!r}")
+            raise ValueError(
+                f"Build status must be one of the following: "
+                f"{possible_values}, not {build_status!r}"
+            )
 
         if commit_hash is None:
             if repository is None:
@@ -113,8 +133,16 @@ class Resource(OutOnlyConcourseResource[Version]):
             git_path = repo_path / ".git"
 
             if mercurial_path.exists():
-                command = ["hg", "R", str(repo_path), "log",
-                           "--rev", ".", "--template", r"{node}"]
+                command = [
+                    "hg",
+                    "R",
+                    str(repo_path),
+                    "log",
+                    "--rev",
+                    ".",
+                    "--template",
+                    r"{node}",
+                ]
             elif git_path.exists():
                 command = ["git", "-C", str(repo_path), "rev-parse", "HEAD"]
             else:
@@ -126,11 +154,17 @@ class Resource(OutOnlyConcourseResource[Version]):
 
         build_url = build_url or build_metadata.build_url()
 
-        key = key or build_metadata.BUILD_JOB_NAME or f"one-off-build-{build_metadata.BUILD_ID}"
+        key = (
+            key
+            or build_metadata.BUILD_JOB_NAME
+            or f"one-off-build-{build_metadata.BUILD_ID}"
+        )
 
         self.debug(f"Build URL: {build_url}")
 
-        description = description or f"Concourse CI build, hijack as #{build_metadata.BUILD_ID}"
+        description = (
+            description or f"Concourse CI build, hijack as #{build_metadata.BUILD_ID}"
+        )
 
         if name is None:
             if build_metadata.is_one_off_build:
@@ -159,7 +193,9 @@ class Resource(OutOnlyConcourseResource[Version]):
 
         self.debug(f"Set build status: {data}")
 
-        response = requests.post(post_url, json=data, auth=self.auth, verify=self.verify_ssl)
+        response = requests.post(
+            post_url, json=data, auth=self.auth, verify=self.verify_ssl
+        )
 
         self.debug(f"Request result: {response.json()}")
 
@@ -174,10 +210,12 @@ class Resource(OutOnlyConcourseResource[Version]):
             colour_print(*args, colour=colour, **kwargs)
 
 
-def create_auth(username: str | None = None,
-                password: str | None = None,
-                client_id: str | None = None,
-                client_secret: str | None = None) -> AuthBase:
+def create_auth(
+    username: str | None = None,
+    password: str | None = None,
+    client_id: str | None = None,
+    client_secret: str | None = None,
+) -> AuthBase:
     if username is not None and password is not None:
         auth: AuthBase = HTTPBasicAuth(username, password)
     elif client_id is not None and client_secret is not None:

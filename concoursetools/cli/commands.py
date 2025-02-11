@@ -2,6 +2,7 @@
 """
 Commands for the Concourse Tools CLI.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,8 +21,14 @@ DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def assets(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
-           class_name: str | None = None) -> None:
+def assets(
+    path: str,
+    /,
+    *,
+    executable: str | None = None,
+    resource_file: str = "concourse.py",
+    class_name: str | None = None,
+) -> None:
     """
     Create the assets script directory.
 
@@ -31,8 +38,11 @@ def assets(path: str, /, *, executable: str | None = None, resource_file: str = 
     :param resource_file: The path to the module containing the resource class. Defaults to 'concourse.py'.
     :param class_name: The name of the resource class in the module, if there are multiple.
     """
-    resource_class = import_single_class_from_module(Path(resource_file), parent_class=ConcourseResource,  # type: ignore[type-abstract]
-                                                     class_name=class_name)
+    resource_class = import_single_class_from_module(
+        Path(resource_file),
+        parent_class=ConcourseResource,  # type: ignore[type-abstract]
+        class_name=class_name,
+    )
     assets_folder = Path(path)
     assets_folder.mkdir(parents=True, exist_ok=True)
 
@@ -43,15 +53,32 @@ def assets(path: str, /, *, executable: str | None = None, resource_file: str = 
     }
     for file_name, method_name in file_name_to_method_name.items():
         file_path = assets_folder / file_name
-        dockertools.create_script_file(file_path, resource_class, method_name,
-                                       executable or dockertools.DEFAULT_EXECUTABLE)
+        dockertools.create_script_file(
+            file_path,
+            resource_class,
+            method_name,
+            executable or dockertools.DEFAULT_EXECUTABLE,
+        )
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def dockerfile(path: str, /, *, executable: str | None = None, image: str = "python", tag: str | None = None,
-               suffix: str | None = None, resource_file: str = "concourse.py", class_name: str | None = None,
-               pip_args: str | None = None, include_rsa: bool = False, include_netrc: bool = False,
-               encoding: str | None = None, no_venv: bool = False, dev: bool = False) -> None:
+def dockerfile(
+    path: str,
+    /,
+    *,
+    executable: str | None = None,
+    image: str = "python",
+    tag: str | None = None,
+    suffix: str | None = None,
+    resource_file: str = "concourse.py",
+    class_name: str | None = None,
+    pip_args: str | None = None,
+    include_rsa: bool = False,
+    include_netrc: bool = False,
+    encoding: str | None = None,
+    no_venv: bool = False,
+    dev: bool = False,
+) -> None:
     """
     Create the Dockerfile.
 
@@ -83,9 +110,21 @@ def dockerfile(path: str, /, *, executable: str | None = None, image: str = "pyt
         "-c": class_name,
         "-e": executable,
     }
-    assets_options = {key: value for key, value in assets_to_potentially_include.items() if value is not None}
+    assets_options = {
+        key: value
+        for key, value in assets_to_potentially_include.items()
+        if value is not None
+    }
 
-    cli_split_command = ["python3", "-m", "concoursetools", "assets", ".", "-r", resource_file]
+    cli_split_command = [
+        "python3",
+        "-m",
+        "concoursetools",
+        "assets",
+        ".",
+        "-r",
+        resource_file,
+    ]
     for key, value in assets_options.items():
         if value is not None:
             cli_split_command.extend([key, value])
@@ -120,29 +159,33 @@ def dockerfile(path: str, /, *, executable: str | None = None, image: str = "pyt
     mounts: list[dockertools.Mount] = []
 
     if include_rsa:
-        mounts.extend([
-            dockertools.SecretMount(
-                secret_id="private_key",
-                target="/root/.ssh/id_rsa",
-                mode=0o600,
-                required=True,
-            ),
-            dockertools.SecretMount(
-                secret_id="known_hosts",
-                target="/root/.ssh/known_hosts",
-                mode=0o644,
-            ),
-        ])
+        mounts.extend(
+            [
+                dockertools.SecretMount(
+                    secret_id="private_key",
+                    target="/root/.ssh/id_rsa",
+                    mode=0o600,
+                    required=True,
+                ),
+                dockertools.SecretMount(
+                    secret_id="known_hosts",
+                    target="/root/.ssh/known_hosts",
+                    mode=0o644,
+                ),
+            ]
+        )
 
     if include_netrc:
-        mounts.extend([
-            dockertools.SecretMount(
-                secret_id="netrc",
-                target="/root/.netrc",
-                mode=0o600,
-                required=True,
-            ),
-        ])
+        mounts.extend(
+            [
+                dockertools.SecretMount(
+                    secret_id="netrc",
+                    target="/root/.netrc",
+                    mode=0o600,
+                    required=True,
+                ),
+            ]
+        )
 
     if pip_args is None:
         pip_string_suffix = ""
@@ -154,18 +197,24 @@ def dockerfile(path: str, /, *, executable: str | None = None, image: str = "pyt
             dockertools.CopyInstruction("concoursetools"),
         )
         final_dockerfile.new_instruction_group(
-            dockertools.MultiLineRunInstruction([
-                "python3 -m pip install --upgrade pip" + pip_string_suffix,
-                "pip install ./concoursetools",
-                "pip install -r requirements.txt --no-deps" + pip_string_suffix,
-            ], mounts=mounts),
+            dockertools.MultiLineRunInstruction(
+                [
+                    "python3 -m pip install --upgrade pip" + pip_string_suffix,
+                    "pip install ./concoursetools",
+                    "pip install -r requirements.txt --no-deps" + pip_string_suffix,
+                ],
+                mounts=mounts,
+            ),
         )
     else:
         final_dockerfile.new_instruction_group(
-            dockertools.MultiLineRunInstruction([
-                "python3 -m pip install --upgrade pip" + pip_string_suffix,
-                "pip install -r requirements.txt --no-deps" + pip_string_suffix,
-            ], mounts=mounts),
+            dockertools.MultiLineRunInstruction(
+                [
+                    "python3 -m pip install --upgrade pip" + pip_string_suffix,
+                    "pip install -r requirements.txt --no-deps" + pip_string_suffix,
+                ],
+                mounts=mounts,
+            ),
         )
 
     final_dockerfile.new_instruction_group(
@@ -182,8 +231,16 @@ def dockerfile(path: str, /, *, executable: str | None = None, image: str = "pyt
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def legacy(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
-           class_name: str | None = None, docker: bool = False, include_rsa: bool = False) -> None:
+def legacy(
+    path: str,
+    /,
+    *,
+    executable: str | None = None,
+    resource_file: str = "concourse.py",
+    class_name: str | None = None,
+    docker: bool = False,
+    include_rsa: bool = False,
+) -> None:
     """
     Invoke the legacy CLI.
 
@@ -194,12 +251,24 @@ def legacy(path: str, /, *, executable: str | None = None, resource_file: str = 
     :param docker: Pass to create a skeleton Dockerfile at the path instead.
     :param include_rsa: Enable the Dockerfile to (securely) use your RSA private key during building.
     """
-    colour_print(textwrap.dedent("""
+    colour_print(
+        textwrap.dedent("""
     The legacy CLI has been deprecated.
     Please refer to the documentation or help pages for the up to date CLI.
     This CLI will be removed in version 0.10.0, or in version 1.0.0, whichever is sooner.
-    """), colour=Colour.RED)
+    """),
+        colour=Colour.RED,
+    )
     if docker:
-        return dockerfile(path, suffix="alpine", executable=executable, resource_file=resource_file, class_name=class_name,
-                          include_rsa=include_rsa, no_venv=True)
-    assets(path, executable=executable, resource_file=resource_file, class_name=class_name)
+        return dockerfile(
+            path,
+            suffix="alpine",
+            executable=executable,
+            resource_file=resource_file,
+            class_name=class_name,
+            include_rsa=include_rsa,
+            no_venv=True,
+        )
+    assets(
+        path, executable=executable, resource_file=resource_file, class_name=class_name
+    )

@@ -4,7 +4,13 @@ import textwrap
 from typing import Any, cast
 from unittest import TestCase
 
-from concoursetools.parsing import format_check_output, format_in_out_output, parse_check_payload, parse_in_payload, parse_out_payload
+from concoursetools.parsing import (
+    format_check_output,
+    format_in_out_output,
+    parse_check_payload,
+    parse_in_payload,
+    parse_out_payload,
+)
 from concoursetools.typing import VersionConfig
 
 
@@ -12,6 +18,7 @@ class CheckParsingTests(TestCase):
     """
     Tests that Concourse JSON is being properly parsed.
     """
+
     def test_check_step_with_version(self) -> None:
         config = textwrap.dedent("""
         {
@@ -26,12 +33,15 @@ class CheckParsingTests(TestCase):
         """).strip()
         resource, version = parse_check_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-            "merges": True,
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+                "merges": True,
+            },
+        )
 
         self.assertIsNotNone(version)
         version = cast(VersionConfig, version)
@@ -49,11 +59,14 @@ class CheckParsingTests(TestCase):
         """).strip()
         resource, version = parse_check_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+            },
+        )
 
         self.assertIsNone(version)
 
@@ -94,25 +107,32 @@ class CheckParsingTests(TestCase):
         """).strip()
         resource, version = parse_check_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+            },
+        )
 
         self.assertIsNotNone(version)
         version = cast(VersionConfig, version)
 
-        self.assertDictEqual(version, {
-            "ref": "61cbef",
-            "is_merge": "True",
-        })
+        self.assertDictEqual(
+            version,
+            {
+                "ref": "61cbef",
+                "is_merge": "True",
+            },
+        )
 
 
 class InParsingTests(TestCase):
     """
     Tests that Concourse JSON is being properly parsed.
     """
+
     def test_in_step_with_params(self) -> None:
         config = textwrap.dedent("""
         {
@@ -128,12 +148,15 @@ class InParsingTests(TestCase):
         """).strip()
         resource, version, params = parse_in_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-            "merges": True,
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+                "merges": True,
+            },
+        )
 
         self.assertDictEqual(version, {"ref": "61cbef"})
         self.assertDictEqual(params, {"shallow": True})
@@ -151,11 +174,14 @@ class InParsingTests(TestCase):
         """).strip()
         resource, version, params = parse_in_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+            },
+        )
 
         self.assertDictEqual(version, {"ref": "61cbef"})
         self.assertDictEqual(params, {})
@@ -199,6 +225,7 @@ class OutParsingTests(TestCase):
     """
     Tests that Concourse JSON is being properly parsed.
     """
+
     def test_out_step_with_params(self) -> None:
         config = textwrap.dedent("""
         {
@@ -216,17 +243,23 @@ class OutParsingTests(TestCase):
         """).strip()
         resource, params = parse_out_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-            "merges": True,
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+                "merges": True,
+            },
+        )
 
-        self.assertDictEqual(params, {
-            "repo": "repo",
-            "force": False,
-        })
+        self.assertDictEqual(
+            params,
+            {
+                "repo": "repo",
+                "force": False,
+            },
+        )
 
     def test_out_step_no_params(self) -> None:
         config = textwrap.dedent("""
@@ -240,11 +273,14 @@ class OutParsingTests(TestCase):
         """).strip()
         resource, params = parse_out_payload(config)
 
-        self.assertDictEqual(resource, {
-            "uri": "git://some-uri",
-            "branch": "develop",
-            "private_key": "...",
-        })
+        self.assertDictEqual(
+            resource,
+            {
+                "uri": "git://some-uri",
+                "branch": "develop",
+                "private_key": "...",
+            },
+        )
 
         self.assertDictEqual(params, {})
 
@@ -275,20 +311,27 @@ class FormatTests(TestCase):
     """
     Tests for the formatting of strings to pass to Concourse.
     """
+
     def test_check_format(self) -> None:
         versions = [
             {"ref": "61cbef"},
             {"ref": "d74e01"},
             {"ref": "7154fe"},
         ]
-        expected_output = re.sub(r"\s", "", """
+        expected_output = re.sub(
+            r"\s",
+            "",
+            """
         [
             { "ref": "61cbef" },
             { "ref": "d74e01" },
             { "ref": "7154fe" }
         ]
-        """)
-        self.assertEqual(expected_output, format_check_output(versions, separators=(",", ":")))
+        """,
+        )
+        self.assertEqual(
+            expected_output, format_check_output(versions, separators=(",", ":"))
+        )
 
     def test_check_format_not_strings(self) -> None:
         versions: list[dict[str, Any]] = [
@@ -296,14 +339,20 @@ class FormatTests(TestCase):
             {"ref": True},
             {"ref": None},
         ]
-        expected_output = re.sub(r"\s", "", """
+        expected_output = re.sub(
+            r"\s",
+            "",
+            """
         [
             { "ref": "100" },
             { "ref": "True" },
             { "ref": "None" }
         ]
-        """)
-        self.assertEqual(expected_output, format_check_output(versions, separators=(",", ":")))
+        """,
+        )
+        self.assertEqual(
+            expected_output, format_check_output(versions, separators=(",", ":"))
+        )
 
     def test_in_out_format(self) -> None:
         version = {"ref": "61cebf"}
@@ -311,7 +360,10 @@ class FormatTests(TestCase):
             "commit": "61cebf",
             "author": "HulkHogan",
         }
-        expected_output = re.sub(r"\s", "", """
+        expected_output = re.sub(
+            r"\s",
+            "",
+            """
         {
             "version": { "ref": "61cebf" },
             "metadata": [
@@ -319,8 +371,12 @@ class FormatTests(TestCase):
                 { "name": "author", "value": "HulkHogan" }
             ]
         }
-        """)
-        self.assertEqual(expected_output, format_in_out_output(version, metadata, separators=(",", ":")))
+        """,
+        )
+        self.assertEqual(
+            expected_output,
+            format_in_out_output(version, metadata, separators=(",", ":")),
+        )
 
     def test_in_out_format_not_strings(self) -> None:
         version: dict[str, Any] = {"ref": True}
@@ -328,7 +384,10 @@ class FormatTests(TestCase):
             "commit": 100,
             "author": "HulkHogan",
         }
-        expected_output = re.sub(r"\s", "", """
+        expected_output = re.sub(
+            r"\s",
+            "",
+            """
         {
             "version": { "ref": "True" },
             "metadata": [
@@ -336,5 +395,9 @@ class FormatTests(TestCase):
                 { "name": "author", "value": "HulkHogan" }
             ]
         }
-        """)
-        self.assertEqual(expected_output, format_in_out_output(version, metadata, separators=(",", ":")))
+        """,
+        )
+        self.assertEqual(
+            expected_output,
+            format_in_out_output(version, metadata, separators=(",", ":")),
+        )

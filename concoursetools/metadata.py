@@ -12,6 +12,7 @@ The :meth:`~concoursetools.resource.ConcourseResource.download_version` and
 
 See the Concourse :concourse:`implementing-resource-types.resource-metadata` documentation for more information.
 """
+
 from __future__ import annotations
 
 import json
@@ -44,9 +45,17 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         These can still be accessed via :data:`os.environ`, but they are not supported by Concourse Tools.
     """
-    def __init__(self, BUILD_ID: str, BUILD_TEAM_NAME: str, ATC_EXTERNAL_URL: str, BUILD_NAME: str | None = None,
-                 BUILD_JOB_NAME: str | None = None, BUILD_PIPELINE_NAME: str | None = None,
-                 BUILD_PIPELINE_INSTANCE_VARS: str | None = None):
+
+    def __init__(
+        self,
+        BUILD_ID: str,
+        BUILD_TEAM_NAME: str,
+        ATC_EXTERNAL_URL: str,
+        BUILD_NAME: str | None = None,
+        BUILD_JOB_NAME: str | None = None,
+        BUILD_PIPELINE_NAME: str | None = None,
+        BUILD_PIPELINE_INSTANCE_VARS: str | None = None,
+    ):
         self.BUILD_ID = BUILD_ID
         self.BUILD_TEAM_NAME = BUILD_TEAM_NAME
 
@@ -71,9 +80,11 @@ class BuildMetadata:  # pylint: disable=invalid-name
         try:
             return os.environ["BUILD_CREATED_BY"]
         except KeyError as error:
-            raise PermissionError("The 'BUILD_CREATED_BY' variable has not been made available. This must be enabled "
-                                  "with the 'expose_build_created_by' variable within the resource schema: "
-                                  "https://concourse-ci.org/resources.html#schema.resource.expose_build_created_by") from error
+            raise PermissionError(
+                "The 'BUILD_CREATED_BY' variable has not been made available. This must be enabled "
+                "with the 'expose_build_created_by' variable within the resource schema: "
+                "https://concourse-ci.org/resources.html#schema.resource.expose_build_created_by"
+            ) from error
 
     @property
     def is_one_off_build(self) -> bool:
@@ -92,7 +103,14 @@ class BuildMetadata:  # pylint: disable=invalid-name
             The documentation insists that ``$BUILD_NAME`` will also not be set in the
             environment during a one-off build, but experimentation has shown this to be **false**.
         """
-        return all(attr is None for attr in (self.BUILD_JOB_NAME, self.BUILD_PIPELINE_NAME, self.BUILD_PIPELINE_INSTANCE_VARS))
+        return all(
+            attr is None
+            for attr in (
+                self.BUILD_JOB_NAME,
+                self.BUILD_PIPELINE_NAME,
+                self.BUILD_PIPELINE_INSTANCE_VARS,
+            )
+        )
 
     @property
     def is_instanced_pipeline(self) -> bool:
@@ -139,7 +157,9 @@ class BuildMetadata:  # pylint: disable=invalid-name
                     }
                 }
         """
-        instance_vars: dict[str, object] = json.loads(self.BUILD_PIPELINE_INSTANCE_VARS or "{}")
+        instance_vars: dict[str, object] = json.loads(
+            self.BUILD_PIPELINE_INSTANCE_VARS or "{}"
+        )
         return instance_vars
 
     def build_url(self) -> str:
@@ -157,14 +177,21 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         if self.is_instanced_pipeline:
             flattened_instance_vars = _flatten_dict(self.instance_vars())
-            query_string = "?" + "&".join(f"vars.{key}={quote(json.dumps(value))}" for key, value in flattened_instance_vars.items())
+            query_string = "?" + "&".join(
+                f"vars.{key}={quote(json.dumps(value))}"
+                for key, value in flattened_instance_vars.items()
+            )
         else:
             query_string = ""
 
         return f"{self.ATC_EXTERNAL_URL}/{quote(build_path)}{query_string}"
 
-    def format_string(self, string: str, additional_values: dict[str, str] | None = None,
-                      ignore_missing: bool = False) -> str:
+    def format_string(
+        self,
+        string: str,
+        additional_values: dict[str, str] | None = None,
+        ignore_missing: bool = False,
+    ) -> str:
         """
         Format a string with metadata using standard bash ``$`` notation.
 
@@ -214,7 +241,11 @@ class BuildMetadata:  # pylint: disable=invalid-name
         except PermissionError:
             pass
 
-        return template.safe_substitute(possible_values) if ignore_missing else template.substitute(possible_values)
+        return (
+            template.safe_substitute(possible_values)
+            if ignore_missing
+            else template.substitute(possible_values)
+        )
 
     @classmethod
     def from_env(cls) -> "BuildMetadata":

@@ -8,6 +8,7 @@ Minor Sphinx extension for creating Wikipedia links, based on https://sphinx-too
 Set ``wikipedia_base_url`` in ``conf.py`` to change the URL used. It must contain "{target}" to be populated.
 It can also contain "{lang}" to allow the language code (e.g. "de") to be injected with the ``wikipedia_lang`` variable.
 """
+
 from __future__ import annotations
 
 import re
@@ -25,8 +26,15 @@ DEFAULT_BASE_URL = "https://{lang}.wikipedia.org/wiki/{target}"
 RE_WIKI_LANG = re.compile(":(.*?):(.*)")
 
 
-def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
-                        content: list[str] = []) -> tuple[list[nodes.reference], list[system_message]]:
+def make_wikipedia_link(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, object] = {},
+    content: list[str] = [],
+) -> tuple[list[nodes.reference], list[system_message]]:
     """
     Add a link to the given article on :wikipedia:`Wikipedia`.
 
@@ -47,7 +55,7 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
     text = nodes.unescape(text)  # type: ignore[attr-defined]
     has_explicit, title, target = split_explicit_title(text)
 
-    if (match := RE_WIKI_LANG.match(target)):
+    if match := RE_WIKI_LANG.match(target):
         lang, target = match.groups()
         if not has_explicit:
             title = target

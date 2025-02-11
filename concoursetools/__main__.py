@@ -4,6 +4,7 @@ The main entrypoint for the Concourse Tools CLI:
 
     $ python3 -m concoursetools --help
 """
+
 import sys
 
 from concoursetools.cli import cli

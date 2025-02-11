@@ -7,6 +7,7 @@ Minor Sphinx extension for counting the number of lines in a file.
 Paths should be relative to the directory of the current file, not the source directory.
 This is the same  path passed to literalinclude.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,8 +20,15 @@ from sphinx.application import Sphinx
 __all__ = ("count_lines", "setup")
 
 
-def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
-                content: list[str] = []) -> tuple[list[nodes.Node], list[system_message]]:
+def count_lines(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: int,
+    inliner: Inliner,
+    options: dict[str, object] = {},
+    content: list[str] = [],
+) -> tuple[list[nodes.Node], list[system_message]]:
     """
     Add a text node containing the number of lines.
 

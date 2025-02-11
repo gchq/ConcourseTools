@@ -27,7 +27,6 @@ class ComicVersion(TypedVersion, SortableVersionMixin):
 
 
 class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
-
     def __init__(self, url: str = "https://xkcd.com"):
         super().__init__(ComicVersion)
         self.url = url
@@ -38,9 +37,15 @@ class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
         feed_data = response.text
         return {ComicVersion(comic_id) for comic_id in yield_comic_ids(feed_data)}
 
-    def download_version(self, version: ComicVersion, destination_dir: Path,
-                         build_metadata: BuildMetadata, image: bool = True,
-                         link: bool = True, alt: bool = True) -> tuple[ComicVersion, dict[str, str]]:
+    def download_version(
+        self,
+        version: ComicVersion,
+        destination_dir: Path,
+        build_metadata: BuildMetadata,
+        image: bool = True,
+        link: bool = True,
+        alt: bool = True,
+    ) -> tuple[ComicVersion, dict[str, str]]:
         comic_info_url = f"{self.url}/{version.comic_id}/info.0.json"
         response = requests.get(comic_info_url)
         info = response.json()
@@ -48,8 +53,9 @@ class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
         title = info["title"]
         url = f"{self.url}/{version.comic_id}/"
 
-        upload_date = datetime(year=int(info["year"]), month=int(info["month"]),
-                               day=int(info["day"]))
+        upload_date = datetime(
+            year=int(info["year"]), month=int(info["month"]), day=int(info["day"])
+        )
         metadata = {
             "Title": title,
             "Uploaded": upload_date.strftime(r"%d/%m/%Y"),
@@ -76,7 +82,9 @@ class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
 
         return version, metadata
 
-    def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata) -> tuple[ComicVersion, dict[str, str]]:
+    def publish_new_version(
+        self, sources_dir: Path, build_metadata: BuildMetadata
+    ) -> tuple[ComicVersion, dict[str, str]]:
         raise NotImplementedError
 
 
