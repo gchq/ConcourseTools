@@ -43,7 +43,7 @@ repos:
     hooks:
       - id: pydocstyle
         additional_dependencies: ["tomli"]
-        exclude: examples|tests|conf.py
+        exclude: examples|tests|.pre-commit-hooks|conf.py
   - repo: https://github.com/regebro/pyroma
     rev: "4.2"
     hooks:
@@ -63,3 +63,11 @@ repos:
           - --template
           - (C) Crown Copyright [OWNER]
           - --owner=GCHQ
+  - repo: local
+    hooks:
+      - id: double-string-fixer
+        name: string fixer
+        description: Replace single-quoted strings with double-quoted strings
+        types: [python]
+        language: python
+        entry: python3 .pre-commit-hooks/double_string_fixer.py
