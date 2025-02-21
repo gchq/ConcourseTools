@@ -8,7 +8,7 @@ repos:
       - id: check-added-large-files
         args: [--enforce-all, --maxkb=100]
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.0
     hooks:
       - id: isort
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -24,12 +24,12 @@ repos:
       - id: forbid-crlf
       - id: forbid-tabs
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v8.17.0
+    rev: v8.17.2
     hooks:
       - id: cspell
         exclude: \.gitignore|.*\.properties
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.1.2
     hooks:
       - id: flake8
         args: [--max-line-length=150]
@@ -41,12 +41,12 @@ repos:
         additional_dependencies: ["tomli"]
         exclude: examples|tests|conf.py
   - repo: https://github.com/regebro/pyroma
-    rev: f4ef6995f6c054586fe6d5d33d180abe71ebabd0
+    rev: "4.2"
     hooks:
     - id: pyroma
-      args: ["-d", "--min=10", ".", "--skip-tests", "ValidREST"]
+      args: ["-d", "--min=10", "."]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+    rev: v1.15.0
     hooks:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
