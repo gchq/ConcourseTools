@@ -7,6 +7,10 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         args: [--enforce-all, --maxkb=100]
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.16.0
+    hooks:
+      - id: yamlfmt
   - repo: https://github.com/pycqa/isort
     rev: 6.0.0
     hooks:
@@ -43,8 +47,8 @@ repos:
   - repo: https://github.com/regebro/pyroma
     rev: "4.2"
     hooks:
-    - id: pyroma
-      args: ["-d", "--min=10", "."]
+      - id: pyroma
+        args: ["-d", "--min=10", "."]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.15.0
     hooks:
