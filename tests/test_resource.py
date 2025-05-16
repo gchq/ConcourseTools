@@ -3,6 +3,7 @@ from pathlib import Path
 import random
 import shutil
 import string
+import sys
 from tempfile import TemporaryDirectory
 from unittest import SkipTest, TestCase
 
@@ -728,7 +729,12 @@ def _build_test_resource_docker_image() -> str:
             except FileNotFoundError:
                 pass
 
-        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__, dev=True)
+        # This pins the tag to the exact version of Python we're using, including alpha/beta
+        # '3.14.0b1 (main, May  9 2025, 23:49:24) [GCC 12.2.0]'
+        #  ^^^^^^^^
+        tag, *_ = sys.version.split()
+        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__,
+                                tag=tag, dev=True)
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)
         sha1_hash = stdout.strip()
