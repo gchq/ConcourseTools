@@ -11,6 +11,11 @@ repos:
     rev: v0.16.0
     hooks:
       - id: yamlfmt
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.2
+    hooks:
+      - id: autopep8
+        exclude: docs/source/conf.py
   - repo: https://github.com/pycqa/isort
     rev: 6.0.0
     hooks:
