@@ -82,6 +82,7 @@ nitpick_ignore = [
 linkcheck_report_timeouts_as_broken = False  # silences a warning: https://github.com/sphinx-doc/sphinx/issues/11868
 linkcheck_anchors_ignore_for_url = [
     "https://github.com/.*",
+    "https://superuser.com/.*",
 ]
 
 intersphinx_mapping = {
