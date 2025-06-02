@@ -8,7 +8,7 @@ repos:
       - id: check-added-large-files
         args: [--enforce-all, --maxkb=100]
   - repo: https://github.com/google/yamlfmt
-    rev: v0.16.0
+    rev: v0.17.0
     hooks:
       - id: yamlfmt
   - repo: https://github.com/hhatto/autopep8
@@ -55,7 +55,7 @@ repos:
       - id: pyroma
         args: ["-d", "--min=10", "."]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.0
     hooks:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
