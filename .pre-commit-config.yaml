@@ -59,6 +59,10 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
+  - repo: "https://github.com/python-jsonschema/check-jsonschema"
+    rev: "0.33.0"
+    hooks:
+      - id: check-github-workflows
   - repo: https://github.com/johannsdg/pre-commit-license-headers
     rev: d53087d331942f263cb553dc67b0e51ffa3a3481
     hooks:
