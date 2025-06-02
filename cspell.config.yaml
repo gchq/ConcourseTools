@@ -1,10 +1,11 @@
 version: "0.2"
 language: en-GB
-useGitignore: true,
+useGitignore: true
 ignorePaths:
   - tests
   - requirements*.txt
   - .pre-commit-config.yaml
+  - .pre-commit-hooks/*
 dictionaries:
   - python
 words:

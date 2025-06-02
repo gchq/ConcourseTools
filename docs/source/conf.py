@@ -83,6 +83,9 @@ linkcheck_report_timeouts_as_broken = False  # silences a warning: https://githu
 linkcheck_anchors_ignore_for_url = [
     "https://github.com/.*",
 ]
+linkcheck_ignore = [
+    "https://superuser.com/.*",
+]
 
 intersphinx_mapping = {
     "python3": ("https://docs.python.org/3", None),

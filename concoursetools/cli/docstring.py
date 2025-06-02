@@ -76,6 +76,6 @@ def _pair_up(data: list[str]) -> Generator[tuple[str, str], None, None]:
     """
     for i in range(0, len(data), 2):
         try:
-            yield data[i], data[i+1]
+            yield data[i], data[i + 1]
         except IndexError:
             raise ValueError(f"Needed an even number of values, got {len(data)}")

@@ -202,7 +202,7 @@ class TemporaryDirectoryState:
                         first_chunk = rf.read(byte_limit)
                     folder_dict[item.name] = first_chunk
             elif item.is_dir():
-                folder_dict[item.name] = self._get_folder_as_dict(item, max_depth=max_depth-1, encoding=encoding)
+                folder_dict[item.name] = self._get_folder_as_dict(item, max_depth=max_depth - 1, encoding=encoding)
         return folder_dict
 
     def _set_folder_from_dict(self, folder_path: Path, folder_dict: FolderDict, encoding: str | None = None) -> None:

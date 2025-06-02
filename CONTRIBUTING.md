@@ -31,6 +31,8 @@ To run the checks at any time:
 $ pre-commit run --all-files
 ```
 
+Please do not add any new pre-commit checks yourself and instead raise a ticket.
+
 ### Tests
 
 Before opening a pull request, please ensure that the tests pass. To do this, run the following:
@@ -80,11 +82,20 @@ $ python3 -m sphinx -b linkcheck docs/source docs/build  # check that all links 
 
 ## Coding Standards and Conventions
 
-Concourse Tools is a fully-typed library, so please ensure all functions, methods and classes are fully typed. Although
-we tend to make use of future annotations (`from __future__ import annotations`) please continue using the `typing`
-module for all types to ensure compatibility with our documentation.
+Concourse Tools is a fully-typed library, so please ensure all functions, methods and classes are fully typed.
 
 Concourse Tools uses [Sphinx-style docstrings](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html).
 
 This project aims to depend only on the standard library, so contributions which add additional dependencies outside of
 the standard library are likely to be rejected unless absolutely necessary.
+
+
+### Style Guide
+
+Concourse Tools does not have an explicit style guide outside of the pre-commit checks for enforcing PEP8 and double-quote strings.
+However, please ensure your code is as readable and clear as possible. Reviewers will highlight any code changes they feel
+is inconsistent or difficult to parse.
+
+Please refrain from running Black over the code, as it can cause readability issues for nested statements.
+
+Finally, please do not refactor "other people's" code when submitting a pull request.
