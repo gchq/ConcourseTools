@@ -736,7 +736,7 @@ def _build_test_resource_docker_image() -> str:
 
 
 class ExternalDockerWrapperTests(TestCase):
-    image = "concourse/mock-resource"
+    image = "concourse/mock-resource:0.13.0"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -923,7 +923,7 @@ class ExternalDockerWrapperTests(TestCase):
 
 
 class ExternalDockerConversionWrapperTests(TestCase):
-    image = "concourse/mock-resource"
+    image = "concourse/mock-resource:0.13.0"
 
     @classmethod
     def setUpClass(cls) -> None:
