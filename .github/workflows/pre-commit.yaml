@@ -17,4 +17,4 @@ jobs:
           python -m pip install pre-commit
       - name: Run pre-commit checks
         run: |
-          python -m pre_commit run --all-files
+          python -m pre_commit run --all-files --color always
