@@ -49,6 +49,14 @@ packages = [
 version = {attr = "concoursetools.__version__"}
 
 
+[tool.autopep8]
+max_line_length = 150
+ignore = ["E301", "E501"]
+in-place = true
+recursive = true
+aggressive = 3
+
+
 [tool.coverage.run]
 command_line = "-m unittest discover"
 source = ["concoursetools"]
