@@ -142,7 +142,7 @@ class JSONWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(new_version_configs, [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}])
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -339,7 +339,7 @@ class FileWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(new_version_configs, [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}])
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
@@ -538,7 +538,7 @@ class DockerWrapperTests(TestCase):
     def test_check_step_without_version(self) -> None:
         with self.wrapper.capture_debugging() as debugging:
             new_version_configs = self.wrapper.fetch_new_versions()
-        self.assertListEqual(new_version_configs, [{"ref": "61cbef"},  {"ref": "d74e01"}, {"ref": "7154fe"}])
+        self.assertListEqual(new_version_configs, [{"ref": "61cbef"}, {"ref": "d74e01"}, {"ref": "7154fe"}])
         self.assertEqual(debugging, "")
 
     def test_in_step_no_directory_state(self) -> None:
