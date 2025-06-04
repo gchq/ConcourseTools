@@ -11,6 +11,7 @@ from typing import Any
 import unittest
 import unittest.mock
 import urllib.parse
+import warnings
 
 try:
     from dateutil.tz import tzlocal
@@ -33,6 +34,16 @@ from examples.secrets import DatetimeSafeJSONEncoder
 from examples.secrets import Resource as SecretsResource
 from examples.secrets import SecretVersion
 from examples.xkcd import ComicVersion, XKCDResource
+
+
+def setUpModule() -> None:
+    """Code to run before any single test in the module is run."""
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="botocore.auth")
+
+
+def tearDownModule() -> None:
+    """Code to run after every single test in the module has been run."""
+    warnings.filterwarnings("default", category=DeprecationWarning, module="botocore.auth")
 
 
 class MockedTextResponse:
