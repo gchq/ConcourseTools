@@ -13,6 +13,7 @@ from collections.abc import Callable, MutableMapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import inspect
 from typing import Any, ClassVar, TypeVar, cast, get_type_hints
 
 from concoursetools.typing import TypedVersionT, VersionConfig, VersionT
@@ -262,9 +263,13 @@ class TypedVersion(Version):
 
     def __init_subclass__(cls) -> None:
         try:
-            annotations = vars(cls)["__annotations__"]  # avoid MRO lookup
-        except KeyError:
-            annotations = {}
+            annotations = inspect.get_annotations(cls)
+        except AttributeError:
+            # Function isn't available in Python 3.9, so use the old code until EOL
+            try:
+                annotations = vars(cls)["__annotations__"]  # avoid MRO lookup
+            except KeyError:
+                annotations = {}
 
         if len(annotations) == 0:
             raise TypeError("Can't instantiate  dataclass TypedVersion without any fields")
