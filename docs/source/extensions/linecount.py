@@ -38,7 +38,7 @@ def count_lines(name: str, rawtext: str, text: str, lineno: int, inliner: Inline
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    path = Path(nodes.unescape(text))  # type: ignore[attr-defined]
+    path = Path(nodes.unescape(text))
     page_path = Path(Path(inliner.document.settings._source))
     resolved_path = (page_path.parent / path).resolve()
     with open(resolved_path) as rf:

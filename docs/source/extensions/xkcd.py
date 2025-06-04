@@ -117,7 +117,7 @@ def make_xkcd_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inl
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    text = nodes.unescape(text)  # type: ignore[attr-defined]
+    text = nodes.unescape(text)
     _, title, target = split_explicit_title(text)
 
     endpoint: str = inliner.document.settings.env.config.xkcd_endpoint

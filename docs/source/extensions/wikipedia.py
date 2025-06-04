@@ -44,7 +44,7 @@ def make_wikipedia_link(name: str, rawtext: str, text: str, lineno: int, inliner
 
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
-    text = nodes.unescape(text)  # type: ignore[attr-defined]
+    text = nodes.unescape(text)
     has_explicit, title, target = split_explicit_title(text)
 
     if (match := RE_WIKI_LANG.match(target)):
