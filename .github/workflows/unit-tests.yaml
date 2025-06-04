@@ -24,4 +24,4 @@ jobs:
           python -m pip install -r requirements-tests.txt --no-deps
       - name: Run tests
         run: |
-          python -m unittest --verbose
+          python -W error -m unittest --verbose
