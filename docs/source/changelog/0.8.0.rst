@@ -12,9 +12,6 @@ Added Python 3.13 support
 
 Added official support for Python 3.13 in Concourse Tools.
 
-.. note::
-    Python 3.13 is **not yet** the development version for Concourse Tools.
-
 
 Added Python 3.12 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~
