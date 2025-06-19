@@ -92,7 +92,7 @@ The Dockerfile should look something like:
 .. code-block:: Dockerfile
     :linenos:
 
-    FROM python:3.12
+    FROM python:3.13
 
     RUN python3 -m venv /opt/venv
     # Activate venv
@@ -121,7 +121,7 @@ __________
 .. code-block:: Dockerfile
     :linenos:
 
-    FROM python:3.12
+    FROM python:3.13
 
 You should adjust the base image according to your requirements. Concourse Tools will default to ``python:<version>``,
 where ``<version>`` corresponds to the current major/minor version you are running. However, you may wish to specify

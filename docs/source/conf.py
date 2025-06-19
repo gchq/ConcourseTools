@@ -63,6 +63,7 @@ autodoc_custom_types = {
     concoursetools.importing.T: ":class:`object`",
     concoursetools.typing.VersionT: ":class:`~concoursetools.version.Version`",
     concoursetools.typing.SortableVersionT: ":class:`~concoursetools.version.Version`",
+    Path: ":class:`~pathlib.Path`",
 }
 
 suppress_warnings = ["config.cache"]  # https://github.com/sphinx-doc/sphinx/issues/12300#issuecomment-2062238457
