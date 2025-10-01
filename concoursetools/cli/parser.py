@@ -10,20 +10,14 @@ from collections.abc import Callable, Generator
 from dataclasses import dataclass
 import inspect
 import shutil
-import sys
 import textwrap
+from types import UnionType
 from typing import Any, Generic, TypeVar
 
 from concoursetools import __version__
 from concoursetools.cli.docstring import Docstring
 
-_CURRENT_PYTHON_VERSION = (sys.version_info.major, sys.version_info.minor)
-
-if _CURRENT_PYTHON_VERSION >= (3, 10):
-    from types import UnionType
-    _ANNOTATIONS_TO_TYPES: dict[type[Any] | UnionType | str, type] = {}
-else:
-    _ANNOTATIONS_TO_TYPES: dict[type[Any] | Any | str, type] = {}  # type: ignore[no-redef]
+_ANNOTATIONS_TO_TYPES: dict[type[Any] | UnionType | str, type] = {}
 
 CLIFunction = Callable[..., None]
 CLIFunctionT = TypeVar("CLIFunctionT", bound=CLIFunction)
@@ -37,8 +31,7 @@ for type_ in _AVAILABLE_TYPES:
         type_.__name__: type_,
         f"{type_.__name__} | None": type_,
     })
-    if _CURRENT_PYTHON_VERSION >= (3, 10):
-        _ANNOTATIONS_TO_TYPES[type_ | None] = type_
+    _ANNOTATIONS_TO_TYPES[type_ | None] = type_
 
 
 class _CLIParser(ABC):
