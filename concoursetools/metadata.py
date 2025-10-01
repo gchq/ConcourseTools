@@ -217,7 +217,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         return template.safe_substitute(possible_values) if ignore_missing else template.substitute(possible_values)
 
     @classmethod
-    def from_env(cls) -> "BuildMetadata":
+    def from_env(cls) -> BuildMetadata:
         """Return an instance populated from the environment."""
         return cls(
             BUILD_ID=os.environ["BUILD_ID"],

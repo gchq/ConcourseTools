@@ -77,7 +77,7 @@ def colour_print(*values: object, colour: str = MISSING_COLOUR, bold: bool = Fal
 
 
 @contextmanager
-def print_in_colour(colour: str, bold: bool = False, underline: bool = False) -> Generator[None, None, None]:
+def print_in_colour(colour: str, bold: bool = False, underline: bool = False) -> Generator[None]:
     """
     Print anything in colour within a :ref:`context manager <context-managers>`.
 

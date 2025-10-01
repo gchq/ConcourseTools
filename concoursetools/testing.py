@@ -105,7 +105,7 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         yield self._debugging_output
 
     @contextmanager
-    def capture_directory_state(self, starting_state: FolderDict | None = None) -> ContextManager["TemporaryDirectoryState"]:
+    def capture_directory_state(self, starting_state: FolderDict | None = None) -> ContextManager[TemporaryDirectoryState]:
         """
         Open a context manager to expose the internal state of the resource.
 
@@ -514,9 +514,9 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         return new_version_config, metadata_pairs
 
     @classmethod
-    def from_assets_dir(cls: type["FileTestResourceWrapper"], inner_resource_config: ResourceConfig, assets_dir: Path,
+    def from_assets_dir(cls: type[FileTestResourceWrapper], inner_resource_config: ResourceConfig, assets_dir: Path,
                         directory_dict: FolderDict | None = None, one_off_build: bool = False,
-                        instance_vars: dict[str, str] | None = None, **env_vars: str) -> "FileTestResourceWrapper":
+                        instance_vars: dict[str, str] | None = None, **env_vars: str) -> FileTestResourceWrapper:
         """
         Create an instance from a single folder of asset files.
 
@@ -958,8 +958,7 @@ def run_command(command: str, additional_args: list[str] | None = None, env: dic
             cwd=cwd,
             check=True,
             input=stdin.encode() if stdin is not None else None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
     except subprocess.CalledProcessError as error:
         error_message: bytes = error.stderr

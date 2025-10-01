@@ -377,7 +377,7 @@ class Parameter(ABC, Generic[T]):
         ...
 
     @classmethod
-    def yield_from_function(cls, func: CLIFunction, allow_short: set[str]) -> Generator[Parameter[Any], None, None]:
+    def yield_from_function(cls, func: CLIFunction, allow_short: set[str]) -> Generator[Parameter[Any]]:
         """
         Yield parameters from a function.
 

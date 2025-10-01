@@ -127,7 +127,7 @@ def import_py_file(import_path: str, file_path: Path) -> ModuleType:
 
 
 @contextmanager
-def edit_sys_path(prepend: Sequence[Path] = (), append: Sequence[Path] = ()) -> Generator[None, None, None]:
+def edit_sys_path(prepend: Sequence[Path] = (), append: Sequence[Path] = ()) -> Generator[None]:
     """
     Temporarily add to :data:`sys.path` within a context manager.
 

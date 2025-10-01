@@ -113,7 +113,7 @@ class PipelineResource(ConcourseResource[ExecutionVersion]):
         new_version = ExecutionVersion(execution_arn)
         return new_version, metadata
 
-    def _yield_potential_execution_versions(self) -> Generator[ExecutionVersion, None, None]:
+    def _yield_potential_execution_versions(self) -> Generator[ExecutionVersion]:
         kwargs = {
             "PipelineName": self.pipeline_name,
             "SortOrder": "Descending",

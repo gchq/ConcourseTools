@@ -32,7 +32,7 @@ class Docstring:
     parameters: dict[str, str]
 
     @classmethod
-    def from_object(cls, obj: object) -> "Docstring":
+    def from_object(cls, obj: object) -> Docstring:
         """
         Parse an object with a docstring.
 
@@ -42,7 +42,7 @@ class Docstring:
         return cls.from_string(raw_docstring)
 
     @classmethod
-    def from_string(cls, raw_docstring: str) -> "Docstring":
+    def from_string(cls, raw_docstring: str) -> Docstring:
         """
         Parse a docstring.
 
@@ -63,7 +63,7 @@ class Docstring:
         return cls(first_line, description.strip(), parameters)
 
 
-def _pair_up(data: list[str]) -> Generator[tuple[str, str], None, None]:
+def _pair_up(data: list[str]) -> Generator[tuple[str, str]]:
     """
     Pair up a list of items.
 

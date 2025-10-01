@@ -80,14 +80,14 @@ class XKCDResource(SelfOrganisingConcourseResource[ComicVersion]):
         raise NotImplementedError
 
 
-def yield_comic_ids(xml_data: str) -> Generator[int, None, None]:
+def yield_comic_ids(xml_data: str) -> Generator[int]:
     for comic_url in yield_comic_links(xml_data):
         parsed_url = urllib.parse.urlparse(comic_url)
         comic_id = parsed_url.path.strip("/")
         yield int(comic_id)
 
 
-def yield_comic_links(xml_data: str) -> Generator[str, None, None]:
+def yield_comic_links(xml_data: str) -> Generator[str]:
     root = ET.fromstring(xml_data)
     for entry in root:
         if entry.tag.endswith("entry"):

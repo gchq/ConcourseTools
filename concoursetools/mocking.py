@@ -156,7 +156,7 @@ class TemporaryDirectoryState:
             raise RuntimeError("Final state is not set whilst temporary directory is still open.")
         return self._final_state
 
-    def __enter__(self) -> "TemporaryDirectoryState":
+    def __enter__(self) -> TemporaryDirectoryState:
         self._temp_dir = TemporaryDirectory(**self.temporary_directory_kwargs)
         self._set_folder_from_dict(self.path, self.starting_state, encoding=self.encoding)
         return self
@@ -278,7 +278,7 @@ class StringIOWrapper:
         self.inner_io = StringIO()
 
     @contextmanager
-    def capture_stdout_and_stderr(self) -> ContextManager["StringIOWrapper"]:
+    def capture_stdout_and_stderr(self) -> ContextManager[StringIOWrapper]:
         """
         Capture both :data:`~sys.stdout` and :data:`~sys.stderr`.
 
@@ -289,7 +289,7 @@ class StringIOWrapper:
                 yield self
 
     @contextmanager
-    def capture_stderr(self) -> ContextManager["StringIOWrapper"]:
+    def capture_stderr(self) -> ContextManager[StringIOWrapper]:
         """
         Capture :data:`~sys.stderr`.
 

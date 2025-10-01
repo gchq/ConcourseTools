@@ -58,11 +58,11 @@ class MockedTextResponse:
     def text(self) -> str:
         return self._data
 
-    def get(self, *args: object, **kwargs: object) -> "MockedTextResponse":
+    def get(self, *args: object, **kwargs: object) -> MockedTextResponse:
         return self
 
     @classmethod
-    def from_file(cls, file_path: str, status_code: int = 200) -> "MockedTextResponse":
+    def from_file(cls, file_path: str, status_code: int = 200) -> MockedTextResponse:
         with open(file_path) as rf:
             data = rf.read()
         return cls(data, status_code)
@@ -76,7 +76,7 @@ class MockedJSONResponse:
         self._json_data = json_data
         self._status_code = status_code
 
-    def get(self, *args: object, **kwargs: object) -> "MockedJSONResponse":
+    def get(self, *args: object, **kwargs: object) -> MockedJSONResponse:
         return self
 
     def json(self) -> Any:
