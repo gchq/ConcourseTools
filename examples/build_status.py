@@ -41,7 +41,7 @@ class BitbucketOAuth(AuthBase):
         return request
 
     @classmethod
-    def from_client_credentials(cls, client_id: str, client_secret: str) -> "BitbucketOAuth":
+    def from_client_credentials(cls, client_id: str, client_secret: str) -> BitbucketOAuth:
         token_auth = HTTPBasicAuth(client_id, client_secret)
 
         url = "https://bitbucket.org/site/oauth2/access_token"

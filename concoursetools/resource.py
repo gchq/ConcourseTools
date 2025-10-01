@@ -275,7 +275,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         _output(output)
 
     @classmethod
-    def _parse_check_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT | None]:
+    def _parse_check_input(cls) -> tuple[ConcourseResource[VersionT], VersionT | None]:
         """Parse input from the command line."""
         check_payload = sys.stdin.read()
 
@@ -291,7 +291,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, previous_version
 
     @classmethod
-    def _parse_in_input(cls) -> tuple["ConcourseResource[VersionT]", VersionT, Path, Params]:
+    def _parse_in_input(cls) -> tuple[ConcourseResource[VersionT], VersionT, Path, Params]:
         """Parse input from the command line."""
         in_payload = sys.stdin.read()
 
@@ -309,7 +309,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, version, destination_dir, params
 
     @classmethod
-    def _parse_out_input(cls) -> tuple["ConcourseResource[VersionT]", Path, Params]:
+    def _parse_out_input(cls) -> tuple[ConcourseResource[VersionT], Path, Params]:
         """Parse input from the command line."""
         out_payload = sys.stdin.read()
 
@@ -326,7 +326,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
         return resource, sources_dir, params
 
     @classmethod
-    def _from_resource_config(cls, resource_config: ResourceConfig) -> "ConcourseResource[VersionT]":
+    def _from_resource_config(cls, resource_config: ResourceConfig) -> ConcourseResource[VersionT]:
         return cls(**resource_config)
 
 

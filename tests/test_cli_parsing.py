@@ -9,7 +9,7 @@ import unittest
 import unittest.mock
 
 from concoursetools import __version__
-from concoursetools.cli.parser import _ANNOTATIONS_TO_TYPES, _CURRENT_PYTHON_VERSION, CLI, Docstring
+from concoursetools.cli.parser import _ANNOTATIONS_TO_TYPES, CLI, Docstring
 
 
 class ParsingTests(unittest.TestCase):
@@ -256,8 +256,6 @@ class AnnotationTests(unittest.TestCase):
         self.assertEqual(_ANNOTATIONS_TO_TYPES[float], float)
 
     def test_optional_types(self) -> None:
-        if _CURRENT_PYTHON_VERSION < (3, 10):
-            self.skipTest("Union types with '|' only valid for Python >= 3.10.")
         self.assertEqual(_ANNOTATIONS_TO_TYPES[str | None], str)
         self.assertEqual(_ANNOTATIONS_TO_TYPES[bool | None], bool)
         self.assertEqual(_ANNOTATIONS_TO_TYPES[int | None], int)

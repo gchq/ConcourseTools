@@ -44,7 +44,7 @@ class DatetimeVersion(TypedVersion):
     execution_date: datetime
 
     @classmethod
-    def now(cls) -> "DatetimeVersion":
+    def now(cls) -> DatetimeVersion:
         """Return the version corresponding to now."""
         return cls(datetime.now())
 
@@ -236,7 +236,7 @@ class MultiVersion(Version, Generic[SortableVersionT]):
         }
 
     @classmethod
-    def from_flat_dict(cls: "type[MultiVersion[SortableVersionT]]", version_dict: VersionConfig) -> "MultiVersion[SortableVersionT]":
+    def from_flat_dict(cls: type[MultiVersion[SortableVersionT]], version_dict: VersionConfig) -> MultiVersion[SortableVersionT]:
         """
         Load an instance from a dictionary representing the version.
 
@@ -382,7 +382,7 @@ class SelfOrganisingConcourseResource(ConcourseResource[SortableVersionT]):
 
 class _PseudoConcourseResource(ConcourseResource[VersionT]):
 
-    def __new__(cls) -> "_PseudoConcourseResource[VersionT]":
+    def __new__(cls) -> _PseudoConcourseResource[VersionT]:
         raise TypeError(f"Cannot instantiate a {cls.__name__} type")
 
 
@@ -425,7 +425,7 @@ def combine_resource_types(resources: dict[str, type[ConcourseResource[VersionT]
         A special Resource class which delegates to multiple other resource classes.
         """
         @classmethod
-        def _from_resource_config(cls, resource_config: ResourceConfig) -> "ConcourseResource[VersionT]":
+        def _from_resource_config(cls, resource_config: ResourceConfig) -> ConcourseResource[VersionT]:
             try:
                 resource_key = resource_config.pop(param_key)
             except KeyError as error:

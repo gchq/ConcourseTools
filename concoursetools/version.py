@@ -262,15 +262,7 @@ class TypedVersion(Version):
     _un_flatten_functions: ClassVar[MutableMapping[type[Any], Callable[[type[Any], str], Any]]] = _TypeKeyDict()
 
     def __init_subclass__(cls) -> None:
-        try:
-            annotations = inspect.get_annotations(cls)
-        except AttributeError:
-            # Function isn't available in Python 3.9, so use the old code until EOL
-            try:
-                annotations = vars(cls)["__annotations__"]  # avoid MRO lookup
-            except KeyError:
-                annotations = {}
-
+        annotations = inspect.get_annotations(cls)
         if len(annotations) == 0:
             raise TypeError("Can't instantiate  dataclass TypedVersion without any fields")
 

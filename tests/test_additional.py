@@ -52,7 +52,7 @@ class FileVersion(Version):
         return {"files": json.dumps(list(self.files))}
 
     @classmethod
-    def from_flat_dict(cls, version_dict: VersionConfig) -> "FileVersion":
+    def from_flat_dict(cls, version_dict: VersionConfig) -> FileVersion:
         return cls(set(json.loads(version_dict["files"])))
 
 
