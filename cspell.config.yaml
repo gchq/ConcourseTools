@@ -4,6 +4,7 @@ useGitignore: true
 ignorePaths:
   - tests
   - requirements*.txt
+  - .github/workflows/*
   - .pre-commit-config.yaml
   - .pre-commit-hooks/*
 dictionaries:
