@@ -65,7 +65,7 @@ class CLIDirective(SphinxDirective):
             for positional in command.positional_arguments:
                 alias_paragraph = nodes.paragraph("", "", nodes.literal("", positional.name))
                 description_paragraph = nodes.paragraph("", positional.description or "")
-                description_paragraph.set_class("cli-option-description")
+                description_paragraph["classes"].append("cli-option-description")
                 command_section.extend([alias_paragraph, description_paragraph])
 
             for option in command.options:
@@ -75,7 +75,7 @@ class CLIDirective(SphinxDirective):
                     alias_nodes.append(nodes.Text(", "))
                 alias_paragraph = nodes.paragraph("", "", *alias_nodes[:-1])
                 description_paragraph = nodes.paragraph("", option.description or "")
-                description_paragraph.set_class("cli-option-description")
+                description_paragraph["classes"].append("cli-option-description")
                 command_section.extend([alias_paragraph, description_paragraph])
 
             nodes_to_return.append(command_section)

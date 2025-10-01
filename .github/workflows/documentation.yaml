@@ -17,7 +17,7 @@ jobs:
           python -m pip install -r docs/requirements.txt --no-deps
       - name: Build documentation
         run: |
-          python -m sphinx -b html -aE -n -W --keep-going docs/source docs/build
+          python -Werror -m sphinx -b html -aE -n -W --keep-going docs/source docs/build
       - name: Check external links
         run: |
           python -m sphinx -b linkcheck docs/source docs/build
