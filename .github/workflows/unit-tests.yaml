@@ -17,7 +17,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Pull docker image
         run: |
-          docker pull concourse/mock-resource:0.13.0
+          IMAGE=$(python -c "import tests.test_resource; print(tests.test_resource.CONCOURSE_MOCK_RESOURCE_IMAGE)")
+          docker pull $IMAGE
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
