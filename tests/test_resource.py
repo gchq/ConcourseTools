@@ -913,7 +913,8 @@ class ExternalDockerWrapperTests(TestCase):
         ])
 
         expected_env_lines = {
-            self._format_debugging_message("env: PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "),
+            self._format_debugging_message("env: PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin "),
+            self._format_debugging_message("env: SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt "),
             self._format_debugging_message("env: HOSTNAME=resource"),
             self._format_debugging_message("env: HOME=/root"),
         }
