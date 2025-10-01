@@ -15,6 +15,8 @@ from concoursetools.testing import (ConversionTestResourceWrapper, DockerConvers
                                     run_command)
 from tests.resource import ConcourseMockResource, ConcourseMockVersion, TestResource, TestVersion
 
+CONCOURSE_MOCK_RESOURCE_IMAGE = "concourse/mock-resource:0.14.1-20250809"
+
 
 class SimpleWrapperTests(TestCase):
 
@@ -742,7 +744,6 @@ def _build_test_resource_docker_image() -> str:
 
 
 class ExternalDockerWrapperTests(TestCase):
-    image = "concourse/mock-resource:0.13.0"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -756,7 +757,7 @@ class ExternalDockerWrapperTests(TestCase):
             "log": "Debug message",
             "metadata": [{"name": "key", "value": "value"}],
         }
-        self.wrapper = DockerTestResourceWrapper(config, self.image)
+        self.wrapper = DockerTestResourceWrapper(config, CONCOURSE_MOCK_RESOURCE_IMAGE)
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version_config = {"version": "1", "privileged": "true"}
@@ -912,7 +913,8 @@ class ExternalDockerWrapperTests(TestCase):
         ])
 
         expected_env_lines = {
-            self._format_debugging_message("env: PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "),
+            self._format_debugging_message("env: PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin "),
+            self._format_debugging_message("env: SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt "),
             self._format_debugging_message("env: HOSTNAME=resource"),
             self._format_debugging_message("env: HOME=/root"),
         }
@@ -929,7 +931,6 @@ class ExternalDockerWrapperTests(TestCase):
 
 
 class ExternalDockerConversionWrapperTests(TestCase):
-    image = "concourse/mock-resource:0.13.0"
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -943,7 +944,7 @@ class ExternalDockerConversionWrapperTests(TestCase):
             "log": "Debug message",
             "metadata": [{"name": "key", "value": "value"}],
         }
-        self.wrapper = DockerConversionTestResourceWrapper(ConcourseMockResource, config, self.image)
+        self.wrapper = DockerConversionTestResourceWrapper(ConcourseMockResource, config, CONCOURSE_MOCK_RESOURCE_IMAGE)
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version = ConcourseMockVersion(version=1, privileged=True)
