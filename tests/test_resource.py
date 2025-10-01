@@ -301,7 +301,7 @@ class FileWrapperTests(TestCase):
         """Code to run before each test."""
         self.temp_dir = TemporaryDirectory()
         cli_commands.assets(self.temp_dir.name, resource_file="tests/resource.py",
-                            class_name=TestResource.__name__, executable="/usr/bin/env python3")
+                            class_name=TestResource.__name__, executable=sys.executable)
 
         config = {
             "uri": "git://some-uri",
@@ -409,7 +409,7 @@ class FileConversionWrapperTests(TestCase):
             "branch": "develop",
             "private_key": "...",
         }
-        self.wrapper = FileConversionTestResourceWrapper(TestResource, config, executable="/usr/bin/env python3")
+        self.wrapper = FileConversionTestResourceWrapper(TestResource, config, executable=sys.executable)
 
     def test_check_step_with_version_no_debugging(self) -> None:
         version = TestVersion("61cbef")
