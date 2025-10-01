@@ -7,18 +7,20 @@ import json
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import TYPE_CHECKING, Any
 import unittest
 import unittest.mock
 import urllib.parse
 import warnings
 
 try:
+    import boto3  # noqa: F401
+    import botocore  # noqa: F401
     from dateutil.tz import tzlocal
     from moto import mock_aws
     from moto.sagemaker.models import FakePipelineExecution
-    from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
     import requests  # noqa: F401
+    import urllib3  # noqa: F401
 except ImportError:
     allowed_to_skip = ("CI" not in os.environ)
     if allowed_to_skip:
@@ -34,6 +36,9 @@ from examples.secrets import DatetimeSafeJSONEncoder
 from examples.secrets import Resource as SecretsResource
 from examples.secrets import SecretVersion
 from examples.xkcd import ComicVersion, XKCDResource
+
+if TYPE_CHECKING:
+    from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
 
 
 def setUpModule() -> None:
