@@ -13,13 +13,11 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any
 from unittest import mock
 
 from concoursetools import BuildMetadata
 
-T = TypeVar("T")
-ContextManager = Generator[T, None, None]
 FolderDict = dict[str, Any]
 
 
@@ -278,7 +276,7 @@ class StringIOWrapper:
         self.inner_io = StringIO()
 
     @contextmanager
-    def capture_stdout_and_stderr(self) -> ContextManager[StringIOWrapper]:
+    def capture_stdout_and_stderr(self) -> Generator[StringIOWrapper]:
         """
         Capture both :data:`~sys.stdout` and :data:`~sys.stderr`.
 
@@ -289,7 +287,7 @@ class StringIOWrapper:
                 yield self
 
     @contextmanager
-    def capture_stderr(self) -> ContextManager[StringIOWrapper]:
+    def capture_stderr(self) -> Generator[StringIOWrapper]:
         """
         Capture :data:`~sys.stderr`.
 
@@ -300,7 +298,7 @@ class StringIOWrapper:
 
 
 @contextmanager
-def mock_environ(new_environ: dict[str, str]) -> ContextManager[None]:
+def mock_environ(new_environ: dict[str, str]) -> Generator[None]:
     """
     Mock :data:`os.environ` in a context manager.
 
@@ -317,7 +315,7 @@ def mock_environ(new_environ: dict[str, str]) -> ContextManager[None]:
 
 
 @contextmanager
-def mock_stdin(stdin: str) -> ContextManager[None]:
+def mock_stdin(stdin: str) -> Generator[None]:
     """
     Mock :data:`~sys.stdin` in a context manager.
 
@@ -338,7 +336,7 @@ def mock_stdin(stdin: str) -> ContextManager[None]:
 
 
 @contextmanager
-def mock_argv(*args: str) -> ContextManager[None]:
+def mock_argv(*args: str) -> Generator[None]:
     """
     Mock :data:`sys.argv` in a context manager.
 

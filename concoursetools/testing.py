@@ -19,7 +19,7 @@ from pathlib import Path
 import secrets
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 from concoursetools import BuildMetadata, ConcourseResource, Version
 from concoursetools.dockertools import MethodName, ScriptName, create_script_file
@@ -27,8 +27,6 @@ from concoursetools.mocking import StringIOWrapper, TemporaryDirectoryState, cre
 from concoursetools.parsing import format_check_input, format_in_input, format_out_input, parse_metadata
 from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig, VersionConfig, VersionT
 
-T = TypeVar("T")
-ContextManager = Generator[T, None, None]
 FolderDict = dict[str, Any]
 
 
@@ -90,7 +88,7 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         """
 
     @contextmanager
-    def capture_debugging(self) -> ContextManager[StringIOWrapper]:
+    def capture_debugging(self) -> Generator[StringIOWrapper]:
         """
         Redirect the resource debugging output within a context manager into a variable.
 
@@ -105,7 +103,7 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
         yield self._debugging_output
 
     @contextmanager
-    def capture_directory_state(self, starting_state: FolderDict | None = None) -> ContextManager[TemporaryDirectoryState]:
+    def capture_directory_state(self, starting_state: FolderDict | None = None) -> Generator[TemporaryDirectoryState]:
         """
         Open a context manager to expose the internal state of the resource.
 
@@ -127,7 +125,7 @@ class TestResourceWrapper(ABC, Generic[VersionT]):
                 self._directory_state.starting_state = old_start_state
 
     @contextmanager
-    def _forbid_methods(self, *methods: Callable[..., object]) -> ContextManager[None]:
+    def _forbid_methods(self, *methods: Callable[..., object]) -> Generator[None]:
         try:
             for method in methods:
                 def new_method(*args: object, **kwargs: object) -> object:
@@ -638,7 +636,7 @@ class FileConversionTestResourceWrapper(FileTestResourceWrapper, Generic[Version
         return new_version, metadata
 
     @contextmanager
-    def _temporarily_create_script_file(self, script_name: ScriptName, method_name: MethodName) -> ContextManager[None]:
+    def _temporarily_create_script_file(self, script_name: ScriptName, method_name: MethodName) -> Generator[None]:
         attribute_name = f"{script_name}_script"
         try:
             with TemporaryDirectory() as temp_dir:
