@@ -1,0 +1,64 @@
+v0.8.1
+======
+
+New Features in v0.8.1
+----------------------
+
+Added Python 3.14 support
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #24 <https://github.com/gchq/ConcourseTools/pull/24>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added official support for Python 3.14 in Concourse Tools.
+
+
+Updated Contribution Guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #23 <https://github.com/gchq/ConcourseTools/pull/23>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added clearer guidance on style in ``CONTRIBUTING.md``. New Pre-commit hooks were also added:
+
+* ``autopep8`` for automatically formatting the code to match PEP-8. This hook was chosen specifically to minimise
+  changes to the current codebase, as opposed to common alternatives such as Black.
+* ``double-string-fixer`` for converting all single-quote strings to double-quotes. This is a local hook adapted from
+  the `frequently used hook that does the opposite <https://github.com/pre-commit/pre-commit-hooks/tree/main#double-quote-string-fixer>`_.
+* ``yamlfmt`` for consistent formatting of YAML files.
+
+
+Documentation is now built with Python 3.13
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #29 <https://github.com/gchq/ConcourseTools/pull/29>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Sphinx documentation is now built with Python 3.13, upgrading from version 3.12.
+
+
+Fixed in v0.8.1
+---------------
+
+Pinned Mock Concourse Resource Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #33 <https://github.com/gchq/ConcourseTools/pull/33>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+The tests use the ``concourse/mock-resource`` Docker image in order to evaluate the ``DockerTestResourceWrapper`` and
+``DockerConversionTestResourceWrapper`` classes. Minor changes in the behaviour of this image meant properly pinning
+the tag of this image from the implicit ``latest`` to ``0.14.1-20250809``, to ensure reproducibility.
+
+
+Removed in v0.8.1
+-----------------
+
+Removed Python 3.9 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #35 <https://github.com/gchq/ConcourseTools/pull/35>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Removed all Python 3.9 support. This is in line with the official
+`end-of-life <https://devguide.python.org/versions/#unsupported-versions>`_ for Python 3.9.
