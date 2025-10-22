@@ -8,7 +8,7 @@ repos:
       - id: check-added-large-files
         args: [--enforce-all, --maxkb=100]
   - repo: https://github.com/google/yamlfmt
-    rev: v0.17.2
+    rev: v0.19.0
     hooks:
       - id: yamlfmt
   - repo: https://github.com/hhatto/autopep8
@@ -17,7 +17,7 @@ repos:
       - id: autopep8
         exclude: docs/source/conf.py
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 7.0.0
     hooks:
       - id: isort
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -60,7 +60,7 @@ repos:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
   - repo: "https://github.com/python-jsonschema/check-jsonschema"
-    rev: "0.34.0"
+    rev: "0.34.1"
     hooks:
       - id: check-github-workflows
   - repo: https://github.com/johannsdg/pre-commit-license-headers
