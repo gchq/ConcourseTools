@@ -4,7 +4,7 @@ AWS SageMaker Pipeline
 .. caution::
     This example is for reference only. It is not extensively tested, and it not intended to be a fully-fledged Concourse resource for production pipelines. Copy and paste at your own risk.
 
-In this example we will explore how to create a custom Concourse Resource using the Concourse Tools library. In this particular example we will consider a resource to interact with an `AWS SageMaker pipeline <https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines-sdk.html>`_, which needs to keep track of `executions <https://docs.aws.amazon.com/sagemaker/latest/dg/run-pipeline.html>`_ of the pipeline, and to also be able to trigger new executions. In particular, we want the following behaviour:
+In this example we will explore how to create a custom Concourse Resource using the Concourse Tools library. In this particular example we will consider a resource to interact with an `AWS SageMaker pipeline <https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines-overview.html>`_, which needs to keep track of `executions <https://docs.aws.amazon.com/sagemaker/latest/dg/run-pipeline.html>`_ of the pipeline, and to also be able to trigger new executions. In particular, we want the following behaviour:
 
 * :concourse:`get-step`: Fetch the latest execution and download the metadata.
 * :concourse:`put-step`: Start a new pipeline execution.
