@@ -18,7 +18,7 @@ from typing import Any
 
 from docutils import nodes
 from docutils.parsers.rst import directives
-from docutils.parsers.rst.roles import set_classes
+from docutils.parsers.rst.roles import normalize_options
 from docutils.parsers.rst.states import Inliner
 import requests
 from sphinx.application import Sphinx
@@ -57,7 +57,7 @@ class XkcdDirective(SphinxDirective):
 
         caption = self.options.pop("caption", "Relevant xkcd")
 
-        set_classes(self.options)
+        normalize_options(self.options)
         image_node = nodes.image(self.block_text, uri=directives.uri(comic_info["img"]),
                                  alt=comic_info["alt"], **self.options)
         self.add_name(image_node)
