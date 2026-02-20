@@ -91,7 +91,7 @@ Updating the Resource
 We can now write the code to update the resource, which involves implementing :meth:`~concoursetools.additional.OutOnlyConcourseResource.publish_new_version`. The method takes the usual parameters, and then the additional arguments offered by the original:
 
 .. note::
-    The original configures a few variables via files instead of direct parameters. This is likely due to it being implemented before the :concourse:`load-var-step` was a thing. This implementation replaces them with direct variables.
+    The original configures a few variables via files instead of direct parameters. This is likely due to it being implemented before the :concourse:`steps.load_var` step was a thing. This implementation replaces them with direct variables.
 
 .. literalinclude:: ../../../examples/build_status.py
     :pyobject: Resource.publish_new_version

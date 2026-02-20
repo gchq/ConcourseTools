@@ -3,7 +3,7 @@
 A resource version represents the exact state of a resource at a given point in time. The resource is responsible for
 defining what a version *actually is*, and this is defined with Concourse Tools using a :class:`Version` subclass.
 
-More information on versions can be found in the :concourse:`Concourse documentation <resource-versions>`.
+More information on versions can be found in the :concourse:`Concourse documentation <resources.resource-versions>`.
 """
 from __future__ import annotations
 

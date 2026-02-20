@@ -64,8 +64,8 @@ class InOnlyConcourseResource(ConcourseResource[DatetimeVersion]):
         :meth:`~concoursetools.resource.ConcourseResource.download_version`.
 
     The correct use case of this resource is to execute a
-    :concourse:`put-step.put-step`, and then place parameters
-    in the :concourse:`put-step.schema.put.get_params` section:
+    :concourse:`steps.put`, and then place parameters
+    in the :concourse:`steps.put#get_params` section:
 
     .. code:: yaml
 
@@ -286,7 +286,7 @@ class MultiVersionConcourseResource(TriggerOnChangeConcourseResource[MultiVersio
 
     .. tip::
         This resource class is best suited to resources used in conjunction
-        with the :concourse:`set-pipeline-step`.
+        with the :concourse:`steps.set_pipeline` step.
     """
     def __init__(self, key: str, sub_version_class: type[SortableVersionT]):
         self.key = key

@@ -9,7 +9,7 @@ To begin, install **Concourse Tools** from source or from PyPI (see the footer f
     $ pip install concoursetools
 
 Start by familiarising yourself with the Concourse resource "rules" in the
-:concourse:`documentation <implementing-resource-types>`. To recreate that example, start by creating a new
+:concourse:`documentation <resource-types.implementing>`. To recreate that example, start by creating a new
 ``concourse.py`` file in your repository. The first step is to create a :class:`~concoursetools.version.Version` subclass:
 
 

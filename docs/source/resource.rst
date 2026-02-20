@@ -20,7 +20,8 @@ The :meth:`~concoursetools.resource.ConcourseResource.download_version` and :met
 .. figure:: _static/step_metadata.png
     :scale: 75%
 
-    Concourse metadata example from the :concourse:`git-trigger-example.git-trigger-example`. The red outline shows the metadata.
+    Concourse metadata example from the `git trigger example <https://concourse-ci.org/examples/git-triggered/>`_.
+    The red outline shows the metadata.
 
 This metadata dictionary should contain string-only key/value pairs. This is enforced by Concourse Tools, which casts both to strings before emitting any JSON. This is not easily overloaded, as the metadata is only ever intended for visual consumption.
 

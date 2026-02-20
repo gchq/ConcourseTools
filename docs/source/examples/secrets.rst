@@ -44,7 +44,7 @@ Next, we overload :meth:`~concoursetools.resource.ConcourseResource.download_ver
 The behaviour of the resource is as follows:
 
 1. The metadata of the secret is fetched from AWS using `describe_secret <https://docs.aws.amazon.com/boto3/latest/reference/services/secretsmanager/client/describe_secret.html>`_. The response metadata is removed, but could potentially be output as :ref:`Step Metadata`.
-2. The metadata is saved to a file. By default this is named ``metadata.json``, but the user can customise this with the parameters of the :concourse:`get-step`.
+2. The metadata is saved to a file. By default this is named ``metadata.json``, but the user can customise this with the parameters of the :concourse:`steps.get` step.
 3. If the user has requested the secret value also (which is **not** the default behaviour), then this is fetched using `get_secret_value <https://docs.aws.amazon.com/boto3/latest/reference/services/secretsmanager/client/get_secret_value.html>`_ to be saved to a file, which defaults to ``value`` but is again customisable by the user.
 4. If the response contains a string, then this is written directly to the file using :meth:`~pathlib.Path.write_text`, but if it contains a binary then it is instead written using :meth:`~pathlib.Path.write_bytes`.
 

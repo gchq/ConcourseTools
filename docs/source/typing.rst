@@ -6,7 +6,7 @@ Typing
 Concourse Types
 ---------------
 
-The following types map onto Concourse :concourse:`config-basics.basic-schemas` used throughout the library.
+The following types map onto Concourse :concourse:`config-basics#basic-schemas` used throughout the library.
 
 .. autodata:: concoursetools.typing.ResourceConfig
 
