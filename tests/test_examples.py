@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any
+from typing import Any
 import unittest
 import unittest.mock
 import urllib.parse
@@ -18,7 +18,9 @@ try:
     import botocore  # noqa: F401
     from dateutil.tz import tzlocal
     from moto import mock_aws
-    from moto.sagemaker.models import FakePipelineExecution
+    from moto.core import DEFAULT_ACCOUNT_ID
+    from moto.sagemaker.models import sagemaker_backends
+    from moto.sagemaker.utils import get_pipeline_execution_from_arn, get_pipeline_from_name
     import requests  # noqa: F401
     import urllib3  # noqa: F401
 except ImportError:
@@ -36,9 +38,6 @@ from examples.secrets import DatetimeSafeJSONEncoder
 from examples.secrets import Resource as SecretsResource
 from examples.secrets import SecretVersion
 from examples.xkcd import ComicVersion, XKCDResource
-
-if TYPE_CHECKING:
-    from moto.sagemaker.responses import TYPE_RESPONSE, SageMakerResponse
 
 
 def setUpModule() -> None:
@@ -448,6 +447,7 @@ class PipelineCheckTests(unittest.TestCase):
         pipeline_arn = "arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline"
         self.resource = PipelineResource(pipeline_arn)
         client = self.resource._client
+        self._moto_backend = sagemaker_backends[DEFAULT_ACCOUNT_ID][client.meta.region_name]
 
         pipeline_definition = {
             "Version": "2020-12-01",
@@ -479,35 +479,29 @@ class PipelineCheckTests(unittest.TestCase):
 
         self.execution_arns = execution_arns[::-1]  # reverse these to force moto to yield in descending order
 
-    def test_fetch_secret_no_version(self) -> None:
+    def test_fetch_no_version(self) -> None:
         version, = self.resource.fetch_new_versions()
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
-    def test_fetch_secret_no_available_versions(self) -> None:
-        with unittest.mock.patch("moto.sagemaker.responses.SageMakerResponse.list_pipeline_executions",
-                                 _new_response_list_pipeline_executions_empty):
-            versions = self.resource.fetch_new_versions()
+    def test_fetch_no_available_versions(self) -> None:
+        pipeline = get_pipeline_from_name(self._moto_backend.pipelines, self.resource.pipeline_name)
+        pipeline.pipeline_executions.clear()
+        versions = self.resource.fetch_new_versions()
         self.assertListEqual(versions, [])
 
-    def test_fetch_secret_no_version_with_pending(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
-
+    def test_fetch_no_version_with_pending(self) -> None:
         for execution_arn in self.execution_arns[3:]:
-            execution = execution_mapping[execution_arn]
+            execution = get_pipeline_execution_from_arn(self._moto_backend.pipelines, execution_arn)
             execution.pipeline_execution_status = "Executing"
 
         version, = self.resource.fetch_new_versions()
         expected_version = ExecutionVersion(self.execution_arns[2])
         self.assertEqual(version, expected_version)
 
-    def test_fetch_secret_no_version_with_pending_and_all_statuses(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
-
+    def test_fetch_no_version_with_pending_and_all_statuses(self) -> None:
         for execution_arn in self.execution_arns[3:]:
-            execution = execution_mapping[execution_arn]
+            execution = get_pipeline_execution_from_arn(self._moto_backend.pipelines, execution_arn)
             execution.pipeline_execution_status = "Executing"
 
         self.resource.statuses.append("Executing")
@@ -516,13 +510,13 @@ class PipelineCheckTests(unittest.TestCase):
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
-    def test_fetch_secret_latest_version(self) -> None:
+    def test_fetch_latest_version(self) -> None:
         previous_version, = self.resource.fetch_new_versions()
         version, = self.resource.fetch_new_versions(previous_version)
         expected_version = ExecutionVersion(self.execution_arns[-1])
         self.assertEqual(version, expected_version)
 
-    def test_fetch_secret_old_version(self) -> None:
+    def test_fetch_old_version(self) -> None:
         previous_version = ExecutionVersion(self.execution_arns[2])
         versions = self.resource.fetch_new_versions(previous_version)
         expected_versions = [ExecutionVersion(arn) for arn in self.execution_arns[2:]]
@@ -542,6 +536,7 @@ class PipelineInTests(unittest.TestCase):
         pipeline_name = "my-pipeline"
         resource = PipelineResource("arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
         client = resource._client
+        self._moto_backend = sagemaker_backends[DEFAULT_ACCOUNT_ID][client.meta.region_name]
 
         self.pipeline_definition = {
             "Version": "2020-12-01",
@@ -611,11 +606,8 @@ class PipelineInTests(unittest.TestCase):
         self.assertDictEqual(metadata, expected_metadata)
 
     def test_download_failed_execution(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
-
-        fake_execution = execution_mapping[self.version_minimum.execution_arn]
-        fake_execution.pipeline_execution_status = "Failed"
+        execution = get_pipeline_execution_from_arn(self._moto_backend.pipelines, self.version_minimum.execution_arn)
+        execution.pipeline_execution_status = "Failed"
 
         resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
         wrapper = SimpleTestResourceWrapper(resource)
@@ -675,20 +667,13 @@ class PipelineOutTests(unittest.TestCase):
         )
 
     def test_execution_creation(self) -> None:
-        fake_pipeline_executions: list[FakePipelineExecution] = FakePipelineExecution.instances
-        initial_execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
+        intitial_executions = {version.execution_arn for version in self.resource._yield_potential_execution_versions()}
 
         resource = PipelineResource(pipeline="arn:aws:sagemaker:eu-west-1:<account>:pipeline:my-pipeline")
         wrapper = SimpleTestResourceWrapper(resource)
         new_version, _ = wrapper.publish_new_version()
 
-        execution_mapping = {execution.pipeline_execution_arn: execution for execution in fake_pipeline_executions}
-        self.assertNotIn(new_version.execution_arn, initial_execution_mapping)
-        self.assertIn(new_version.execution_arn, execution_mapping)
+        new_executions = {version.execution_arn for version in self.resource._yield_potential_execution_versions()}
 
-
-def _new_response_list_pipeline_executions_empty(self: SageMakerResponse) -> TYPE_RESPONSE:
-    response: dict[str, object] = {
-        "PipelineExecutionSummaries": [],
-    }
-    return 200, {}, json.dumps(response)
+        self.assertNotIn(new_version.execution_arn, intitial_executions)
+        self.assertIn(new_version.execution_arn, new_executions)
