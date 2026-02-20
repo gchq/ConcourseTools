@@ -46,7 +46,7 @@ All of the resource functionality comes from overloading the :meth:`~concourseto
     :pyobject: S3SignedURLConcourseResource.download_data
     :dedent:
 
-This method takes a required ``file_path`` argument to indicate the object for which the URL should be generated. The ``expires_in`` parameter takes a mapping of arguments for :class:`datetime.timedelta` to allow users to specify expiration time more explicitly. Finally, passing a ``file_name`` instructs the URL to name the downloaded file something specific, rather than the original name from within S3.  The URL itself is generated using the `generate_presigned_url <https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/generate_presigned_url.html>`_ function. Finally, we don't return a version, so we only need to concern ourselves with the :ref:`Step Metadata`.
+This method takes a required ``file_path`` argument to indicate the object for which the URL should be generated. The ``expires_in`` parameter takes a mapping of arguments for :class:`datetime.timedelta` to allow users to specify expiration time more explicitly. Finally, passing a ``file_name`` instructs the URL to name the downloaded file something specific, rather than the original name from within S3.  The URL itself is generated using the `generate_presigned_url <https://docs.aws.amazon.com/boto3/latest/reference/services/s3/client/generate_presigned_url.html>`_ function. Finally, we don't return a version, so we only need to concern ourselves with the :ref:`Step Metadata`.
 
 This resource can then be invoked like so:
 
