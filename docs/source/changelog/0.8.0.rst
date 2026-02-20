@@ -55,8 +55,8 @@ Build Metadata string formatting
 Both :meth:`~concoursetools.resource.ConcourseResource.download_version` and
 :meth:`~concoursetools.resource.ConcourseResource.publish_new_version` methods are passed an instance of
 :class:`~concoursetools.metadata.BuildMetadata` to interface with the
-:concourse:`implementing-resource-types.resource-metadata`. This allows developers to easily interface with this
-metadata from within the resource code.
+:concourse:`resource metadata <resource-types.implementing#metadata>`. This allows developers to easily interface with
+this metadata from within the resource code.
 
 However, many resources want to make this metadata available to the end user in their pipelines, by allowing them to
 reference the variables in commit messages, slack notifications and emails. Previously, resources would need to use
@@ -245,7 +245,7 @@ Allowed ``source`` to be empty in resource configuration
 
 
 Recall that the parameters of the ``__init__`` method of your :class:`~concoursetools.resource.ConcourseResource`
-subclass are taken from the :concourse:`resource-types.schema.resource_type.source` block of the pipeline YAML.
+subclass are taken from the :concourse:`resource-types#source` block of the pipeline YAML.
 This means that a resource which looks like this:
 
 .. code:: python

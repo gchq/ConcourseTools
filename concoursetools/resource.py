@@ -7,12 +7,12 @@ Each resource represents a versioned artifact with an external source of truth.
 Configuring the same resource in any pipeline on any Concourse cluster will
 behave the exact same way. Concourse will continuously check each configured
 resource to discover new versions. These versions then flow through the pipeline
-via :concourse:`get steps <get-step.get-step>` configured on jobs.
+via :concourse:`get steps <steps.get>` configured on jobs.
 
 Find out more about resources in the :concourse:`Concourse resource documentation <resources>`.
 
 To learn more about how Concourse resource types are actually implemented under the hood,
-check out :concourse:`implementing-resource-types` in Concourse.
+check out :concourse:`implementing resource types <resource-types.implementing>` in Concourse.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
     """
     Represents an external input or output to a pipeline.
 
-    The :concourse:`resource-types.schema.resource_type.source`
+    The :concourse:`resource-types#source`
     defined in a Concourse :concourse:`pipeline <pipelines>` is
     parsed into JSON by Concourse, and will be passed to the initialiser
     of the :class:`ConcourseResource` class.
@@ -94,7 +94,7 @@ class ConcourseResource(ABC, Generic[VersionT]):
 
             This folder may not always exist, depending on how the Concourse runner was configured.
 
-        See the :concourse:`implementing-resource-types.resource-certs` documentation for more information.
+        See the :concourse:`resource-types.implementing#certificate-propagation` documentation for more information.
         """
         return Path("/etc/ssl/certs")
 

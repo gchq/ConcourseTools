@@ -10,7 +10,8 @@ The :meth:`~concoursetools.resource.ConcourseResource.download_version` and
     Build metadata is deliberately not passed to :meth:`~concoursetools.resource.ConcourseResource.fetch_new_versions`,
     as none of this metadata is passed to the check environment by Concourse, to avoid antipatterns.
 
-See the Concourse :concourse:`implementing-resource-types.resource-metadata` documentation for more information.
+See the Concourse :concourse:`resource types metadata <resource_types.implementing#metadata>` documentation
+for more information.
 """
 from __future__ import annotations
 
@@ -32,8 +33,9 @@ class BuildMetadata:  # pylint: disable=invalid-name
     :param BUILD_NAME: The build number within the build's job.
     :param BUILD_JOB_NAME: The name of the build's job.
     :param BUILD_PIPELINE_NAME: The name of the pipeline that the build's job lives in.
-    :param BUILD_PIPELINE_INSTANCE_VARS: The instance vars of the :concourse:`instanced pipeline <instanced-pipelines>`
-                                         that the build's job lives in, serialized as JSON.
+    :param BUILD_PIPELINE_INSTANCE_VARS: The instance vars of the :concourse:`instanced pipeline
+                                         <pipelines.grouping-pipelines#managing-instanced-pipelines>` that the build's
+                                         job lives in, serialized as JSON.
 
     .. note::
         A few variables are often present in the build environment, but are **not** documented by Concourse:
@@ -66,14 +68,14 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
         .. warning::
             By default this information is **not** available. To enable it, you need to set
-            :concourse:`resources.schema.resource.expose_build_created_by` in your resource schema.
+            :concourse:`resources#expose_build_created_by` in your resource schema.
         """
         try:
             return os.environ["BUILD_CREATED_BY"]
         except KeyError as error:
             raise PermissionError("The 'BUILD_CREATED_BY' variable has not been made available. This must be enabled "
                                   "with the 'expose_build_created_by' variable within the resource schema: "
-                                  "https://concourse-ci.org/resources.html#schema.resource.expose_build_created_by") from error
+                                  "https://concourse-ci.org/docs/resources/#expose_build_created_by") from error
 
     @property
     def is_one_off_build(self) -> bool:
@@ -81,7 +83,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         Return :data:`True` if this build is one-off, and :data:`False` otherwise.
 
         A build is a "one-off" is it is triggered via the Concourse CLI
-        :concourse:`execute command <tasks.running-tasks>`.
+        :concourse:`execute command <tasks#running-tasks-with-fly-execute>`.
         It is determined by the absence of all of the following attributes:
 
         * ``BUILD_JOB_NAME``
@@ -96,14 +98,15 @@ class BuildMetadata:  # pylint: disable=invalid-name
 
     @property
     def is_instanced_pipeline(self) -> bool:
-        """Return :data:`True` if this is an :concourse:`instanced pipeline <instanced-pipelines>`."""
+        """Return :data:`True` if this is an :concourse:`instanced pipeline <pipelines.grouping-pipelines#managing-instanced-pipelines>`."""
         return self.BUILD_PIPELINE_INSTANCE_VARS is not None
 
     def instance_vars(self) -> dict[str, object]:
         """
         Return the instance vars set on this pipeline as a mapping.
 
-        When working with an :concourse:`instanced pipeline <instanced-pipelines>`, it is much more convenient to
+        When working with an :concourse:`instanced pipeline
+        <pipelines.grouping-pipelines#managing-instanced-pipelines>`, it is much more convenient to
         work with the instance vars as a mapping instead of a JSON string.
 
         .. note::
@@ -113,7 +116,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         :Example:
 
             If a instanced pipeline has been created from within another pipeline
-            (using the :concourse:`set-pipeline-step`), such as this:
+            (using the :concourse:`steps.set_pipeline` step), such as this:
 
             .. code:: yaml
 
@@ -169,7 +172,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         Format a string with metadata using standard bash ``$`` notation.
 
         Only a handful of "safe" values will be interpolated, not arbitrary attributes on the instance.
-        These are the :concourse:`original environment variables <implementing-resource-types.resource-metadata>`,
+        These are the :concourse:`original environment variables <resource_types.implementing#metadata>`,
         including :attr:`BUILD_CREATED_BY` if it exists. object missing environment variable (such as in the case of a
         one-off build) will be empty. A ``$BUILD_URL`` variable is also added for ease.
 

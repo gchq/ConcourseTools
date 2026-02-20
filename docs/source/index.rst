@@ -3,7 +3,7 @@ Concourse Tools (|version|)
 
 .. admonition:: Description
 
-   A Python package for easily implementing Concourse :concourse:`resource types <implementing-resource-types>`, created by GCHQ.
+   A Python package for easily implementing Concourse :concourse:`resource types <resource-types.implementing>`, created by GCHQ.
 
 
 

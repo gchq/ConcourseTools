@@ -2,17 +2,12 @@
 """
 Minor Sphinx extension for creating Concourse documentation links, based on https://sphinx-toolbox.readthedocs.io/en/stable/extensions/wikipedia.html.
 
-:concourse:`jobs` will create a link to /jobs.html with the text "jobs".
-:concourse:`jobs.thing.thing2` will create a link to /jobs.html#thing1.thing2 with the text "thing2".
-:concourse:`jobs-a-b-c` will create a link to /jobs-a-b-c.html with the text "jobs a b c".
-:concourse:`job <jobs>` will create a link to /jobs.html with the text "job".
-:concourse:`job <jobs.thing1.thing2>` will create a link to /jobs.html#thing1.thing2 with the text "job".
+Calling :concourse:`jobs` will create a link to the Concourse documentation. Rules for parsing links and text can be
+found in the docstring examples of the ``parse_link_and_title`` function.
 
 Set ``concourse_base_url`` in ``conf.py`` to change the URL used. It must contain "{target}" to be populated.
 """
 from __future__ import annotations
-
-from urllib.parse import quote
 
 from docutils import nodes
 from docutils.nodes import system_message
@@ -22,7 +17,7 @@ from sphinx.util.nodes import split_explicit_title
 
 __all__ = ("make_concourse_link", "setup")
 
-DEFAULT_BASE_URL = "https://concourse-ci.org/{target}"
+DEFAULT_BASE_URL = "https://concourse-ci.org/docs/{target}"
 
 
 def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner: Inliner, options: dict[str, object] = {},
@@ -45,22 +40,48 @@ def make_concourse_link(name: str, rawtext: str, text: str, lineno: int, inliner
     :return: A list containing the created node, and a list containing any messages generated during the function.
     """
     text = nodes.unescape(text)
-    _, title, target = split_explicit_title(text)
-
-    title = title.split(".")[-1].replace("-", " ")
-
-    page, *anchors = quote(target.replace(" ", "_"), safe="").split(".", maxsplit=1)
-    if anchors:
-        anchor = ".".join(anchors)
-        new_target = f"{page}.html#{anchor}"
-    else:
-        new_target = f"{page}.html"
+    target, title = parse_link_and_title(text)
 
     base_url: str = inliner.document.settings.env.config.concourse_base_url
-    ref = base_url.format(target=new_target)
+    ref = base_url.format(target=target)
 
     node = nodes.reference(rawtext, title, refuri=str(ref), **options)
     return [node], []
+
+
+def parse_link_and_title(text: str) -> tuple[str, str]:
+    """
+    Parse the link and title from text.
+
+    :Example:
+        >>> parse_link_and_title("steps")
+        ('steps/', 'steps')
+        >>> parse_link_and_title("steps.set_pipeline")
+        ('steps/set-pipeline/', 'set_pipeline')
+        >>> parse_link_and_title("steps.set_pipeline#instance_vars")
+        ('steps/set-pipeline/#instance_vars', 'instance_vars')
+        >>> parse_link_and_title("step <steps>")
+        ('steps/', 'step')
+        >>> parse_link_and_title("setting pipeline <steps.set_pipeline>")
+        ('steps/set-pipeline/', 'setting pipeline')
+        >>> parse_link_and_title("pipeline vars <steps.set_pipeline#instance_vars>")
+        ('steps/set-pipeline/#instance_vars', 'pipeline vars')
+    """
+    _, title, target = split_explicit_title(text)
+
+    new_title = title.split(".")[-1].split("#")[-1].replace("-", " ")
+
+    try:
+        page, anchor = target.split("#")
+    except ValueError:
+        page = target
+        anchor = ""
+
+    new_page = page.replace("_", "-").replace(".", "/")
+    new_target = f"{new_page}/"
+    new_target = f"{new_page}/#{anchor}" if anchor else f"{new_page}/"
+
+    return new_target, new_title
 
 
 def setup(app: Sphinx) -> dict[str, object]:

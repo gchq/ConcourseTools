@@ -395,13 +395,13 @@ class FileTestResourceWrapper(TestResourceWrapper[Version]):
         This is best to use if your resource uses external scripts for any of the steps.
 
     :param inner_resource_config: The JSON configuration for the resource.
-    :param check_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-check>`.
+    :param check_script: The path to the external script for the :concourse:`check <resource-types.implementing#check-check-for-new-versions>`.
                          Setting to :data:`None` (default) means that :meth:`fetch_new_versions`
                          raises :class:`NotImplementedError`.
-    :param in_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-in>`.
+    :param in_script: The path to the external script for the :concourse:`check <resource-types.implementing#in-fetch-a-given-resource>`.
                       Setting to :data:`None` (default) means that :meth:`download_version`
                       raises :class:`NotImplementedError`.
-    :param out_script: The path to the external script for the :concourse:`check <implementing-resource-types.resource-out>`.
+    :param out_script: The path to the external script for the :concourse:`check <resource-types.implementing#out-update-a-resource>`.
                        Setting to :data:`None` (default) means that :meth:`publish_new_version`
                        raises :class:`NotImplementedError`.
     :param directory_dict: The initial state of the resource directory. See :class:`~concoursetools.mocking.TemporaryDirectoryState`

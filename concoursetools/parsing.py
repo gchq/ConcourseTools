@@ -13,7 +13,7 @@ from concoursetools.typing import Metadata, MetadataPair, Params, ResourceConfig
 
 def parse_check_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig | None]:
     """
-    Parse raw input JSON for a :concourse:`check payload <implementing-resource-types.resource-check>`.
+    Parse raw input JSON for a :concourse:`check payload <resource-types.implementing#check-check-for-new-versions>`.
 
     :param raw_json: A JSON string of the following form:
 
@@ -46,7 +46,7 @@ def parse_check_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig | 
 
 def parse_in_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig, Params]:
     """
-    Parse raw input JSON for an :concourse:`in payload <implementing-resource-types.resource-in>`.
+    Parse raw input JSON for an :concourse:`in payload <resource-types.implementing#in-fetch-a-given-resource>`.
 
     :param raw_json: A JSON string of the following form:
 
@@ -78,7 +78,7 @@ def parse_in_payload(raw_json: str) -> tuple[ResourceConfig, VersionConfig, Para
 
 def parse_out_payload(raw_json: str) -> tuple[ResourceConfig, Params]:
     """
-    Parse raw input JSON for an :concourse:`out payload <implementing-resource-types.resource-out>`.
+    Parse raw input JSON for an :concourse:`out payload <resource-types.implementing#out-update-a-resource>`.
 
     :param raw_json: A JSON string of the following form:
 
@@ -116,7 +116,7 @@ def parse_metadata(metadata_pairs: list[MetadataPair]) -> Metadata:
 
 def format_check_output(version_configs: list[VersionConfig], **json_kwargs: Any) -> str:
     """
-    Format :concourse:`check output <implementing-resource-types.resource-check>` as a JSON string.
+    Format :concourse:`check output <resource-types.implementing#check-check-for-new-versions>` as a JSON string.
 
     :param version_configs: A list of version configurations.
     :param json_kwargs: Additional keyword arguments to pass to :func:`json.dumps`.
@@ -136,8 +136,8 @@ def format_check_output(version_configs: list[VersionConfig], **json_kwargs: Any
 
 def format_in_out_output(version_config: VersionConfig, metadata: Metadata, **json_kwargs: Any) -> str:
     """
-    Format :concourse:`in output <implementing-resource-types.resource-in>` or
-    :concourse:`out output <implementing-resource-types.resource-out>` as a JSON string.
+    Format :concourse:`in output <resource-types.implementing#in-fetch-a-given-resource>` or
+    :concourse:`out output <resource-types.implementing#out-update-a-resource>` as a JSON string.
 
     :param version_config: A version configuration.
     :param metadata: A key-value mapping of metadata.
@@ -175,7 +175,7 @@ def format_metadata(metadata: Metadata) -> list[MetadataPair]:
 
 def format_check_input(resource_config: ResourceConfig, version_config: VersionConfig | None = None, **json_kwargs: Any) -> str:
     """
-    Format :concourse:`check input <implementing-resource-types.resource-check>` as a JSON string.
+    Format :concourse:`check input <resource-types.implementing#check-check-for-new-versions>` as a JSON string.
 
     :param resource_config: A resource configuration.
     :param version_config: A version configuration, or :data:`None` if no version currently exists.
@@ -201,7 +201,7 @@ def format_check_input(resource_config: ResourceConfig, version_config: VersionC
 
 def format_in_input(resource_config: ResourceConfig, version_config: VersionConfig, params: Params | None = None, **json_kwargs: Any) -> str:
     """
-    Format :concourse:`in input <implementing-resource-types.resource-in>` as a JSON string.
+    Format :concourse:`in input <resource-types.implementing#in-fetch-a-given-resource>` as a JSON string.
 
     :param resource_config: A resource configuration.
     :param version_config: A version configuration.
@@ -232,7 +232,7 @@ def format_in_input(resource_config: ResourceConfig, version_config: VersionConf
 
 def format_out_input(resource_config: ResourceConfig, params: Params | None = None, **json_kwargs: Any) -> str:
     """
-    Format :concourse:`out input <implementing-resource-types.resource-out>` as a JSON string.
+    Format :concourse:`out input <resource-types.implementing#out-update-a-resource>` as a JSON string.
 
     :param resource_config: A resource configuration.
     :param params: Optional parameters to be passed.

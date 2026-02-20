@@ -18,13 +18,13 @@ T = TypeVar("T")
 ResourceConfig = dict[str, Any]
 """
 Represents arbitrary configuration passed to a Concourse resource.
-See the :concourse:`config-basics.schema.config` schema for more information.
+See the :concourse:`config-basics#config-schema` for more information.
 """
 
 Params = dict[str, Any]
 """
 Represents arbitrary parameters passed to a Concourse resource.
-See the :concourse:`config-basics.schema.config` schema for more information.
+See the :concourse:`config-basics#config-schema` for more information.
 """
 
 Metadata = dict[str, str]
@@ -48,7 +48,7 @@ class MetadataPair(TypedDict):
 VersionConfig = dict[str, str]
 """
 Represents a version of a Concourse resource.
-See the :concourse:`config-basics.schema.version` schema for more information.
+See the :concourse:`config-basics#version-schema` for more information.
 """
 
 VersionT = TypeVar("VersionT", bound="VersionProtocol")

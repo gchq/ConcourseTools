@@ -15,7 +15,7 @@ On occasion, you may wish your resource to emit versions when something has chan
 
 But what happens when a check yields two versions from different branches? We could figure out the "latest" version by sorting by commit date, but if we are tracking multiple branches then we don't want to ignore a commit on one just because a more recent commit has been made on another. Previous in Concourse this was "fixed" by passing ``version: every`` to the resource, but this means that if multiple commits are pushed to a branch at once, then each commit will emit a build, which may not be what we want.
 
-What we really want is to iterate over all branches in our repository, and spin up a branch-specific pipeline for each one using the :concourse:`set-pipeline-step`. This is easy to do, but we need to make sure that new pipelines are added when new branches appear, and that old pipelines are deleted when their branches are removed. We specifically require a resource which will trigger a pipeline whenever something has changed. The generic resource for this pattern is the :class:`~concoursetools.additional.TriggerOnChangeConcourseResource`, but because the "state" is made up of several "sub versions", it makes sense to instead utilise the :class:`~concoursetools.additional.MultiVersionConcourseResource`, which takes care of much of the boiler plate for us, and also allow us to automatically download these subversions as JSON so that we may iterate over them.
+What we really want is to iterate over all branches in our repository, and spin up a branch-specific pipeline for each one using the :concourse:`steps.set_pipeline` step. This is easy to do, but we need to make sure that new pipelines are added when new branches appear, and that old pipelines are deleted when their branches are removed. We specifically require a resource which will trigger a pipeline whenever something has changed. The generic resource for this pattern is the :class:`~concoursetools.additional.TriggerOnChangeConcourseResource`, but because the "state" is made up of several "sub versions", it makes sense to instead utilise the :class:`~concoursetools.additional.MultiVersionConcourseResource`, which takes care of much of the boiler plate for us, and also allow us to automatically download these subversions as JSON so that we may iterate over them.
 
 Branch Version
 --------------
@@ -66,7 +66,7 @@ We only need to implement the :meth:`~concoursetools.additional.MultiVersionConc
 
 The logic required here is incredibly minimal, and we only need to return each available subversion. The returned set will then be sorted by the resource when converting it to its final version, which is why we needed the subversion to be sortable and hashable.
 
-When the branches change (either with new ones added or existing ones removed) a new version will be emitted and the pipeline will be triggered. Users can then iterate over them in their pipeline using a combination of the :concourse:`across-step` and the :concourse:`set-pipeline-step`:
+When the branches change (either with new ones added or existing ones removed) a new version will be emitted and the pipeline will be triggered. Users can then iterate over them in their pipeline using a combination of the :concourse:`steps.modifier-and-hooks.across` step modifier and the :concourse:`steps.set_pipeline` step:
 
 .. code:: yaml
 
