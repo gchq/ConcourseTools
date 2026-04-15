@@ -1,13 +1,9 @@
 # (C) Crown Copyright GCHQ
 from __future__ import annotations
 
-from http.client import HTTPResponse
 import json
 from pathlib import Path
-import ssl
-from typing import cast
 from unittest import TestCase
-import urllib.request
 
 from concoursetools import BuildMetadata, ConcourseResource
 from concoursetools.additional import (DatetimeVersion, InOnlyConcourseResource, MultiVersionConcourseResource, OutOnlyConcourseResource,
@@ -203,24 +199,16 @@ class MultiVersionTests(TestCase):
         self.assertDictEqual(directory_state.final_state, {"repos.json": expected_payload})
 
 
-class ImageDownloadResource(InOnlyConcourseResource):
+class FileDownloadResource(InOnlyConcourseResource):
 
-    def __init__(self, image_url: str) -> None:
-        super().__init__()
-        self.image_url = image_url
+    def download_data(self, destination_dir: Path, build_metadata: BuildMetadata, name: str = "file.txt") -> Metadata:
+        file_path = destination_dir / name
+        file_path.write_text("Hello, world!")
 
-    def download_data(self, destination_dir: Path, build_metadata: BuildMetadata, name: str = "image") -> Metadata:
-        image_path = destination_dir / name
-        request = urllib.request.Request(url=self.image_url)
-
-        ssl_context = ssl._create_unverified_context()
-        with urllib.request.urlopen(request, context=ssl_context) as response:
-            response = cast(HTTPResponse, response)
-            with open(image_path, "wb") as wf:
-                wf.write(response.read())
+        print(f"Writing file {name!r} for job {build_metadata.BUILD_NAME}")
 
         metadata = {
-            "HTTP Status": str(response.status),
+            "HTTP Status": "200",
         }
         return metadata
 
@@ -229,16 +217,36 @@ class InOnlyTests(TestCase):
     """
     Tests for the InOnlyConcourseResource class.
     """
-    def test_data_download(self) -> None:
-        resource = ImageDownloadResource(image_url="https://www.gchq.gov.uk/files/favicon.ico")
+    def test_check_versions(self) -> None:
+        resource = FileDownloadResource()
         wrapper = SimpleTestResourceWrapper(resource)
+        self.assertListEqual(wrapper.fetch_new_versions(), [])
+        self.assertListEqual(wrapper.fetch_new_versions(DatetimeVersion.now()), [])
+
+    def test_data_download(self) -> None:
+        resource = FileDownloadResource()
+        wrapper = SimpleTestResourceWrapper(resource)
+        self.assertEqual(wrapper.mocked_build_metadata.BUILD_NAME, "42")
+
+        version, publish_metadata = wrapper.publish_new_version()
+        self.assertDictEqual(publish_metadata, {})
+
         with wrapper.capture_debugging() as debugging:
             with wrapper.capture_directory_state() as directory_state:
-                wrapper.download_version(DatetimeVersion.now(), name="favicon.ico")
+                wrapper.download_version(version)
 
-        self.assertEqual(debugging, "")
+        self.assertEqual(debugging, "Writing file 'file.txt' for job 42\n")
         self.assertDictEqual(directory_state.final_state, {
-            "favicon.ico": b"\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x01\x00 \x00w%",
+            "file.txt": "Hello, world!",
+        })
+
+        with wrapper.capture_debugging() as debugging:
+            with wrapper.capture_directory_state() as directory_state:
+                wrapper.download_version(version, name="other.txt")
+
+        self.assertEqual(debugging, "Writing file 'other.txt' for job 42\n")
+        self.assertDictEqual(directory_state.final_state, {
+            "other.txt": "Hello, world!",
         })
 
 
