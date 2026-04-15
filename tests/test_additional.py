@@ -226,6 +226,8 @@ class InOnlyTests(TestCase):
     def test_data_download(self) -> None:
         resource = FileDownloadResource()
         wrapper = SimpleTestResourceWrapper(resource)
+        self.assertEqual(wrapper.mocked_build_metadata.BUILD_NAME, "42")
+
         version, publish_metadata = wrapper.publish_new_version()
         self.assertDictEqual(publish_metadata, {})
 
