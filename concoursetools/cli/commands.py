@@ -17,10 +17,11 @@ from concoursetools.resource import ConcourseResource
 cli = CLI()
 
 DEFAULT_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+DEFAULT_RESOURCE_FILE = "concourse.py"
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def assets(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
+def assets(path: str, /, *, executable: str | None = None, resource_file: str = DEFAULT_RESOURCE_FILE,
            class_name: str | None = None) -> None:
     """
     Create the assets script directory.
@@ -49,7 +50,7 @@ def assets(path: str, /, *, executable: str | None = None, resource_file: str = 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
 def dockerfile(path: str, /, *, executable: str | None = None, image: str = "python", tag: str | None = None,
-               suffix: str | None = None, resource_file: str = "concourse.py", class_name: str | None = None,
+               suffix: str | None = None, resource_file: str = DEFAULT_RESOURCE_FILE, class_name: str | None = None,
                pip_args: str | None = None, include_rsa: bool = False, include_netrc: bool = False,
                encoding: str | None = None, no_venv: bool = False, dev: bool = False) -> None:
     """
@@ -182,7 +183,7 @@ def dockerfile(path: str, /, *, executable: str | None = None, image: str = "pyt
 
 
 @cli.register(allow_short={"executable", "class_name", "resource_file"})
-def legacy(path: str, /, *, executable: str | None = None, resource_file: str = "concourse.py",
+def legacy(path: str, /, *, executable: str | None = None, resource_file: str = DEFAULT_RESOURCE_FILE,
            class_name: str | None = None, docker: bool = False, include_rsa: bool = False) -> None:
     """
     Invoke the legacy CLI.

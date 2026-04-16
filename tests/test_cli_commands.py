@@ -11,6 +11,7 @@ import unittest
 import unittest.mock
 
 from concoursetools.cli import cli
+from concoursetools.cli.commands import DEFAULT_RESOURCE_FILE
 from concoursetools.colour import Colour, colourise
 
 
@@ -26,7 +27,7 @@ class AssetTests(unittest.TestCase):
 
         path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
-        shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
+        shutil.copyfile(path_to_test_resource_module, self.temp_dir / DEFAULT_RESOURCE_FILE)
         os.chdir(self.temp_dir)
 
     def tearDown(self) -> None:
@@ -60,7 +61,7 @@ class DockerfileTests(unittest.TestCase):
 
         path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
-        shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
+        shutil.copyfile(path_to_test_resource_module, self.temp_dir / DEFAULT_RESOURCE_FILE)
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 
@@ -115,7 +116,7 @@ class LegacyTests(unittest.TestCase):
 
         path_to_this_file = Path(__file__)
         path_to_test_resource_module = path_to_this_file.parent / "resource.py"
-        shutil.copyfile(path_to_test_resource_module, self.temp_dir / "concourse.py")
+        shutil.copyfile(path_to_test_resource_module, self.temp_dir / DEFAULT_RESOURCE_FILE)
         self.dockerfile_path = self.temp_dir / "Dockerfile"
         self.assertFalse(self.dockerfile_path.exists())
 

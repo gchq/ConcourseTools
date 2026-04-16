@@ -87,9 +87,8 @@ class Resource(OutOnlyConcourseResource[Version]):
             else:
                 endpoint = endpoint.rstrip("/")
 
-        if self.driver is Driver.CLOUD:
-            if repository is None:
-                raise ValueError("Must set repository when using Bitbucket Cloud.")
+        if self.driver is Driver.CLOUD and repository is None:
+            raise ValueError("Must set repository when using Bitbucket Cloud.")
 
     def publish_new_version(self, sources_dir: Path, build_metadata: BuildMetadata,
                             repository: str, build_status: str, key: str | None = None,
