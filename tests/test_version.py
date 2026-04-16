@@ -118,7 +118,7 @@ class ComparisonTests(TestCase):
         version_3 = BasicVersion("image.png")
 
         with self.assertRaises(TypeError):
-            sorted([version_1, version_2, version_3])  # type: ignore[type-var]
+            [version_1, version_2, version_3].sort()  # type: ignore[call-arg]
 
     def test_complex_sorting(self) -> None:
         version_1 = ComplexVersion("file.txt")
