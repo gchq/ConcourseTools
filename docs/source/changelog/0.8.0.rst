@@ -55,7 +55,7 @@ Build Metadata string formatting
 Both :meth:`~concoursetools.resource.ConcourseResource.download_version` and
 :meth:`~concoursetools.resource.ConcourseResource.publish_new_version` methods are passed an instance of
 :class:`~concoursetools.metadata.BuildMetadata` to interface with the
-:concourse:`resource metadata <resource-types.implementing#metadata>`. This allows developers to easily interface with
+:concourse:`resource metadata <resource-types.implementing#build-metadata>`. This allows developers to easily interface with
 this metadata from within the resource code.
 
 However, many resources want to make this metadata available to the end user in their pipelines, by allowing them to
