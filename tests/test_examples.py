@@ -279,7 +279,7 @@ class XKCDInTests(unittest.TestCase):
         self.assertDictEqual(self.expected_response, json.loads(folder_state["info.json"]))
 
         image_contents = folder_state["image.png"]
-        hashed_image_contents = hashlib.sha1(image_contents).hexdigest()
+        hashed_image_contents = hashlib.sha1(image_contents, usedforsecurity=False).hexdigest()
         self.assertEqual(hashed_image_contents, "22f545ac6b50163ce39bac49094c3f64e0858403")
 
     def test_file_downloads_without_files(self) -> None:
