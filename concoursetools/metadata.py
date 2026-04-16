@@ -10,7 +10,7 @@ The :meth:`~concoursetools.resource.ConcourseResource.download_version` and
     Build metadata is deliberately not passed to :meth:`~concoursetools.resource.ConcourseResource.fetch_new_versions`,
     as none of this metadata is passed to the check environment by Concourse, to avoid antipatterns.
 
-See the Concourse :concourse:`resource types metadata <resource_types.implementing#metadata>` documentation
+See the Concourse :concourse:`resource types metadata <resource_types.implementing#build-metadata>` documentation
 for more information.
 """
 from __future__ import annotations
@@ -172,7 +172,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
         Format a string with metadata using standard bash ``$`` notation.
 
         Only a handful of "safe" values will be interpolated, not arbitrary attributes on the instance.
-        These are the :concourse:`original environment variables <resource_types.implementing#metadata>`,
+        These are the :concourse:`original environment variables <resource_types.implementing#build-metadata>`,
         including :attr:`BUILD_CREATED_BY` if it exists. object missing environment variable (such as in the case of a
         one-off build) will be empty. A ``$BUILD_URL`` variable is also added for ease.
 

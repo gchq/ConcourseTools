@@ -17,7 +17,7 @@ repos:
       - id: autopep8
         exclude: docs/source/conf.py
   - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
+    rev: 8.0.1
     hooks:
       - id: isort
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -28,12 +28,12 @@ repos:
       - id: forbid-binary
         exclude: docs/source/_static/.*.png
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
       - id: forbid-crlf
       - id: forbid-tabs
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v9.4.0
+    rev: v9.8.0
     hooks:
       - id: cspell
         exclude: \.gitignore|.*\.properties
@@ -55,12 +55,12 @@ repos:
       - id: pyroma
         args: ["-d", "--min=10", "."]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.1
     hooks:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
   - repo: "https://github.com/python-jsonschema/check-jsonschema"
-    rev: "0.36.0"
+    rev: "0.37.1"
     hooks:
       - id: check-github-workflows
   - repo: https://github.com/johannsdg/pre-commit-license-headers
