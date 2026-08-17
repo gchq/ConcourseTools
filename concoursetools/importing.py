@@ -57,17 +57,16 @@ def import_classes_from_module(file_path: Path, parent_class: type[T]) -> dict[s
     import_path = file_path_to_import_path(file_path)
     module = import_py_file(import_path, file_path)
 
-    possible_resource_classes = {}
+    possible_resource_classes: dict[str, type[T]] = {}
     for _, cls in inspect.getmembers(module, predicate=inspect.isclass):
-        try:
-            class_is_subclass_of_parent = issubclass(cls, parent_class)
-        except TypeError:
-            class_is_subclass_of_parent = False
+
+        if not issubclass(cls, parent_class):
+            continue
 
         class_is_defined_in_this_module = (cls.__module__ == import_path)
         class_is_not_private = (not cls.__name__.startswith("_"))
 
-        if class_is_subclass_of_parent and class_is_defined_in_this_module and class_is_not_private:
+        if class_is_defined_in_this_module and class_is_not_private:
             possible_resource_classes[cls.__name__] = cls
 
     return possible_resource_classes
