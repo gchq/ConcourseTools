@@ -60,7 +60,11 @@ def import_classes_from_module(file_path: Path, parent_class: type[T]) -> dict[s
     possible_resource_classes: dict[str, type[T]] = {}
     for _, cls in inspect.getmembers(module, predicate=inspect.isclass):
 
-        if not issubclass(cls, parent_class):
+        try:
+            if not issubclass(cls, parent_class):
+                continue
+        except TypeError:
+            # This can fail in Python 3.10
             continue
 
         class_is_defined_in_this_module = (cls.__module__ == import_path)
