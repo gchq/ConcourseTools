@@ -1,2 +1,4 @@
 Development
 ===========
+
+* Added Python 3.15 support
