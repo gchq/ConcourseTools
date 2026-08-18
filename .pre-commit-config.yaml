@@ -55,12 +55,12 @@ repos:
       - id: pyroma
         args: ["-d", "--min=10", "."]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: v2.3.1
     hooks:
       - id: mypy
         additional_dependencies: ["types-docutils", "types-python-dateutil", "types-requests"]
   - repo: "https://github.com/python-jsonschema/check-jsonschema"
-    rev: "0.37.3"
+    rev: "0.38.0"
     hooks:
       - id: check-github-workflows
   - repo: https://github.com/johannsdg/pre-commit-license-headers
