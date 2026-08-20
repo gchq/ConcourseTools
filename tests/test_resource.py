@@ -735,7 +735,7 @@ def _build_test_resource_docker_image() -> str:
         # '3.14.0b1 (main, May  9 2025, 23:49:24) [GCC 12.2.0]'
         #  ^^^^^^^^
         tag, *_ = sys.version.split()
-        cli_commands.dockerfile(str(temp_dir), resource_file="concourse.py", class_name=TestResource.__name__,
+        cli_commands.dockerfile(str(temp_dir), resource_file=temporary_resource_file.name, class_name=TestResource.__name__,
                                 tag=tag, dev=True)
 
         stdout, _ = run_command("docker", ["build", ".", "-q"], cwd=temp_dir)

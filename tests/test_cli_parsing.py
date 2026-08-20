@@ -141,7 +141,7 @@ class HelpTests(unittest.TestCase):
 
         """).lstrip())
 
-    def first_command_help(self) -> None:
+    def test_first_command_help(self) -> None:
         with self._mock_terminal_width(120):
             width, _ = shutil.get_terminal_size()
             self.assertGreaterEqual(width, 120)

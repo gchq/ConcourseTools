@@ -355,7 +355,7 @@ class Parameter(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def aliases(self) -> tuple[str, ...]:
+    def aliases(self) -> list[str]:
         """The aliases for the option."""
         ...
 
@@ -410,9 +410,9 @@ class PositionalArgument(Parameter[T]):
     :param description: An optional description of the argument.
     """
     @property
-    def aliases(self) -> tuple[str, ...]:
+    def aliases(self) -> list[str]:
         """The aliases for the option."""
-        return (self.name,)
+        return [self.name]
 
     def add_to_parser(self, parser: ArgumentParser) -> None:
         parser.add_argument(*self.aliases, type=self.param_type, help=self.description)
@@ -433,10 +433,10 @@ class Option(Parameter[T]):
     allow_short: bool = False
 
     @property
-    def aliases(self) -> tuple[str, ...]:
+    def aliases(self) -> list[str]:
         if self.allow_short:
-            return (self.short_alias, self.long_alias)
-        return (self.long_alias,)
+            return [self.short_alias, self.long_alias]
+        return [self.long_alias]
 
     def add_to_parser(self, parser: ArgumentParser) -> None:
         parser.add_argument(*self.aliases, type=self.param_type, default=self.default, help=self.description)
