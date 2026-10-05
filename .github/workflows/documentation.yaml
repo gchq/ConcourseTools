@@ -12,6 +12,8 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install dependencies
+        env:
+          PIP_ONLY_BINARY: ":all:"
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r docs/requirements.txt --no-deps
