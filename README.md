@@ -100,6 +100,10 @@ For more information - and for more in-depth examples - see the [documentation](
 
 ## Bugs and Contributions
 
-Concourse Tools is in beta, and still under somewhat-active development.  Contributions, fixes, suggestions and bug
+> [!IMPORTANT]
+> GCHQ is pausing contributions from those outside of the organisation who are not approved collaborators.
+> Please consider [filing an issue](https://github.com/gchq/ConcourseTools/issues) instead.
+
+Concourse Tools is in beta, and still under somewhat-active development. Suggestions and bug
 reports are all welcome: Please familiarise yourself with our
 [contribution guidelines](https://github.com/gchq/ConcourseTools/blob/main/CONTRIBUTING.md).
