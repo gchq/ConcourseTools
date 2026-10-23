@@ -6,6 +6,10 @@ Please provide full details of your issue, and ideally code to reproduce it.
 
 ## Pull Requests
 
+> [!IMPORTANT]
+> GCHQ is pausing contributions from those outside of the organisation who are not approved collaborators.
+> Please consider [filing an issue](https://github.com/gchq/ConcourseTools/issues) instead.
+
 Prior to us accepting any work, you must sign the [GCHQ CLA Agreement](https://cla-assistant.io/gchq/ConcourseTools).
 We follow a branching strategy for handling contributions:
 

@@ -11,6 +11,7 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
+        exclude: .github/workflows/auto-reject-untrusted-pr.yaml
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.2
     hooks:
