@@ -213,7 +213,7 @@ class BuildMetadata:  # pylint: disable=invalid-name
             possible_values.update(additional_values)
 
         try:
-            possible_values["$BUILD_CREATED_BY"] = self.BUILD_CREATED_BY
+            possible_values["BUILD_CREATED_BY"] = self.BUILD_CREATED_BY
         except PermissionError:
             pass
 
