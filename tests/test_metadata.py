@@ -152,6 +152,28 @@ class MetadataTests(TestCase):
         }
         self.assertDictEqual(_flatten_dict(nested_dict), flattened_dict)
 
+    def test_build_created_by(self) -> None:
+        metadata = BuildMetadata(
+            BUILD_ID="12345678",
+            BUILD_TEAM_NAME="my-team",
+            ATC_EXTERNAL_URL="https://ci.myconcourse.com",
+            BUILD_NAME="42",
+        )
+
+        with self.assertRaises(PermissionError):
+            metadata.BUILD_CREATED_BY
+
+        with mock_environ({"BUILD_CREATED_BY": "dev-1"}):
+            self.assertEqual(metadata.BUILD_CREATED_BY, "dev-1")
+
+    def test_build_created_by_in_test_metadata(self) -> None:
+        metadata = TestBuildMetadata()
+        with self.assertRaises(PermissionError):
+            metadata.BUILD_CREATED_BY
+
+        metadata = TestBuildMetadata(build_created_by="dev-1")
+        self.assertEqual(metadata.BUILD_CREATED_BY, "dev-1")
+
 
 class MetadataFormattingTests(TestCase):
     """
@@ -186,3 +208,46 @@ class MetadataFormattingTests(TestCase):
         new_string = self.metadata.format_string("The build id is $OTHER.", additional_values={"OTHER": "value"},
                                                  ignore_missing=True)
         self.assertEqual(new_string, "The build id is value.")
+
+    def test_interpolation_with_build_created_by_not_set(self) -> None:
+        string = "Created by $BUILD_CREATED_BY"
+
+        with self.assertRaises(KeyError):
+            self.metadata.format_string(string)
+
+        self.assertEqual(self.metadata.format_string(string, ignore_missing=True), string)
+
+    def test_interpolation_with_build_created_by_set(self) -> None:
+        metadata = TestBuildMetadata(build_created_by="dev-1")
+        self.assertEqual(metadata.BUILD_CREATED_BY, "dev-1")
+        self.assertEqual(metadata.format_string("Created by $BUILD_CREATED_BY"), "Created by dev-1")
+
+    def test_interpolation_with_everything(self) -> None:
+        string = """
+        This is build number $BUILD_ID named $BUILD_NAME.
+        Job $BUILD_JOB_NAME from pipeline $BUILD_PIPELINE_NAME.
+        Started by $BUILD_CREATED_BY for team $BUILD_TEAM_NAME.
+        On server $ATC_EXTERNAL_URL.
+
+        Build accessible at $BUILD_URL.
+
+        Raw instance vars: $BUILD_PIPELINE_INSTANCE_VARS.
+
+        Custom vegetable: $VEGETABLE!
+        """
+
+        expected = """
+        This is build number 12345678 named 42.
+        Job my-job from pipeline my-pipeline.
+        Started by dev-1 for team my-team.
+        On server https://ci.myconcourse.com.
+
+        Build accessible at https://ci.myconcourse.com/teams/my-team/pipelines/my-pipeline/jobs/my-job/builds/42?vars.instance=%22my-instance%22.
+
+        Raw instance vars: {"instance": "my-instance"}.
+
+        Custom vegetable: carrot!
+        """
+
+        metadata = TestBuildMetadata(instance_vars={"instance": "my-instance"}, build_created_by="dev-1")
+        self.assertEqual(metadata.format_string(string, additional_values={"VEGETABLE": "carrot"}), expected)
