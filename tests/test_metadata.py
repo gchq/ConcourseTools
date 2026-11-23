@@ -153,12 +153,26 @@ class MetadataTests(TestCase):
         self.assertDictEqual(_flatten_dict(nested_dict), flattened_dict)
 
     def test_build_created_by(self) -> None:
-        metadata = TestBuildMetadata()
+        metadata = BuildMetadata(
+            BUILD_ID="12345678",
+            BUILD_TEAM_NAME="my-team",
+            ATC_EXTERNAL_URL="https://ci.myconcourse.com",
+            BUILD_NAME="42",
+        )
+
         with self.assertRaises(PermissionError):
             metadata.BUILD_CREATED_BY
 
         with mock_environ({"BUILD_CREATED_BY": "dev-1"}):
             self.assertEqual(metadata.BUILD_CREATED_BY, "dev-1")
+
+    def test_build_created_by_in_test_metadata(self) -> None:
+        metadata = TestBuildMetadata()
+        with self.assertRaises(PermissionError):
+            metadata.BUILD_CREATED_BY
+
+        metadata = TestBuildMetadata(build_created_by="dev-1")
+        self.assertEqual(metadata.BUILD_CREATED_BY, "dev-1")
 
 
 class MetadataFormattingTests(TestCase):

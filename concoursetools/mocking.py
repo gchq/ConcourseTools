@@ -79,11 +79,23 @@ class TestBuildMetadata(BuildMetadata):
 
     :param one_off_build: Set to :data:`True` if you are testing a one-off build.
     :param instance_vars: Pass optional instance vars to emulate an instanced pipeline.
+    :param build_created_by: Pass to enable the
+                             :attr:`~concoursetools.metadata.BuildMetadata.BUILD_CREATED_BY` property.
     :param env_vars: Pass additional environment variables, or overload the default ones.
     """
-    def __init__(self, one_off_build: bool = False, instance_vars: dict[str, str] | None = None, **env_vars: str):
+    def __init__(self, one_off_build: bool = False, instance_vars: dict[str, str] | None = None,
+                 build_created_by: str | None = None, **env_vars: str):
         test_env_vars = create_env_vars(one_off_build, instance_vars, **env_vars)
         super().__init__(**test_env_vars)
+        self._build_created_by = build_created_by
+
+    @property
+    def BUILD_CREATED_BY(self) -> str:
+        if self._build_created_by is None:
+            raise PermissionError("The 'BUILD_CREATED_BY' variable has not been made available. This must be enabled "
+                                  "with the 'expose_build_created_by' variable within the resource schema: "
+                                  "https://concourse-ci.org/docs/resources/#expose_build_created_by")
+        return self._build_created_by
 
 
 class TemporaryDirectoryState:
