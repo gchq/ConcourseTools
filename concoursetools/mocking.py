@@ -82,6 +82,9 @@ class TestBuildMetadata(BuildMetadata):
     :param build_created_by: Pass to enable the
                              :attr:`~concoursetools.metadata.BuildMetadata.BUILD_CREATED_BY` property.
     :param env_vars: Pass additional environment variables, or overload the default ones.
+
+    .. version-changed:: 0.9.0
+        Added support for the ``build_created_by`` parameter.
     """
     def __init__(self, one_off_build: bool = False, instance_vars: dict[str, str] | None = None,
                  build_created_by: str | None = None, **env_vars: str):

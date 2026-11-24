@@ -1,0 +1,91 @@
+v0.9.0
+======
+
+New Features in v0.9.0
+----------------------
+
+Added Python 3.15 support
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #46 <https://github.com/gchq/ConcourseTools/pull/46>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Added official support for Python 3.15 in Concourse Tools.
+
+
+Updated ``moto`` dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #40 <https://github.com/gchq/ConcourseTools/pull/40>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Tests no longer depend on the internal ``moto`` API, meaning the dependency could finally be upgraded.
+
+
+Fixed in v0.9.0
+---------------
+
+Interpolating ``BUILD_CREATED_BY`` now works
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #57 <https://github.com/gchq/ConcourseTools/pull/57>`_ by `gchqdev227 <https://github.com/gchqdev227>`_,
+    based on `PR #52 <https://github.com/gchq/ConcourseTools/pull/52>`_ by `sylvesterkaczmarek <https://github.com/sylvesterkaczmarek>`_
+
+
+A typo in the :meth:`concoursetools.metadata.BuildMetadata.format_string` method meant that even if
+:attr:`~concoursetools.metadata.BuildMetadata.BUILD_CREATED_BY` was correctly extracted from the environment variables,
+it would be not be properly interpolated. This has now been addressed.
+
+
+Support for ``BUILD_CREATED_BY`` in ``TestBuildMetadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #57 <https://github.com/gchq/ConcourseTools/pull/57>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+One can now pass ``build_created_by`` to :class:`~concoursetools.mocking.TestBuildMetadata` to test
+:attr:`~concoursetools.metadata.BuildMetadata.BUILD_CREATED_BY` directly, rather than needing to mock the environment.
+
+
+Removed flaky internet dependency on unit tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #42 <https://github.com/gchq/ConcourseTools/pull/42>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+The unit tests for the :class:`~concoursetools.additional.InOnlyConcourseResource` class used to reach out and download
+an image from the internet, which became incredibly fragile. This has now been replaced with a simple write to disk.
+
+
+Changed CLI parameter alias return types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #44 <https://github.com/gchq/ConcourseTools/pull/44>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+The :class:`concoursetools.cli.parser.Parameter` class has been updated, so that the
+:attr:`~concoursetools.cli.parser.Parameter.aliases` now returns a :class:`list` instead of a :class:`tuple`. This is
+very much an internal change, but nonetheless means that attempts to mutate this return value may now succeed.
+
+
+Updated links
+~~~~~~~~~~~~~
+
+    Contributed in `PR #41 <https://github.com/gchq/ConcourseTools/pull/41>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Changes to the Concourse documentation (see `concourse/docs#572 <https://github.com/concourse/docs/pull/572>`_) meant a
+number of broken links across the Concourse Tools documentation. This PR updated the internal extension to reflect this.
+
+
+Removed in v0.9.0
+-----------------
+
+Removed Python 3.10 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Contributed in `PR #53 <https://github.com/gchq/ConcourseTools/pull/53>`_ by `gchqdev227 <https://github.com/gchqdev227>`_
+
+
+Removed all Python 3.10 support. This is in line with the official
+`end-of-life <https://devguide.python.org/versions/#unsupported-versions>`_ for Python 3.10.

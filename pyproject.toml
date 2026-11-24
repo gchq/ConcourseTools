@@ -16,7 +16,6 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,7 +28,7 @@ classifiers = [
 authors = [
     {name = "GCHQ", email = "oss@gchq.gov.uk"},
 ]
-license = {text = "Apache License 2.0"}
+license = "Apache-2.0"
 
 [project.urls]
 "Homepage" = "https://github.com/gchq/ConcourseTools/"
